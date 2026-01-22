@@ -298,6 +298,29 @@ export default function Drafts() {
                               {draft.cta}
                             </p>
                           )}
+                          {/* Phoenix Metadata for 𝕏 posts */}
+                          {config?.platform === "twitter" && draft.replyLikelihood && (
+                            <div className="mt-3 p-2 bg-muted/50 rounded-md space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className="text-xs">
+                                  Reply: {draft.replyLikelihood}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  Dwell: {draft.dwellLikelihood}
+                                </Badge>
+                                {draft.fatigueRisk && draft.fatigueRisk !== "low" && (
+                                  <Badge variant={draft.fatigueRisk === "high" ? "destructive" : "secondary"} className="text-xs">
+                                    Fatigue: {draft.fatigueRisk}
+                                  </Badge>
+                                )}
+                              </div>
+                              {draft.authorEngagementReminder && (
+                                <p className="text-xs text-muted-foreground">
+                                  {draft.authorEngagementReminder}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-4 pt-4 border-t">
                           <Button

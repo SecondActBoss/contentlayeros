@@ -591,11 +591,17 @@ Write a 300-500 word newsletter section structured as:
 4. Implication: What this means for the reader
 5. Open loop: Leave them thinking
 
+=== DWELL-TIME OPTIMIZATION ===
+- Use short paragraphs (2-3 sentences max)
+- Include strategic line breaks between key ideas
+- Let whitespace slow the reader down
+- Each section should invite the reader to pause and think
+
 TONE CONSTRAINTS:
 - Calm, thoughtful tone
 - No hype, no listicles
 - No engagement bait
-- No emojis
+- No emojis or external links (keeps readers on platform)
 - Clarity over cleverness
 
 Return a JSON object with:
@@ -650,6 +656,7 @@ Return ONLY valid JSON, no markdown.`;
   }
 
   // 2. Generate THREE 𝕏 Posts
+  // Phoenix-optimized prompts for 𝕏 algorithm alignment
   const twitterPostTypes = [
     {
       type: "twitter_pov" as const,
@@ -660,7 +667,9 @@ Return ONLY valid JSON, no markdown.`;
 - Single powerful statement
 - Designed to be bookmarked
 - No thread language
-- No hashtags or emojis`,
+- No hashtags, emojis, or external links
+- End with a thought that invites a quiet reply (avoid engagement bait like "thoughts?" or "agree?")
+- Make it feel like a belief worth remembering, not content to consume`,
     },
     {
       type: "twitter_paradox" as const,
@@ -671,7 +680,9 @@ Return ONLY valid JSON, no markdown.`;
 - Challenges a popular assumption
 - Counterintuitive truth
 - Calm, non-combative tone
-- No hashtags or emojis`,
+- No hashtags, emojis, or external links
+- Use line breaks strategically to slow the reader down (dwell-time optimization)
+- End with a statement that invites reflection, not explicit asks for engagement`,
     },
     {
       type: "twitter_operator" as const,
@@ -681,8 +692,9 @@ Return ONLY valid JSON, no markdown.`;
 - Must be ≤280 characters
 - Grounded in lived experience
 - Focus on execution, coordination, or relief
-- Designed to prompt replies
-- No hashtags or emojis`,
+- No hashtags, emojis, or external links
+- End with a phrase that naturally prompts replies (operators sharing their experience)
+- Example endings: "still learning how to..." or "the fix was simpler than I expected" — not "what's your take?"`,
     },
   ];
 
@@ -813,6 +825,76 @@ Return ONLY valid JSON, no markdown.`;
   }
 }
 
+// Phoenix Guardrail: Detect content fatigue by analyzing semantic similarity
+export interface FatigueAnalysis {
+  overallFatigueRisk: "low" | "medium" | "high";
+  similarPosts: Array<{
+    hookPreview: string;
+    similarityReason: string;
+  }>;
+  recommendations: string[];
+}
+
+export async function detectContentFatigue(
+  newDraft: { hook: string; body: string; coreInsight: string },
+  recentApprovedPosts: Array<{ hook: string; body: string; coreInsight: string }>
+): Promise<FatigueAnalysis> {
+  if (recentApprovedPosts.length === 0) {
+    return {
+      overallFatigueRisk: "low",
+      similarPosts: [],
+      recommendations: [],
+    };
+  }
+
+  const prompt = `Analyze this new draft for content fatigue by comparing it to recent approved posts.
+
+=== NEW DRAFT ===
+Hook: ${newDraft.hook}
+Body: ${newDraft.body.slice(0, 300)}...
+Core Insight: ${newDraft.coreInsight}
+
+=== RECENT APPROVED POSTS (Last 7) ===
+${recentApprovedPosts.slice(0, 7).map((post, i) => `
+${i + 1}. Hook: ${post.hook}
+   Core Insight: ${post.coreInsight}
+`).join("\n")}
+
+Analyze for:
+1. Semantic similarity (same core idea expressed differently)
+2. Structural repetition (same hook patterns, same frameworks)
+3. Thematic overuse (same topics appearing too often)
+4. Audience fatigue risk (will readers feel déjà vu?)
+
+Return a JSON object with:
+- overallFatigueRisk: "low" | "medium" | "high"
+- similarPosts: Array of { hookPreview: string (first 50 chars), similarityReason: string } - only include if similarity found
+- recommendations: Array of strings with specific suggestions to differentiate
+
+Return ONLY valid JSON, no markdown.`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+    });
+
+    const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+    return {
+      overallFatigueRisk: parsed.overallFatigueRisk || "low",
+      similarPosts: parsed.similarPosts || [],
+      recommendations: parsed.recommendations || [],
+    };
+  } catch {
+    return {
+      overallFatigueRisk: "low",
+      similarPosts: [],
+      recommendations: [],
+    };
+  }
+}
+
 // Raw Tweet types for variety
 const RAW_TWEET_TYPES: Array<{
   type: RawTweetType;
@@ -925,10 +1007,18 @@ Generate 6 single tweets that:
 - Use a VARIETY of tweet types (at least 4 different types)
 - Never use the same tweet type back-to-back
 
-=== TONE CONSTRAINTS (MANDATORY) ===
+=== PHOENIX ALGORITHM OPTIMIZATION (MANDATORY) ===
+- End at least 2 tweets with reply-inviting closings (not bait):
+  - Good: "still figuring this out" / "took me too long to see this"
+  - Bad: "thoughts?" / "agree?" / "what do you think?"
+- Use line breaks in at least 1 tweet for dwell-time (slow the reader down)
+- At least 1 tweet should be a quiet insight that makes readers pause and think
+
+=== PLATFORM RETENTION CONSTRAINTS (MANDATORY) ===
 - NO emojis
 - NO hashtags
 - NO thread language
+- NO external links (keeps readers on platform)
 - NO engagement bait ("Thoughts?", "Agree?", "RT if...")
 - NO hype or outrage framing
 - Tone: "Typed by a founder between meetings"

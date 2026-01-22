@@ -1,11 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { extractSignals, generatePosts, generateContrarianPosts, generateTwitterContent, generateRawTweets, extractPatterns } from "./lib/contentGenerator";
+import { extractSignals, generatePosts, generateContrarianPosts, generateTwitterContent, generateRawTweets, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
 import { runThinkingGates } from "./lib/thinkingGates";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
-import { insertContextItemSchema, insertPostDraftSchema, insertFeedbackEntrySchema } from "@shared/schema";
+import { insertContextItemSchema, insertPostDraftSchema, insertFeedbackEntrySchema, type PostDraft } from "@shared/schema";
 import { z } from "zod";
 
 // Validation schemas for API requests
@@ -413,6 +413,33 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching feedback:", error);
       res.status(500).json({ error: "Failed to fetch feedback" });
+    }
+  });
+
+  // Phoenix Guardrail: Fatigue Detection
+  app.post("/api/drafts/:draftId/fatigue-check", async (req, res) => {
+    try {
+      const draft = await storage.getPostDraft(req.params.draftId);
+      if (!draft) {
+        return res.status(404).json({ error: "Draft not found" });
+      }
+
+      // Get recent approved posts (posted or edited status from the last 7 days)
+      const allDrafts = await storage.getAllPostDrafts();
+      const recentApproved = allDrafts
+        .filter((d: PostDraft) => d.status === "posted" && d.id !== draft.id)
+        .slice(-7)
+        .map((d: PostDraft) => ({ hook: d.hook, body: d.body, coreInsight: d.coreInsight }));
+
+      const fatigueAnalysis = await detectContentFatigue(
+        { hook: draft.hook, body: draft.body, coreInsight: draft.coreInsight },
+        recentApproved
+      );
+
+      res.json(fatigueAnalysis);
+    } catch (error) {
+      console.error("Error checking fatigue:", error);
+      res.status(500).json({ error: "Failed to check content fatigue" });
     }
   });
 
