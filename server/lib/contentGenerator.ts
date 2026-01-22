@@ -7,27 +7,51 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
-// Post types as defined in the spec
+// Post types as defined in the spec with hook biases
 const POST_TYPES = [
   {
     type: "educational_authority",
     name: "High-Level Educational Authority Post",
     description: "Clear stance, operator-safe, calm authority. Demonstrates monetizable expertise.",
+    hookBias: "Strong stance or reframing. Take a clear position that challenges conventional thinking.",
+    hookExamples: [
+      "AI agents won't replace departments.",
+      "Not smarter AI. Quieter execution.",
+      "Relief beats innovation.",
+    ],
   },
   {
     type: "founder_story",
     name: "Founder Storytelling Post",
     description: "One moment → one lesson → why it matters to the reader. Personal and authentic.",
+    hookBias: "Emotional mirror or lived quote. Reflect a feeling or moment operators know well.",
+    hookExamples: [
+      "Busy all day. Nothing moved.",
+      "I used to think speed was the problem.",
+      "The team was stressed. The system was fine.",
+    ],
   },
   {
     type: "trend_translation",
     name: "Trend Translation / Strategic Arbitrage Post",
     description: "Trend → operator lens → grounded POV. Reframes industry discourse.",
+    hookBias: "Disagreement with prevailing narrative. Challenge what everyone else is saying.",
+    hookExamples: [
+      "Early AI adoption isn't about intelligence.",
+      "The AI hype cycle missed the point.",
+      "Everyone's building agents. Few are deploying them.",
+    ],
   },
   {
     type: "system_principle",
     name: "System Principle / Rule-Based Post",
     description: "A constraint, rule, or mental model that guides decisions.",
+    hookBias: "Clear rule, constraint, or belief. State a principle like it's obvious truth.",
+    hookExamples: [
+      "Coordination pain is the real trigger.",
+      "AI only sticks when chaos disappears.",
+      "If it needs a meeting, it's not automated.",
+    ],
   },
 ];
 
@@ -124,20 +148,51 @@ ${examplesString}
 POST TYPE: ${postType.name}
 ${postType.description}
 
-WRITING CONSTRAINTS (MANDATORY):
+=== HOOK GENERATION RULES (CRITICAL) ===
+
+The hook (Line 1) and rehook (Line 2) are the most important parts. They determine "See more" clicks.
+
+HOOK BIAS FOR THIS POST TYPE:
+${postType.hookBias}
+
+EXAMPLE HOOKS (for tone/structure, do not copy verbatim):
+${postType.hookExamples.map((h: string) => `- "${h}"`).join("\n")}
+
+HOOK STRUCTURE REQUIREMENTS:
+- Line 1 (hook): 8 words or less, declarative statement
+- Line 2 (rehook): Adds clarity, tension, or narrows audience
+- NO questions in Line 1
+- NO emojis
+- NO hype language ("game-changing", "revolutionary", "the future")
+- NO generic openings ("Here's why...", "Let's talk about...", "I've learned...")
+
+PREFERRED HOOK TYPES (use one):
+A. Strong Contrarian: "AI agents won't replace departments."
+B. Operator Pain Mirror: "Busy all day. Nothing moved."
+C. Rule or Principle: "Coordination pain is the real trigger."
+D. Reframe / Contrast: "Not smarter AI. Quieter execution."
+
+REHOOK REQUIREMENTS:
+Line 2 should do ONE of these:
+- Add specificity: "That's why operators adopt AI first."
+- Create tension: "This is where most AI strategies break."
+- Narrow audience: "If you run ops, you've felt this."
+- Extend with consequence: "The cost shows up in meetings."
+
+SUCCESS CRITERIA:
+A good hook makes operators think: "That's exactly what I'm dealing with — keep going."
+NOT: "That sounds smart."
+
+=== BODY WRITING CONSTRAINTS ===
 - Short lines (aim for 8 words or less per line)
 - Calm, authoritative tone
 - NO emojis
-- NO hype language
-- NO sales copy
-- NO tool lists or buzzwords
-- Hook: First 2 lines optimized for "See more" (clear stance, specific)
-- NO mystery hooks
+- NO sales copy or buzzwords
 - This is a DRAFT, not publish-ready copy
 
 Return a JSON object with:
-- hook: First line (8 words or less, clear stance)
-- rehook: Second line (continues the hook, creates tension or curiosity)
+- hook: First line (8 words or less, specific stance - NOT generic)
+- rehook: Second line (adds tension, clarity, or narrows audience)
 - body: Main content (short paragraphs, line breaks between thoughts)
 - coreInsight: The key takeaway in one sentence
 - cta: Optional engagement prompt or question (can be empty string)

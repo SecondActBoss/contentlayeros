@@ -1,0 +1,157 @@
+We’d like to improve the hook-generation logic only, while leaving the rest of the LinkedIn Content Workflow Engine unchanged.
+
+This is not a redesign — it’s a refinement.
+
+GOAL
+
+Increase “See more” clicks and early engagement by making hooks:
+
+More specific
+
+More opinionated
+
+More tension-driven
+while staying calm, credible, and non-hype.
+
+Hooks should feel like earned authority, not marketing copy.
+
+CURRENT ISSUE
+
+Hooks are directionally correct but sometimes:
+
+Too neutral
+
+Too safe
+
+Not distinct enough between posts
+
+Lacking specificity (numbers, contrasts, rules)
+
+We want hooks that feel bookmarkable and disagreeable-in-a-good-way.
+
+UPDATED HOOK RULES (PLEASE IMPLEMENT)
+1. First Two Lines Are Mandatory Hooks
+
+Each post must generate:
+
+Line 1 (Hook)
+
+Line 2 (Rehook)
+
+Optimized for LinkedIn’s “See more” cutoff.
+
+2. Hook Length & Structure
+
+Aim for ≤ 8 words per line
+
+Short, declarative sentences
+
+No questions in Line 1
+
+No emojis
+
+No hype language
+
+3. Hook Types to Bias Toward
+
+For each post, prefer one of the following hook styles:
+
+A. Strong Contrarian Statement
+
+“AI agents won’t replace departments.”
+
+“Early AI adoption isn’t about intelligence.”
+
+B. Operator Pain Mirror
+
+“Busy all day. Nothing moved.”
+
+“Most teams aren’t inefficient — they’re overwhelmed.”
+
+C. Rule or Principle
+
+“Coordination pain is the real trigger.”
+
+“AI only sticks when chaos disappears.”
+
+D. Reframe / Contrast
+
+“Not smarter AI. Quieter execution.”
+
+“Relief beats innovation.”
+
+4. Second Line (Rehook) Requirements
+
+Line 2 should:
+
+Add clarity or tension
+
+Narrow the audience
+
+Extend curiosity without mystery
+
+Examples:
+
+“That’s why operators adopt AI first.”
+
+“This is where most AI strategies break.”
+
+5. Avoid These Patterns
+
+Do NOT generate hooks that:
+
+Sound generic or instructional (“Here’s why…”, “Let’s talk about…”)
+
+Use vague abstractions (“the future”, “game-changing”)
+
+Ask rhetorical questions in the first line
+
+Repeat the same hook pattern across all four posts
+
+POST-TYPE-SPECIFIC HOOK BIAS
+
+Apply slight variation by post type:
+
+Educational Authority
+→ Strong stance or reframing
+
+Founder Story
+→ Emotional mirror or lived quote
+
+Trend Translation
+→ Disagreement with prevailing narrative
+
+System Principle
+→ Clear rule, constraint, or belief
+
+IMPORTANT CONSTRAINTS
+
+Do NOT change:
+
+Post body generation
+
+Context logic
+
+Feedback system
+
+Google Sheets export
+
+Only adjust hook and rehook generation logic
+
+Hooks must still respect:
+
+Calm, authoritative tone
+
+Operator-first audience
+
+“AI Employees / system” positioning
+
+SUCCESS CRITERIA
+
+A good hook should make a qualified reader think:
+
+“That’s exactly what I’m dealing with — keep going.”
+
+Not:
+
+“That sounds smart.”
