@@ -27,6 +27,7 @@ export const contextItems = pgTable("context_items", {
   type: text("type").notNull(), // icp, positioning, language_rules, visual
   title: text("title").notNull(),
   content: text("content").notNull(),
+  imageUrl: text("image_url"), // Optional image URL for visual type
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

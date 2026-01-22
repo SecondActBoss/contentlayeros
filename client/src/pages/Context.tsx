@@ -10,9 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, Trash2, Users, Target, MessageSquare, Image } from "lucide-react";
+import { Loader2, Plus, Trash2, Users, Target, MessageSquare, Image, Upload, X } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useUpload } from "@/hooks/use-upload";
 import type { ContextItem, ContextType } from "@shared/schema";
 
 const CONTEXT_TYPES = [
@@ -30,7 +31,18 @@ export default function Context() {
     type: "icp" as ContextType,
     title: "",
     content: "",
+    imageUrl: null as string | null,
     isActive: true,
+  });
+  
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (response) => {
+      setFormData((prev) => ({ ...prev, imageUrl: response.objectPath }));
+      toast({ title: "Image uploaded", description: "Your screenshot has been uploaded." });
+    },
+    onError: () => {
+      toast({ title: "Upload failed", description: "Failed to upload image.", variant: "destructive" });
+    },
   });
 
   const { data: contextItems = [], isLoading } = useQuery<ContextItem[]>({
@@ -81,7 +93,7 @@ export default function Context() {
   });
 
   const resetForm = () => {
-    setFormData({ type: "icp", title: "", content: "", isActive: true });
+    setFormData({ type: "icp", title: "", content: "", imageUrl: null, isActive: true });
     setEditingItem(null);
   };
 
@@ -91,14 +103,26 @@ export default function Context() {
       type: item.type as ContextType,
       title: item.title,
       content: item.content,
+      imageUrl: item.imageUrl || null,
       isActive: item.isActive,
     });
     setDialogOpen(true);
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadFile(file);
+    }
+  };
+
   const handleSubmit = () => {
-    if (!formData.title.trim() || !formData.content.trim()) {
-      toast({ title: "Validation error", description: "Title and content are required.", variant: "destructive" });
+    if (!formData.title.trim()) {
+      toast({ title: "Validation error", description: "Title is required.", variant: "destructive" });
+      return;
+    }
+    if (formData.type !== "visual" && !formData.content.trim()) {
+      toast({ title: "Validation error", description: "Content is required.", variant: "destructive" });
       return;
     }
     if (editingItem) {
@@ -176,17 +200,81 @@ export default function Context() {
                   data-testid="input-context-title"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="content">Content</Label>
-                <Textarea
-                  id="content"
-                  placeholder="Describe the context in detail..."
-                  className="min-h-[150px]"
-                  value={formData.content}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
-                  data-testid="input-context-content"
-                />
-              </div>
+              {formData.type === "visual" ? (
+                <div className="space-y-2">
+                  <Label>Screenshot / Image</Label>
+                  <div className="border-2 border-dashed rounded-md p-4">
+                    {formData.imageUrl ? (
+                      <div className="relative">
+                        <img 
+                          src={formData.imageUrl} 
+                          alt="Uploaded visual" 
+                          className="max-h-48 mx-auto rounded"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-0 right-0"
+                          onClick={() => setFormData((prev) => ({ ...prev, imageUrl: null }))}
+                          data-testid="button-remove-image"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">Upload a screenshot</p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                          id="image-upload"
+                          data-testid="input-image-upload"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById("image-upload")?.click()}
+                          disabled={isUploading}
+                          data-testid="button-upload-image"
+                        >
+                          {isUploading ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4 mr-2" />
+                          )}
+                          Choose File
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2 mt-4">
+                    <Label htmlFor="content">Description (optional)</Label>
+                    <Textarea
+                      id="content"
+                      placeholder="Describe what this visual represents..."
+                      className="min-h-[80px]"
+                      value={formData.content}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
+                      data-testid="input-context-content"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="content">Content</Label>
+                  <Textarea
+                    id="content"
+                    placeholder="Describe the context in detail..."
+                    className="min-h-[150px]"
+                    value={formData.content}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
+                    data-testid="input-context-content"
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Switch
                   id="active"
@@ -316,9 +404,18 @@ export default function Context() {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                          {item.content}
-                        </p>
+                        {item.imageUrl && (
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.title} 
+                            className="max-h-40 rounded mb-2"
+                          />
+                        )}
+                        {item.content && (
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {item.content}
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   ))

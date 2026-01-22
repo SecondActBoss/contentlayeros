@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { extractSignals, generatePosts, extractPatterns } from "./lib/contentGenerator";
 import { appendPostsToSheet } from "./lib/googleSheets";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { insertContextItemSchema, insertPostDraftSchema, insertFeedbackEntrySchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -32,6 +33,9 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Register object storage routes for file uploads
+  registerObjectStorageRoutes(app);
+
   // Context Items CRUD
   app.get("/api/context-items", async (req, res) => {
     try {
