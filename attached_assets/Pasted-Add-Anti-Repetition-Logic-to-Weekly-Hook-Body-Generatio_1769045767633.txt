@@ -1,0 +1,142 @@
+Add Anti-Repetition Logic to Weekly Hook & Body Generation
+
+We want to reduce intra-week repetition while preserving clarity, authority, and emotional strength.
+
+This refinement applies within a single weekly run only.
+
+GOAL
+
+Prevent the same anchor phrases, metaphors, or signature lines from appearing verbatim across multiple posts in the same weekly batch.
+
+We want:
+
+Variety across posts
+
+Distinct cognitive angles
+
+No dilution of strong ideas
+
+Without:
+
+Weakening hooks
+
+Over-synonymizing core concepts
+
+Losing thematic cohesion
+
+CURRENT ISSUE
+
+After hook refinement, the system correctly surfaces strong phrases, but may reuse them too frequently in a single run (e.g. the same emotional mirror or metaphor appearing in 2–4 posts).
+
+This creates internal redundancy, even if each post is strong on its own.
+
+ANTI-REPETITION RULES (PLEASE IMPLEMENT)
+1. Anchor Phrase Uniqueness (Weekly Scope)
+
+Within a single weekly run:
+
+Each post may have one primary anchor phrase
+
+The same anchor phrase must not appear verbatim in more than one post
+
+Examples of anchor phrases:
+
+“Busy all day, nothing moved”
+
+“Your computer should keep working when you stop”
+
+“Dashboards solve nothing”
+
+“Coordination pain is the signal”
+
+If a phrase is used as an anchor in one post:
+
+Other posts should express the same idea using different wording or angle
+
+Do not repeat the exact phrasing
+
+2. Metaphor & Mental Model Rotation
+
+If a metaphor or mental model is used in one post:
+
+Avoid reusing the same metaphor in the other three posts
+
+Example:
+
+If one post uses “quiet where chaos used to be”
+
+Other posts should shift framing (e.g. momentum, relief, load removal, friction reduction)
+
+3. Core Idea ≠ Repeated Language
+
+Allow:
+
+The same idea to appear across posts
+
+Prevent:
+
+The same sentence, quote, or catchphrase appearing multiple times
+
+This ensures:
+
+Cohesive theme
+
+Distinct expression
+
+4. Post-Type Differentiation Reinforcement
+
+Reinforce that each post answers a different question, even if sourced from the same raw material:
+
+Educational Authority → Why does this problem exist?
+
+Founder Story → What moment made this real?
+
+Trend Translation → What narrative is wrong?
+
+System Principle → What rule do we enforce because of this?
+
+Language overlap should be minimized across these roles.
+
+IMPLEMENTATION GUIDANCE
+
+Track anchor phrases detected during draft generation
+
+Once an anchor is assigned to a post, mark it as “used” for the current weekly run
+
+For subsequent posts:
+
+Re-express the concept using a different emotional angle, framing, or vocabulary
+
+Do NOT weaken clarity or authority just to avoid repetition
+
+This constraint resets with each new weekly run.
+
+IMPORTANT CONSTRAINTS
+
+Do NOT remove strong hooks
+
+Do NOT genericize language
+
+Do NOT replace clear phrasing with vague synonyms
+
+Do NOT change:
+
+Body generation logic
+
+Context logic
+
+Feedback & learning system
+
+Google Sheets export
+
+This refinement affects language diversity, not strategic direction.
+
+SUCCESS CRITERIA
+
+A reader who sees all four posts in the same week should think:
+
+“Each post says something different — but they clearly come from the same mind.”
+
+Not:
+
+“I’ve already read this.”

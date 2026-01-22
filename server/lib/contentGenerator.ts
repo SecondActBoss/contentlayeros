@@ -134,8 +134,43 @@ ${strongExamples.slice(0, 3).map((e) => `[${e.postType}]: ${e.finalContent.slice
     : "";
 
   const posts: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
+  
+  // Track used elements for anti-repetition across this weekly run
+  const usedAnchors: string[] = [];
+  const usedMetaphors: string[] = [];
+  const usedHookTypes: string[] = [];
 
   for (const postType of POST_TYPES) {
+    // Build anti-repetition context from previously generated posts
+    const antiRepetitionContext = posts.length > 0
+      ? `
+=== ANTI-REPETITION RULES (CRITICAL FOR THIS WEEKLY BATCH) ===
+
+You are generating post ${posts.length + 1} of 4 in this weekly batch.
+The reader may see all 4 posts this week. Each must feel distinct.
+
+ALREADY USED IN THIS BATCH (DO NOT REUSE VERBATIM):
+${usedAnchors.length > 0 ? `Anchor phrases: ${usedAnchors.map(a => `"${a}"`).join(", ")}` : ""}
+${usedMetaphors.length > 0 ? `Metaphors/framings: ${usedMetaphors.map(m => `"${m}"`).join(", ")}` : ""}
+${usedHookTypes.length > 0 ? `Hook types used: ${usedHookTypes.join(", ")}` : ""}
+
+PREVIOUS POSTS IN THIS BATCH:
+${posts.map((p, i) => `Post ${i + 1} (${p.postType}): "${p.hook}" / "${p.rehook}"`).join("\n")}
+
+ANTI-REPETITION REQUIREMENTS:
+- Use DIFFERENT anchor phrase than previous posts
+- Use DIFFERENT metaphor or mental model
+- Express similar ideas with DIFFERENT vocabulary
+- Each post answers a different question:
+  * Educational Authority → Why does this problem exist?
+  * Founder Story → What moment made this real?
+  * Trend Translation → What narrative is wrong?
+  * System Principle → What rule do we enforce?
+
+DO NOT weaken clarity to avoid repetition. Find a different angle, not a weaker synonym.
+`
+      : "";
+
     const prompt = `You are a LinkedIn ghostwriter for a founder. Generate a ${postType.name}.
 
 CONTEXT:
@@ -144,7 +179,7 @@ ${contextString || "Write for a professional audience."}
 EXTRACTED SIGNALS:
 ${signalsString}
 ${examplesString}
-
+${antiRepetitionContext}
 POST TYPE: ${postType.name}
 ${postType.description}
 
@@ -196,6 +231,9 @@ Return a JSON object with:
 - body: Main content (short paragraphs, line breaks between thoughts)
 - coreInsight: The key takeaway in one sentence
 - cta: Optional engagement prompt or question (can be empty string)
+- anchorPhrase: The primary memorable phrase in this post (for tracking)
+- metaphor: Any metaphor or mental model used (or empty string if none)
+- hookType: Which hook type you used (Contrarian, Pain Mirror, Rule/Principle, or Reframe)
 
 Return ONLY valid JSON, no markdown.`;
 
@@ -208,6 +246,12 @@ Return ONLY valid JSON, no markdown.`;
     const content = response.choices[0]?.message?.content || "{}";
     try {
       const parsed = JSON.parse(content);
+      
+      // Track used elements for anti-repetition in subsequent posts
+      if (parsed.anchorPhrase) usedAnchors.push(parsed.anchorPhrase);
+      if (parsed.metaphor) usedMetaphors.push(parsed.metaphor);
+      if (parsed.hookType) usedHookTypes.push(parsed.hookType);
+      
       posts.push({
         postType: postType.type,
         hook: parsed.hook || "",
