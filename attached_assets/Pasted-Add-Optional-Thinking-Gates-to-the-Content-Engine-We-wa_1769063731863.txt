@@ -1,0 +1,257 @@
+Add Optional “Thinking Gates” to the Content Engine
+
+We want to add a set of optional, opt-in Thinking Gates that run before or after content generation to improve clarity, conviction, and long-term leverage.
+
+These gates are designed to pressure-test ideas, not rewrite content.
+
+They must be:
+
+Optional
+
+Non-destructive
+
+Transparent
+
+Human-in-the-loop
+
+This is a judgment layer, not a generation layer.
+
+FEATURE OVERVIEW
+
+Add a new section to the Weekly Run UI titled:
+
+Thinking Gates (Optional)
+
+Each gate can be toggled on/off independently per run.
+
+If no gates are enabled, the engine behaves exactly as it does today.
+
+GATE 1 — Belief Stress Test (Pre-Generation)
+
+Purpose
+Force clarity around the belief driving this week’s content.
+
+When it runs
+Before content generation.
+
+What it does
+If enabled, the engine should internally analyze:
+
+The core belief the content is built on
+
+The belief the market still holds that this belief rejects
+
+Where this belief creates tension with conventional wisdom
+
+Where holding this belief costs the author short-term
+
+Where it compounds long-term if correct
+
+Output behavior
+
+Do NOT rewrite content
+
+Surface findings as a short Belief Summary Panel
+
+Use findings to sharpen hooks and contrarian framing
+
+Rules
+
+No softening language
+
+No validation
+
+Force explicit positions
+
+GATE 2 — Experience Miner (Signal Extraction Bias)
+
+Purpose
+Ensure content is grounded in decisions, not advice.
+
+When it runs
+During signal extraction.
+
+What it does
+Bias extraction toward:
+
+Decisions made with incomplete information
+
+Tradeoffs consciously accepted
+
+Mistakes that produced durable learning
+
+Rules created because of pain or failure
+
+Positions the author can defend from experience
+
+Output behavior
+
+Surface:
+
+3 operating principles
+
+3 mistakes not to repeat
+
+3 defensible positions
+
+Feed these into generation logic
+
+Do NOT invent experiences
+
+GATE 3 — Clarity Destroyer (Post-Generation)
+
+Purpose
+Eliminate vague thinking before distribution.
+
+When it runs
+After drafts are generated.
+
+What it does
+Analyze drafts to:
+
+Flag sentences that sound intelligent but lack substance
+
+Identify abstract language avoiding commitment
+
+Highlight generalizations that could apply to anyone
+
+Test whether the idea collapses under specificity
+
+Output behavior
+
+Do NOT rewrite content
+
+Mark drafts as:
+
+“Survives scrutiny”
+
+“Collapses under precision”
+
+Provide brief flags explaining why
+
+Rules
+
+Precision over politeness
+
+If an idea fails, say so
+
+GATE 4 — Content as Infrastructure (Metadata Layer)
+
+Purpose
+Treat content as a durable business asset.
+
+When it runs
+After generation.
+
+What it does
+Attach metadata to each draft:
+
+Core thesis (1 sentence)
+
+Misunderstanding it corrects
+
+Buyer sophistication level it attracts
+
+Buyer type it repels
+
+Objections it quietly dissolves
+
+Which offers or conversations it supports
+
+Output behavior
+
+Metadata only
+
+No copy changes
+
+Used for long-term leverage and reuse
+
+GATE 5 — Silent Sales Map (Pre-Sales Check)
+
+Purpose
+Ensure content reduces friction before a sales conversation.
+
+When it runs
+After generation.
+
+What it does
+Analyze content to identify:
+
+The belief installed in the reader
+
+Objections removed
+
+Buyer qualification effect
+
+Whether it supports a real business outcome
+
+Output behavior
+
+If no real outcome is supported, state that clearly
+
+Do NOT add CTAs
+
+Selling should remain implicit and quiet
+
+GATE 6 — Weekly Operator Focus (Founder Leverage)
+
+Purpose
+Protect time and focus under constraint.
+
+When it runs
+After all drafts are generated.
+
+What it does
+Based on current goals and constraints, output:
+
+What deserves focus this week
+
+What can wait without consequence
+
+What compounds if done once and well
+
+What creates motion without leverage
+
+Output behavior
+
+Short operator summary
+
+No content generation
+
+Direction > activity
+
+UI & SYSTEM CONSTRAINTS
+
+All gates must be:
+
+Toggleable
+
+Optional
+
+Non-blocking
+
+Do NOT auto-enable any gate
+
+Do NOT auto-rewrite drafts
+
+Do NOT affect:
+
+Posting
+
+Scheduling
+
+Feedback & learning logic
+
+Google Sheets export (except metadata columns)
+
+This layer should feel like a sharp advisor, not a content editor.
+
+SUCCESS CRITERIA
+
+A user should feel:
+
+“This helped me decide what deserves to exist.”
+
+Not:
+
+“This wrote more content for me.”

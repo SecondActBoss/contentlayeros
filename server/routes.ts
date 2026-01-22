@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { extractSignals, generatePosts, generateContrarianPosts, generateTwitterContent, generateRawTweets, extractPatterns } from "./lib/contentGenerator";
+import { runThinkingGates } from "./lib/thinkingGates";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { insertContextItemSchema, insertPostDraftSchema, insertFeedbackEntrySchema } from "@shared/schema";
@@ -16,6 +17,12 @@ const weeklyRunInputSchema = z.object({
   isRawTweetMode: z.boolean().optional().default(false),
   externalSignal: z.string().optional(),
   framingNote: z.string().optional(),
+  gateBeliefStressTest: z.boolean().optional().default(false),
+  gateExperienceMiner: z.boolean().optional().default(false),
+  gateClarityDestroyer: z.boolean().optional().default(false),
+  gateContentInfrastructure: z.boolean().optional().default(false),
+  gateSilentSalesMap: z.boolean().optional().default(false),
+  gateWeeklyOperatorFocus: z.boolean().optional().default(false),
 });
 
 const updateContextItemSchema = insertContextItemSchema.partial();
@@ -138,7 +145,21 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ error: parsed.error.message });
       }
-      const { rawInput, selectedContextIds, distributionMode, isContrarianMode, isRawTweetMode, externalSignal, framingNote } = parsed.data;
+      const { 
+        rawInput, 
+        selectedContextIds, 
+        distributionMode, 
+        isContrarianMode, 
+        isRawTweetMode, 
+        externalSignal, 
+        framingNote,
+        gateBeliefStressTest,
+        gateExperienceMiner,
+        gateClarityDestroyer,
+        gateContentInfrastructure,
+        gateSilentSalesMap,
+        gateWeeklyOperatorFocus,
+      } = parsed.data;
 
       // Validate based on mode
       if (isContrarianMode && distributionMode === "linkedin" && !externalSignal?.trim()) {
@@ -204,6 +225,12 @@ export async function registerRoutes(
         isRawTweetMode: isRawTweetMode || false,
         externalSignal: externalSignal || null,
         framingNote: framingNote || null,
+        gateBeliefStressTest: gateBeliefStressTest || false,
+        gateExperienceMiner: gateExperienceMiner || false,
+        gateClarityDestroyer: gateClarityDestroyer || false,
+        gateContentInfrastructure: gateContentInfrastructure || false,
+        gateSilentSalesMap: gateSilentSalesMap || false,
+        gateWeeklyOperatorFocus: gateWeeklyOperatorFocus || false,
       });
 
       // Update with extracted signals
@@ -221,9 +248,32 @@ export async function registerRoutes(
         )
       );
 
+      // Run thinking gates if any are enabled
+      const anyGateEnabled = gateBeliefStressTest || gateExperienceMiner || gateClarityDestroyer || 
+                             gateContentInfrastructure || gateSilentSalesMap || gateWeeklyOperatorFocus;
+      
+      let gateOutputs = null;
+      if (anyGateEnabled) {
+        gateOutputs = await runThinkingGates(
+          {
+            beliefStressTest: gateBeliefStressTest || false,
+            experienceMiner: gateExperienceMiner || false,
+            clarityDestroyer: gateClarityDestroyer || false,
+            contentInfrastructure: gateContentInfrastructure || false,
+            silentSalesMap: gateSilentSalesMap || false,
+            weeklyOperatorFocus: gateWeeklyOperatorFocus || false,
+          },
+          rawInput,
+          selectedContexts,
+          posts
+        );
+        await storage.updateWeeklyRun(weeklyRun.id, { gateOutputs });
+      }
+
       res.status(201).json({
         ...weeklyRun,
         extractedSignals,
+        gateOutputs,
         posts,
       });
     } catch (error) {

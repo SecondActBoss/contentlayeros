@@ -73,6 +73,70 @@ export type RawTweetType =
 // Post draft status
 export type DraftStatus = "draft" | "edited" | "posted";
 
+// Thinking Gate IDs
+export type ThinkingGateId = 
+  | "belief_stress_test"    // Gate 1: Pre-generation belief analysis
+  | "experience_miner"      // Gate 2: Signal extraction bias
+  | "clarity_destroyer"     // Gate 3: Post-generation vagueness detection
+  | "content_infrastructure" // Gate 4: Metadata layer
+  | "silent_sales_map"      // Gate 5: Pre-sales check
+  | "weekly_operator_focus"; // Gate 6: Founder leverage
+
+// Gate output types
+export interface BeliefStressTestOutput {
+  coreBelief: string;
+  marketBelief: string;
+  tensionWithWisdom: string;
+  shortTermCost: string;
+  longTermCompound: string;
+}
+
+export interface ExperienceMinerOutput {
+  operatingPrinciples: string[];
+  mistakesNotToRepeat: string[];
+  defensiblePositions: string[];
+}
+
+export interface ClarityDestroyerOutput {
+  draftId: string;
+  verdict: "survives_scrutiny" | "collapses_under_precision";
+  flags: string[];
+}
+
+export interface ContentInfrastructureOutput {
+  draftId: string;
+  coreThesis: string;
+  misunderstandingCorrected: string;
+  buyerSophisticationLevel: string;
+  buyerTypeRepelled: string;
+  objectionsQuietlyDissolved: string[];
+  offersSupported: string[];
+}
+
+export interface SilentSalesMapOutput {
+  beliefInstalled: string;
+  objectionsRemoved: string[];
+  buyerQualificationEffect: string;
+  supportsRealOutcome: boolean;
+  outcomeNote: string;
+}
+
+export interface WeeklyOperatorFocusOutput {
+  deservesFocusThisWeek: string[];
+  canWaitWithoutConsequence: string[];
+  compoundsIfDoneOnceAndWell: string[];
+  createsMotionWithoutLeverage: string[];
+}
+
+export interface ThinkingGatesOutput {
+  beliefStressTest?: BeliefStressTestOutput;
+  experienceMiner?: ExperienceMinerOutput;
+  clarityDestroyer?: ClarityDestroyerOutput[];
+  contentInfrastructure?: ContentInfrastructureOutput[];
+  silentSalesMap?: SilentSalesMapOutput;
+  weeklyOperatorFocus?: WeeklyOperatorFocusOutput;
+}
+
 // Weekly runs - a single weekly content generation run
 export const weeklyRuns = pgTable("weekly_runs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -85,6 +149,13 @@ export const weeklyRuns = pgTable("weekly_runs", {
   isRawTweetMode: boolean("is_raw_tweet_mode").default(false).notNull(), // For 𝕏 Raw Tweet Mode
   externalSignal: text("external_signal"), // The external post/article to respond to in contrarian mode
   framingNote: text("framing_note"), // Optional framing note for contrarian mode
+  gateBeliefStressTest: boolean("gate_belief_stress_test").default(false).notNull(),
+  gateExperienceMiner: boolean("gate_experience_miner").default(false).notNull(),
+  gateClarityDestroyer: boolean("gate_clarity_destroyer").default(false).notNull(),
+  gateContentInfrastructure: boolean("gate_content_infrastructure").default(false).notNull(),
+  gateSilentSalesMap: boolean("gate_silent_sales_map").default(false).notNull(),
+  gateWeeklyOperatorFocus: boolean("gate_weekly_operator_focus").default(false).notNull(),
+  gateOutputs: jsonb("gate_outputs"), // ThinkingGatesOutput
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
