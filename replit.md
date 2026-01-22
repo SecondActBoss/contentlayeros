@@ -2,13 +2,14 @@
 
 ## Overview
 
-A context-aware LinkedIn content workflow engine designed for founders. The system transforms raw weekly materials (voice notes, call transcripts, build notes, reflections) into 4 high-quality LinkedIn post drafts. This is a thinking and drafting system with human-in-the-loop design—no auto-posting to LinkedIn.
+A context-aware content workflow engine designed for founders with two distribution modes: LinkedIn and 𝕏 (Twitter). The system transforms raw weekly materials (voice notes, call transcripts, build notes, reflections) into high-quality post drafts. This is a thinking and drafting system with human-in-the-loop design—no auto-posting.
 
 Key capabilities:
-- Weekly content generation runs from unstructured input materials
-- **"Be Contrary" mode**: Generate thoughtful contrarian responses to popular narratives
+- **LinkedIn Mode**: Weekly content generation for 4 post types (Educational Authority, Founder Story, Trend Translation, System Principle)
+- **"Be Contrary" mode** (LinkedIn): Generate thoughtful contrarian responses to popular narratives with 4 distinct angles
+- **𝕏 Mode**: Generate 1 newsletter section (300-500 words) + 3 Twitter posts (≤280 chars)
+- **Raw Tweet Mode** (𝕏): Generate 5-7 single tweets with variety across five types: POV Statement, Contrarian Reframe, Operator Reality, System Rule, Quiet Insight
 - Context management (ICP, positioning, language rules, visual references)
-- Five post type templates: Educational Authority, Founder Story, Trend Translation, System Principle, Contrarian POV
 - Feedback learning system for performance tracking
 - Google Sheets export integration
 
@@ -46,12 +47,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Content Generation Pipeline
 
-**Regular Mode:**
+**LinkedIn Regular Mode:**
 1. Raw input + selected context items → Signal extraction (OpenAI)
 2. Extracted signals → 4 post drafts (one per post type)
 3. Pattern extraction from feedback for future improvements
 
-**"Be Contrary" Mode:**
+**LinkedIn "Be Contrary" Mode:**
 1. External signal (viral post, article, narrative) + optional framing note
 2. Generate 4 contrarian posts with distinct angles:
    - **Calm Reframe**: Educated disagreement; popular view is understandable but incomplete
@@ -59,6 +60,21 @@ Preferred communication style: Simple, everyday language.
    - **Systems View**: Elevate above discourse; the problem isn't the tool, it's the system
    - **Consequence View**: Practical caution; if you follow this advice, here's what breaks
 3. Tone rules: calm (not combative), thoughtful disagreement, never name original author, no outrage language
+
+**𝕏 Standard Mode:**
+1. Raw input + selected context items → Signal extraction (OpenAI)
+2. Generate 1 newsletter section (300-500 words) + 3 Twitter posts (≤280 chars)
+3. Newsletter uses paradox/open loop structure; posts compress ideas
+
+**𝕏 Raw Tweet Mode:**
+1. Raw input + selected context items → Signal extraction (OpenAI)
+2. Generate 5-7 single tweets with variety across five types:
+   - **POV Statement**: Declarative belief, no preamble
+   - **Contrarian Reframe**: Flip conventional take
+   - **Operator Reality**: Insider truth that sounds unpopular
+   - **System Rule**: Mental model or constraint
+   - **Quiet Insight**: Reflective observation
+3. Constraints: ≤280 chars, no emojis, no hashtags, no thread language, operator tone
 
 ### Project Structure
 ```
