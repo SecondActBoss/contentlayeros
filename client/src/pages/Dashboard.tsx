@@ -371,25 +371,32 @@ Examples:
           {/* Thinking Gates - Optional */}
           <Collapsible open={gatesOpen} onOpenChange={setGatesOpen}>
             <Card>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="pb-3 cursor-pointer hover-elevate">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Brain className="h-4 w-4 text-muted-foreground" />
-                      <CardTitle className="text-base">Thinking Gates</CardTitle>
-                      {anyGateEnabled && (
-                        <Badge variant="secondary" className="text-xs">
-                          {[gateBeliefStressTest, gateExperienceMiner, gateClarityDestroyer, gateContentInfrastructure, gateSilentSalesMap, gateWeeklyOperatorFocus].filter(Boolean).length} active
-                        </Badge>
-                      )}
+              <CardHeader className="pb-3">
+                <CollapsibleTrigger asChild>
+                  <button 
+                    type="button"
+                    className="w-full text-left cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-expanded={gatesOpen}
+                    data-testid="button-toggle-thinking-gates"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Brain className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-base">Thinking Gates</CardTitle>
+                        {anyGateEnabled && (
+                          <Badge variant="secondary" className="text-xs">
+                            {[gateBeliefStressTest, gateExperienceMiner, gateClarityDestroyer, gateContentInfrastructure, gateSilentSalesMap, gateWeeklyOperatorFocus].filter(Boolean).length} active
+                          </Badge>
+                        )}
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${gatesOpen ? 'rotate-180' : ''}`} />
                     </div>
-                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${gatesOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                  <CardDescription>
-                    Optional analysis layers to pressure-test your content
-                  </CardDescription>
-                </CardHeader>
-              </CollapsibleTrigger>
+                    <CardDescription className="mt-1">
+                      Optional analysis layers to pressure-test your content
+                    </CardDescription>
+                  </button>
+                </CollapsibleTrigger>
+              </CardHeader>
               <CollapsibleContent>
                 <CardContent className="pt-0">
                   <div className="grid gap-4 sm:grid-cols-2">
