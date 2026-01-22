@@ -204,7 +204,11 @@ export default function Drafts() {
     {} as Record<string, PostDraft[]>
   );
 
-  const runIds = Object.keys(draftsByRun).sort().reverse();
+  const runIds = Object.keys(draftsByRun).sort((a, b) => {
+    const runA = weeklyRuns.find((r) => r.id === a);
+    const runB = weeklyRuns.find((r) => r.id === b);
+    return (runB?.weekNumber || 0) - (runA?.weekNumber || 0);
+  });
 
   // Separate drafts by platform
   const linkedInDrafts = drafts.filter(d => {
