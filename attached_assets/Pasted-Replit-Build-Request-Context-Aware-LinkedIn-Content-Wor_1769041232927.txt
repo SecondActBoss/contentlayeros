@@ -1,0 +1,276 @@
+Replit Build Request: Context-Aware LinkedIn Content Workflow Engine with Feedback Learning
+
+Purpose
+Build an internal, manual, weekly LinkedIn Content Workflow Engine for a founder.
+The engine turns raw weekly materials into 4 high-quality LinkedIn post drafts that reflect the founder’s ICP, positioning, tone, and judgment — without auto-posting.
+
+This is a thinking + drafting system, not a content scheduler.
+
+1. CORE OPERATING MODEL
+
+Manual weekly run only
+
+Human-in-the-loop by design
+
+No auto-posting to LinkedIn
+
+Outputs drafts, not final copy
+
+Learning is curated, not automatic
+
+2. INPUTS
+A. Raw Material Input (Required)
+
+Provide a single input area (textarea and/or file upload) for unstructured weekly materials, including:
+
+Voice note transcripts
+
+Call transcripts
+
+Build notes
+
+Slack thoughts
+
+Personal reflections
+
+Links to articles, X posts, or trends
+
+Opinions or decisions made during the week
+
+B. Context Inputs (User-Selectable per Run)
+
+Context must be explicit, visible, editable, and toggleable per weekly run.
+
+Allow the user to add and select:
+
+ICP Context
+
+Description of target audience
+
+Their pains, fears, fatigue, and goals
+
+Product / Positioning Context
+
+Key positioning documents
+
+Core beliefs (e.g. “not an AI app, a system”)
+
+Strategic constraints and philosophy
+
+Language Rules
+
+Preferred terminology (e.g. “AI Employees”)
+
+Do / Don’t language
+
+Tone constraints
+
+Optional Visual Context
+
+Website screenshots or images
+
+Used only as grounding reference (not for OCR perfection)
+
+Context should function as bounded reference material, not hidden memory.
+
+3. PROCESSING LOGIC
+Step 1: Signal Extraction
+
+From the raw input (filtered through selected context), extract:
+
+Monetizable expertise
+(Insights that change outcomes or remove friction)
+
+Founder stories
+(Decisions, tradeoffs, realizations)
+
+Trends / strategic arbitrage
+(Industry discourse that can be reframed)
+
+Strong opinions or system rules
+(What the founder believes, refuses, or enforces)
+
+Step 2: Post Mapping
+
+Generate exactly 4 LinkedIn post drafts, mapped as:
+
+High-Level Educational Authority Post
+(Clear stance, operator-safe, calm authority)
+
+Founder Storytelling Post
+(One moment → one lesson → why it matters to the reader)
+
+Trend Translation / Strategic Arbitrage Post
+(Trend → operator lens → grounded POV)
+
+System Principle / Rule-Based Post
+(Constraint, rule, or mental model)
+
+No extra posts. No batching beyond four.
+
+4. WRITING CONSTRAINTS (MANDATORY)
+
+All drafts must follow these rules:
+
+Short lines
+
+Calm, authoritative tone
+
+No emojis
+
+No hype language
+
+No sales copy
+
+No tool lists
+
+No buzzwords
+
+Hooks
+
+First two lines optimized for “See more”
+
+Aim for ≤ 8 words per line
+
+Clear stance or specificity early
+
+No mystery hooks
+
+These are drafts, not publish-ready copy.
+
+5. OUTPUT DESTINATION
+
+Automatically append results to a connected Google Sheet with the following columns:
+
+Week #
+
+Post Type
+
+Hook (Line 1)
+
+Rehook (Line 2)
+
+Body Draft
+
+Core Insight
+
+Optional CTA / Engagement Prompt
+
+Status (Draft / Edited / Posted)
+
+Post URL (added manually later)
+
+This sheet acts as:
+
+Editorial calendar
+
+Swipe file
+
+Performance log
+
+6. FEEDBACK-BASED LEARNING (CURATED)
+
+Add a manual feedback loop to improve future drafts.
+
+Learning Inputs (Manual)
+
+Allow the user to input:
+
+Final posted LinkedIn content (after edits)
+
+Optional performance label:
+
+Strong / Average / Weak
+
+Optional notes:
+
+“High operator DMs”
+
+“Saved a lot”
+
+“Good comments, low reach”
+
+Only user-approved posts are ingested.
+
+Learning Behavior
+
+The system should:
+
+Store approved posts as reference examples
+
+Extract patterns:
+
+Tone
+
+Hook structure
+
+Sentence length
+
+Framing style
+
+Associate patterns with:
+
+Post type
+
+Context used
+
+Performance label
+
+Future drafts should be biased toward high-performing patterns, without copying or rewriting past content.
+
+Learning must be:
+
+Transparent
+
+Inspectable
+
+Non-autonomous
+
+Non-destructive
+
+No fine-tuning required.
+No autonomous optimization.
+
+7. UI REQUIREMENTS
+
+Extremely minimal UI
+
+Operator-focused
+
+Clear separation between:
+
+Raw input
+
+Context selection
+
+Draft output
+
+Feedback ingestion
+
+No dashboards beyond what’s necessary
+
+No scheduling UI
+
+8. HARD CONSTRAINTS
+
+Manual weekly run only
+
+No LinkedIn API posting
+
+No engagement automation
+
+No viral optimization logic
+
+This is a reasoning and drafting engine, not a growth hack tool
+
+9. DESIGN PHILOSOPHY (IMPORTANT)
+
+This system should behave like:
+
+A chief-of-staff for content thinking
+
+A governed assistant, not a creative free-for-all
+
+AI that executes within rules, context, and judgment
+
+Human judgment is always the final authority.
