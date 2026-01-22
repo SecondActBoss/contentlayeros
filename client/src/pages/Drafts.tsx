@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap } from "lucide-react";
+import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle } from "lucide-react";
+import { SiX } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { PostDraft, WeeklyRun, DraftStatus } from "@shared/schema";
@@ -21,26 +22,55 @@ const POST_TYPE_CONFIG = {
     icon: FileText,
     label: "Educational Authority",
     description: "Clear stance, operator-safe, calm authority",
+    platform: "linkedin",
   },
   founder_story: {
     icon: Quote,
     label: "Founder Story",
     description: "One moment, one lesson, why it matters",
+    platform: "linkedin",
   },
   trend_translation: {
     icon: TrendingUp,
     label: "Trend Translation",
     description: "Trend → operator lens → grounded POV",
+    platform: "linkedin",
   },
   system_principle: {
     icon: Lightbulb,
     label: "System Principle",
     description: "Constraint, rule, or mental model",
+    platform: "linkedin",
   },
   contrarian_pov: {
     icon: Zap,
     label: "Contrarian POV",
     description: "Thoughtful disagreement with popular narratives",
+    platform: "linkedin",
+  },
+  newsletter_section: {
+    icon: Newspaper,
+    label: "Newsletter Section",
+    description: "300-500 word newsletter piece with paradox and open loop",
+    platform: "twitter",
+  },
+  twitter_pov: {
+    icon: MessageCircle,
+    label: "𝕏 POV Compression",
+    description: "Distill multi-paragraph idea to one line",
+    platform: "twitter",
+  },
+  twitter_paradox: {
+    icon: Zap,
+    label: "𝕏 Paradox / Reframe",
+    description: "Counter-intuitive statement that stops scroll",
+    platform: "twitter",
+  },
+  twitter_operator: {
+    icon: FileText,
+    label: "𝕏 Operator Reality",
+    description: "What everyone says vs what actually works",
+    platform: "twitter",
   },
 };
 
@@ -143,13 +173,23 @@ export default function Drafts() {
 
   const runIds = Object.keys(draftsByRun).sort().reverse();
 
+  // Separate drafts by platform
+  const linkedInDrafts = drafts.filter(d => {
+    const config = POST_TYPE_CONFIG[d.postType as keyof typeof POST_TYPE_CONFIG];
+    return config?.platform === "linkedin" || !config?.platform;
+  });
+  const twitterDrafts = drafts.filter(d => {
+    const config = POST_TYPE_CONFIG[d.postType as keyof typeof POST_TYPE_CONFIG];
+    return config?.platform === "twitter";
+  });
+
   return (
     <div className="flex flex-col gap-6 p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Post Drafts</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Content Drafts</h1>
           <p className="text-muted-foreground mt-1">
-            View, edit, and export your generated LinkedIn post drafts.
+            View, edit, and export your generated content drafts.
           </p>
         </div>
         <Button

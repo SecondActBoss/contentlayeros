@@ -86,12 +86,23 @@ export async function appendPostsToSheet(
       founder_story: 'Founder Story',
       trend_translation: 'Trend Translation',
       system_principle: 'System Principle',
+      newsletter_section: 'Newsletter Section',
+      twitter_pov: '𝕏 POV Compression',
+      twitter_paradox: '𝕏 Paradox / Reframe',
+      twitter_operator: '𝕏 Operator Reality',
     };
     return typeLabels[type] || type;
+  };
+
+  // Get platform from post type
+  const getPlatform = (type: string) => {
+    const twitterTypes = ['newsletter_section', 'twitter_pov', 'twitter_paradox', 'twitter_operator'];
+    return twitterTypes.includes(type) ? '𝕏' : 'LinkedIn';
   };
   
   const values = posts.map(post => [
     post.weekNumber,
+    getPlatform(post.postType),
     formatPostType(post.postType, post.contrarianAngle),
     post.hook,
     post.rehook,
@@ -104,7 +115,7 @@ export async function appendPostsToSheet(
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: 'A:I',
+    range: 'A:J',
     valueInputOption: 'USER_ENTERED',
     requestBody: {
       values
@@ -113,7 +124,7 @@ export async function appendPostsToSheet(
 }
 
 // Helper to create a new spreadsheet with the required columns
-export async function createContentSpreadsheet(title: string = 'LinkedIn Content Calendar') {
+export async function createContentSpreadsheet(title: string = 'Content Calendar') {
   const sheets = await getUncachableGoogleSheetClient();
   
   const response = await sheets.spreadsheets.create({
@@ -131,6 +142,7 @@ export async function createContentSpreadsheet(title: string = 'LinkedIn Content
           rowData: [{
             values: [
               { userEnteredValue: { stringValue: 'Week #' } },
+              { userEnteredValue: { stringValue: 'Platform' } },
               { userEnteredValue: { stringValue: 'Post Type' } },
               { userEnteredValue: { stringValue: 'Hook (Line 1)' } },
               { userEnteredValue: { stringValue: 'Rehook (Line 2)' } },
