@@ -6,8 +6,9 @@ A context-aware LinkedIn content workflow engine designed for founders. The syst
 
 Key capabilities:
 - Weekly content generation runs from unstructured input materials
+- **"Be Contrary" mode**: Generate thoughtful contrarian responses to popular narratives
 - Context management (ICP, positioning, language rules, visual references)
-- Four post type templates: Educational Authority, Founder Story, Trend Translation, System Principle
+- Five post type templates: Educational Authority, Founder Story, Trend Translation, System Principle, Contrarian POV
 - Feedback learning system for performance tracking
 - Google Sheets export integration
 
@@ -44,9 +45,20 @@ Preferred communication style: Simple, everyday language.
 - **FeedbackEntries**: Performance tracking for learning
 
 ### Content Generation Pipeline
+
+**Regular Mode:**
 1. Raw input + selected context items → Signal extraction (OpenAI)
 2. Extracted signals → 4 post drafts (one per post type)
 3. Pattern extraction from feedback for future improvements
+
+**"Be Contrary" Mode:**
+1. External signal (viral post, article, narrative) + optional framing note
+2. Generate 4 contrarian posts with distinct angles:
+   - **Calm Reframe**: Educated disagreement; popular view is understandable but incomplete
+   - **Operator Reality**: Ground theory in execution; what's true online breaks in real work
+   - **Systems View**: Elevate above discourse; the problem isn't the tool, it's the system
+   - **Consequence View**: Practical caution; if you follow this advice, here's what breaks
+3. Tone rules: calm (not combative), thoughtful disagreement, never name original author, no outrage language
 
 ### Project Structure
 ```
