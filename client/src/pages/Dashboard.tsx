@@ -10,11 +10,12 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap, Newspaper, MessageCircle } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap, Newspaper, MessageCircle, ChevronDown, Brain, Target, Search, Database, ShoppingCart, Focus } from "lucide-react";
 import { SiX, SiLinkedin } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { ContextItem, PostDraft, ExtractedSignals, DistributionMode } from "@shared/schema";
+import type { ContextItem, PostDraft, ExtractedSignals, DistributionMode, ThinkingGatesOutput } from "@shared/schema";
 
 const POST_TYPE_ICONS: Record<string, any> = {
   educational_authority: FileText,
@@ -68,6 +69,14 @@ export default function Dashboard() {
   const [isRawTweetMode, setIsRawTweetMode] = useState(false);
   const [externalSignal, setExternalSignal] = useState("");
   const [framingNote, setFramingNote] = useState("");
+  const [gatesOpen, setGatesOpen] = useState(false);
+  const [gateOutputs, setGateOutputs] = useState<ThinkingGatesOutput | null>(null);
+  const [gateBeliefStressTest, setGateBeliefStressTest] = useState(false);
+  const [gateExperienceMiner, setGateExperienceMiner] = useState(false);
+  const [gateClarityDestroyer, setGateClarityDestroyer] = useState(false);
+  const [gateContentInfrastructure, setGateContentInfrastructure] = useState(false);
+  const [gateSilentSalesMap, setGateSilentSalesMap] = useState(false);
+  const [gateWeeklyOperatorFocus, setGateWeeklyOperatorFocus] = useState(false);
 
   const { data: contextItems = [], isLoading: loadingContext } = useQuery<ContextItem[]>({
     queryKey: ["/api/context-items"],
@@ -82,6 +91,12 @@ export default function Dashboard() {
       isRawTweetMode?: boolean;
       externalSignal?: string;
       framingNote?: string;
+      gateBeliefStressTest?: boolean;
+      gateExperienceMiner?: boolean;
+      gateClarityDestroyer?: boolean;
+      gateContentInfrastructure?: boolean;
+      gateSilentSalesMap?: boolean;
+      gateWeeklyOperatorFocus?: boolean;
     }) => {
       const response = await apiRequest("POST", "/api/weekly-runs", data);
       return response;
@@ -89,6 +104,7 @@ export default function Dashboard() {
     onSuccess: (data: any) => {
       setGeneratedPosts(data.posts || []);
       setExtractedSignals(data.extractedSignals || null);
+      setGateOutputs(data.gateOutputs || null);
       const postCount = data.posts?.length || 0;
       let modeDesc: string;
       if (distributionMode === "twitter") {
@@ -101,6 +117,10 @@ export default function Dashboard() {
         modeDesc = `${postCount} contrarian LinkedIn post drafts have been created.`;
       } else {
         modeDesc = `${postCount} LinkedIn post drafts have been created.`;
+      }
+      const gateCount = Object.keys(data.gateOutputs || {}).length;
+      if (gateCount > 0) {
+        modeDesc += ` ${gateCount} thinking gate${gateCount > 1 ? 's' : ''} analyzed.`;
       }
       toast({
         title: "Content generated",
@@ -151,8 +171,17 @@ export default function Dashboard() {
       isRawTweetMode: distributionMode === "twitter" ? isRawTweetMode : false,
       externalSignal: isContrarianMode ? externalSignal : undefined,
       framingNote: isContrarianMode ? framingNote : undefined,
+      gateBeliefStressTest,
+      gateExperienceMiner,
+      gateClarityDestroyer,
+      gateContentInfrastructure,
+      gateSilentSalesMap,
+      gateWeeklyOperatorFocus,
     });
   };
+
+  const anyGateEnabled = gateBeliefStressTest || gateExperienceMiner || gateClarityDestroyer || 
+                         gateContentInfrastructure || gateSilentSalesMap || gateWeeklyOperatorFocus;
 
   const groupedContext = contextItems.reduce(
     (acc, item) => {
@@ -339,6 +368,144 @@ Examples:
             </Card>
           )}
 
+          {/* Thinking Gates - Optional */}
+          <Collapsible open={gatesOpen} onOpenChange={setGatesOpen}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="pb-3 cursor-pointer hover-elevate">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-muted-foreground" />
+                      <CardTitle className="text-base">Thinking Gates</CardTitle>
+                      {anyGateEnabled && (
+                        <Badge variant="secondary" className="text-xs">
+                          {[gateBeliefStressTest, gateExperienceMiner, gateClarityDestroyer, gateContentInfrastructure, gateSilentSalesMap, gateWeeklyOperatorFocus].filter(Boolean).length} active
+                        </Badge>
+                      )}
+                    </div>
+                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${gatesOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                  <CardDescription>
+                    Optional analysis layers to pressure-test your content
+                  </CardDescription>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="flex items-start gap-3 p-3 rounded-md border">
+                      <Checkbox
+                        id="gate-belief"
+                        checked={gateBeliefStressTest}
+                        onCheckedChange={(checked) => setGateBeliefStressTest(!!checked)}
+                        data-testid="gate-belief-stress-test"
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="gate-belief" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                          <Target className="h-3 w-3" />
+                          Belief Stress Test
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Force clarity around the belief driving this content
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 rounded-md border">
+                      <Checkbox
+                        id="gate-experience"
+                        checked={gateExperienceMiner}
+                        onCheckedChange={(checked) => setGateExperienceMiner(!!checked)}
+                        data-testid="gate-experience-miner"
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="gate-experience" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                          <Search className="h-3 w-3" />
+                          Experience Miner
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Ensure content is grounded in decisions, not advice
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 rounded-md border">
+                      <Checkbox
+                        id="gate-clarity"
+                        checked={gateClarityDestroyer}
+                        onCheckedChange={(checked) => setGateClarityDestroyer(!!checked)}
+                        data-testid="gate-clarity-destroyer"
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="gate-clarity" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                          <Zap className="h-3 w-3" />
+                          Clarity Destroyer
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Eliminate vague thinking before distribution
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 rounded-md border">
+                      <Checkbox
+                        id="gate-infrastructure"
+                        checked={gateContentInfrastructure}
+                        onCheckedChange={(checked) => setGateContentInfrastructure(!!checked)}
+                        data-testid="gate-content-infrastructure"
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="gate-infrastructure" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                          <Database className="h-3 w-3" />
+                          Content as Infrastructure
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Treat content as a durable business asset
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 rounded-md border">
+                      <Checkbox
+                        id="gate-sales"
+                        checked={gateSilentSalesMap}
+                        onCheckedChange={(checked) => setGateSilentSalesMap(!!checked)}
+                        data-testid="gate-silent-sales-map"
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="gate-sales" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                          <ShoppingCart className="h-3 w-3" />
+                          Silent Sales Map
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Ensure content reduces friction before sales
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 rounded-md border">
+                      <Checkbox
+                        id="gate-focus"
+                        checked={gateWeeklyOperatorFocus}
+                        onCheckedChange={(checked) => setGateWeeklyOperatorFocus(!!checked)}
+                        data-testid="gate-weekly-operator-focus"
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="gate-focus" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                          <Focus className="h-3 w-3" />
+                          Weekly Operator Focus
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Protect time and focus under constraint
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
           {/* Generated Posts Preview */}
           {generatedPosts.length > 0 && (
             <Card>
@@ -452,6 +619,231 @@ Examples:
                     </div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Thinking Gate Outputs */}
+          {gateOutputs && Object.keys(gateOutputs).length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-base">Thinking Gate Analysis</CardTitle>
+                </div>
+                <CardDescription>
+                  Insights from enabled thinking gates
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {gateOutputs.beliefStressTest && (
+                  <div className="p-3 rounded-md border space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-primary" />
+                      <h4 className="text-sm font-medium">Belief Stress Test</h4>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Core Belief:</span>
+                        <p className="mt-1">{gateOutputs.beliefStressTest.coreBelief}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Market Still Believes:</span>
+                        <p className="mt-1">{gateOutputs.beliefStressTest.marketBelief}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Tension with Wisdom:</span>
+                        <p className="mt-1">{gateOutputs.beliefStressTest.tensionWithWisdom}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Short-term Cost:</span>
+                        <p className="mt-1">{gateOutputs.beliefStressTest.shortTermCost}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Long-term Compound:</span>
+                        <p className="mt-1">{gateOutputs.beliefStressTest.longTermCompound}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {gateOutputs.experienceMiner && (
+                  <div className="p-3 rounded-md border space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Search className="h-4 w-4 text-primary" />
+                      <h4 className="text-sm font-medium">Experience Miner</h4>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground block mb-1">Operating Principles</span>
+                        <ul className="list-disc list-inside space-y-1">
+                          {gateOutputs.experienceMiner.operatingPrinciples?.map((p, i) => (
+                            <li key={i}>{p}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block mb-1">Mistakes Not to Repeat</span>
+                        <ul className="list-disc list-inside space-y-1">
+                          {gateOutputs.experienceMiner.mistakesNotToRepeat?.map((m, i) => (
+                            <li key={i}>{m}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block mb-1">Defensible Positions</span>
+                        <ul className="list-disc list-inside space-y-1">
+                          {gateOutputs.experienceMiner.defensiblePositions?.map((d, i) => (
+                            <li key={i}>{d}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {gateOutputs.clarityDestroyer && gateOutputs.clarityDestroyer.length > 0 && (
+                  <div className="p-3 rounded-md border space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <h4 className="text-sm font-medium">Clarity Destroyer</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {gateOutputs.clarityDestroyer.map((result, i) => (
+                        <div key={i} className="p-2 rounded bg-muted/50">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant={result.verdict === "survives_scrutiny" ? "default" : "destructive"} className="text-xs">
+                              {result.verdict === "survives_scrutiny" ? "Survives Scrutiny" : "Collapses Under Precision"}
+                            </Badge>
+                          </div>
+                          {result.flags && result.flags.length > 0 && (
+                            <ul className="text-xs text-muted-foreground list-disc list-inside">
+                              {result.flags.map((flag, j) => (
+                                <li key={j}>{flag}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {gateOutputs.silentSalesMap && (
+                  <div className="p-3 rounded-md border space-y-2">
+                    <div className="flex items-center gap-2">
+                      <ShoppingCart className="h-4 w-4 text-primary" />
+                      <h4 className="text-sm font-medium">Silent Sales Map</h4>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={gateOutputs.silentSalesMap.supportsRealOutcome ? "default" : "secondary"}>
+                          {gateOutputs.silentSalesMap.supportsRealOutcome ? "Supports Real Outcome" : "No Clear Outcome"}
+                        </Badge>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Belief Installed:</span>
+                        <p className="mt-1">{gateOutputs.silentSalesMap.beliefInstalled}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Buyer Qualification Effect:</span>
+                        <p className="mt-1">{gateOutputs.silentSalesMap.buyerQualificationEffect}</p>
+                      </div>
+                      {gateOutputs.silentSalesMap.objectionsRemoved?.length > 0 && (
+                        <div>
+                          <span className="text-muted-foreground">Objections Removed:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {gateOutputs.silentSalesMap.objectionsRemoved.map((obj, i) => (
+                              <Badge key={i} variant="outline" className="text-xs">{obj}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-muted-foreground">Outcome Note:</span>
+                        <p className="mt-1">{gateOutputs.silentSalesMap.outcomeNote}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {gateOutputs.weeklyOperatorFocus && (
+                  <div className="p-3 rounded-md border space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Focus className="h-4 w-4 text-primary" />
+                      <h4 className="text-sm font-medium">Weekly Operator Focus</h4>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground block mb-1">Deserves Focus This Week</span>
+                        <ul className="list-disc list-inside space-y-1">
+                          {gateOutputs.weeklyOperatorFocus.deservesFocusThisWeek?.map((item, i) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block mb-1">Can Wait</span>
+                        <ul className="list-disc list-inside space-y-1">
+                          {gateOutputs.weeklyOperatorFocus.canWaitWithoutConsequence?.map((item, i) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block mb-1">Compounds If Done Well</span>
+                        <ul className="list-disc list-inside space-y-1">
+                          {gateOutputs.weeklyOperatorFocus.compoundsIfDoneOnceAndWell?.map((item, i) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block mb-1">Motion Without Leverage</span>
+                        <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                          {gateOutputs.weeklyOperatorFocus.createsMotionWithoutLeverage?.map((item, i) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {gateOutputs.contentInfrastructure && gateOutputs.contentInfrastructure.length > 0 && (
+                  <div className="p-3 rounded-md border space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Database className="h-4 w-4 text-primary" />
+                      <h4 className="text-sm font-medium">Content as Infrastructure</h4>
+                    </div>
+                    <div className="space-y-3">
+                      {gateOutputs.contentInfrastructure.map((infra, i) => (
+                        <div key={i} className="p-2 rounded bg-muted/50 space-y-1 text-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="text-xs">{infra.buyerSophisticationLevel}</Badge>
+                            <span className="text-xs text-muted-foreground">Repels: {infra.buyerTypeRepelled}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Core Thesis:</span>
+                            <p>{infra.coreThesis}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Corrects:</span>
+                            <p>{infra.misunderstandingCorrected}</p>
+                          </div>
+                          {infra.offersSupported?.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              <span className="text-muted-foreground text-xs">Supports:</span>
+                              {infra.offersSupported.map((offer, j) => (
+                                <Badge key={j} variant="secondary" className="text-xs">{offer}</Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
