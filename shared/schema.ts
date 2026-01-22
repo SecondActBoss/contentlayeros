@@ -168,6 +168,10 @@ export const insertWeeklyRunSchema = createInsertSchema(weeklyRuns).omit({
 export type InsertWeeklyRun = z.infer<typeof insertWeeklyRunSchema>;
 export type WeeklyRun = typeof weeklyRuns.$inferSelect;
 
+// Phoenix metadata types (for 𝕏 algorithm optimization)
+export type PhoenixLikelihood = "high" | "medium" | "low";
+export type PhoenixFatigueRisk = "low" | "medium" | "high";
+
 // Post drafts - the 4 posts generated per weekly run
 export const postDrafts = pgTable("post_drafts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -182,6 +186,11 @@ export const postDrafts = pgTable("post_drafts", {
   cta: text("cta"), // Optional CTA / engagement prompt
   status: text("status").default("draft").notNull(), // draft, edited, posted
   postUrl: text("post_url"), // Added manually later
+  // Phoenix metadata (𝕏 algorithm optimization)
+  replyLikelihood: text("reply_likelihood"), // high, medium, low - predicted reply probability
+  dwellLikelihood: text("dwell_likelihood"), // high, medium, low - predicted read depth
+  fatigueRisk: text("fatigue_risk"), // low, medium, high - risk of mute/not interested
+  authorEngagementReminder: text("author_engagement_reminder"), // Reminder for author to engage
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

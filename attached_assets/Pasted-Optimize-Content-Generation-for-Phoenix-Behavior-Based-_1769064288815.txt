@@ -1,0 +1,143 @@
+Optimize 𝕏 Content Generation for Phoenix (Behavior-Based Ranking)
+
+We want to refine the existing 𝕏 Content Engine to better align with the new Phoenix algorithm, which ranks content based on predicted user behavior rather than static rules.
+
+This is an optimization pass — not a redesign.
+
+PRIMARY OBJECTIVE
+
+Increase the predicted likelihood of:
+
+Replies
+
+Dwell time
+
+Profile clicks
+
+Follows
+
+While minimizing the likelihood of:
+
+Mutes
+
+“Not interested”
+
+Feed fatigue
+
+REQUIRED UPGRADES
+1. Reply Probability Optimization
+
+For applicable 𝕏 outputs, bias toward reply-inviting endings that:
+
+Continue the thought
+
+Invite lived experience
+
+Do NOT use engagement bait
+
+Allowed examples:
+
+“This is where most teams stall.”
+
+“Most operators feel this before they can explain it.”
+
+“This breaks quietly, then all at once.”
+
+Disallowed:
+
+“Thoughts?”
+
+“Agree?”
+
+“Hot take”
+
+2. Dwell-Time Formatting Pass
+
+Ensure at least one 𝕏 post per run is optimized for read depth by:
+
+Using short, broken lines
+
+Including one mid-post pause before payoff
+
+Prioritizing clarity and rhythm over compression
+
+Do NOT generate threads.
+
+3. Negative Signal Guard (Fatigue Prevention)
+
+Add a Phoenix Guardrail that:
+
+Flags tweets with high semantic similarity to others in the same run
+
+Flags tweets that reuse phrasing from recent runs (when available)
+
+Suggests holding or rotating content instead of posting all drafts
+
+This should surface warnings only.
+Do NOT auto-remove or rewrite content.
+
+4. Author Engagement Alignment
+
+Add a reminder note to 𝕏 drafts:
+
+“Reply to comments in the first 15–30 minutes to boost conversation signals.”
+
+This is informational only — not automation.
+
+5. Platform Retention Enforcement (Already Mostly Done)
+
+Reinforce existing constraints:
+
+No links in main tweet
+
+No hashtags
+
+No emojis
+
+Value delivered in-feed
+
+OUTPUT BEHAVIOR
+
+Maintain existing 𝕏 output types:
+
+POV Compression
+
+Paradox / Reframe
+
+Operator Reality
+
+Newsletter Section
+
+Add internal metadata:
+
+Reply-likelihood: High / Medium / Low
+
+Dwell-likelihood: High / Medium / Low
+
+Fatigue-risk: Low / Medium / High
+
+Metadata only — no visible copy changes required.
+
+IMPORTANT CONSTRAINTS
+
+Do NOT auto-post
+
+Do NOT schedule
+
+Do NOT add engagement bait
+
+Do NOT change LinkedIn mode
+
+Do NOT optimize for posting time or follower count
+
+This system should optimize for human response, not algorithm tricks.
+
+SUCCESS CRITERIA
+
+A strong 𝕏 post should make the algorithm predict:
+
+“This user is likely to stop, read, reply, and want to see more from this author.”
+
+Not:
+
+“This checks a box.”

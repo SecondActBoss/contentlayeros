@@ -263,6 +263,10 @@ Return ONLY valid JSON, no markdown.`;
         cta: parsed.cta || null,
         status: "draft",
         postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
       });
     } catch {
       posts.push({
@@ -276,6 +280,10 @@ Return ONLY valid JSON, no markdown.`;
         cta: null,
         status: "draft",
         postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
       });
     }
   }
@@ -469,6 +477,10 @@ Return ONLY valid JSON, no markdown.`;
         cta: parsed.cta || null,
         status: "draft",
         postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
       });
     } catch {
       posts.push({
@@ -482,6 +494,10 @@ Return ONLY valid JSON, no markdown.`;
         cta: null,
         status: "draft",
         postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
       });
     }
   }
@@ -608,6 +624,11 @@ Return ONLY valid JSON, no markdown.`;
       cta: null,
       status: "draft",
       postUrl: null,
+      // Phoenix metadata - newsletter optimized for dwell time
+      replyLikelihood: "medium",
+      dwellLikelihood: "high",
+      fatigueRisk: "low",
+      authorEngagementReminder: "Reply to comments in the first 15-30 minutes to boost conversation signals.",
     });
   } catch {
     posts.push({
@@ -621,6 +642,10 @@ Return ONLY valid JSON, no markdown.`;
       cta: null,
       status: "draft",
       postUrl: null,
+      replyLikelihood: null,
+      dwellLikelihood: null,
+      fatigueRisk: null,
+      authorEngagementReminder: null,
     });
   }
 
@@ -705,6 +730,9 @@ Return ONLY valid JSON, no markdown.`;
 
     try {
       const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+      // Determine Phoenix metadata based on post type
+      const isOperatorReality = postConfig.type === "twitter_operator";
+      const isParadox = postConfig.type === "twitter_paradox";
       posts.push({
         postType: postConfig.type,
         contrarianAngle: null,
@@ -716,6 +744,11 @@ Return ONLY valid JSON, no markdown.`;
         cta: null,
         status: "draft",
         postUrl: null,
+        // Phoenix metadata
+        replyLikelihood: isOperatorReality ? "high" : (isParadox ? "medium" : "medium"),
+        dwellLikelihood: isParadox ? "high" : "medium",
+        fatigueRisk: "low",
+        authorEngagementReminder: "Reply to comments in the first 15-30 minutes to boost conversation signals.",
       });
     } catch {
       posts.push({
@@ -729,6 +762,10 @@ Return ONLY valid JSON, no markdown.`;
         cta: null,
         status: "draft",
         postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
       });
     }
   }
@@ -937,10 +974,16 @@ Return ONLY valid JSON, no markdown.`;
       // Ensure tweet is within character limit
       const tweetText = tweet.text?.slice(0, 280) || "";
       
+      // Determine Phoenix metadata based on tweet type
+      const tweetType = tweet.type as RawTweetType || "pov_statement";
+      const isOperatorReality = tweetType === "operator_reality";
+      const isContrarianReframe = tweetType === "contrarian_reframe";
+      const isQuietInsight = tweetType === "quiet_insight";
+      
       posts.push({
         postType: "raw_tweet",
         contrarianAngle: null,
-        rawTweetType: tweet.type as RawTweetType || "pov_statement",
+        rawTweetType: tweetType,
         hook: tweetText,
         rehook: "",
         body: "",
@@ -948,6 +991,11 @@ Return ONLY valid JSON, no markdown.`;
         cta: null,
         status: "draft",
         postUrl: null,
+        // Phoenix metadata based on tweet type
+        replyLikelihood: isOperatorReality ? "high" : (isContrarianReframe ? "medium" : "medium"),
+        dwellLikelihood: isQuietInsight ? "high" : "medium",
+        fatigueRisk: "low",
+        authorEngagementReminder: "Reply to comments in the first 15-30 minutes to boost conversation signals.",
       });
     }
   } catch {
@@ -963,6 +1011,10 @@ Return ONLY valid JSON, no markdown.`;
       cta: null,
       status: "draft",
       postUrl: null,
+      replyLikelihood: null,
+      dwellLikelihood: null,
+      fatigueRisk: null,
+      authorEngagementReminder: null,
     });
   }
 
