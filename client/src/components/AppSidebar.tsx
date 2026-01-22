@@ -57,8 +57,8 @@ export function AppSidebar() {
             <PenLine className="h-4 w-4 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold">Content Engine</h2>
-            <p className="text-xs text-muted-foreground">LinkedIn Workflow</p>
+            <h2 className="text-sm font-semibold">FounderEngineOS</h2>
+            <p className="text-xs text-muted-foreground">Content Operating System</p>
           </div>
         </div>
       </SidebarHeader>
