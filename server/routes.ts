@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { extractSignals, generatePosts, generateContrarianPosts, generateTwitterContent, extractPatterns } from "./lib/contentGenerator";
+import { extractSignals, generatePosts, generateContrarianPosts, generateTwitterContent, generateRawTweets, extractPatterns } from "./lib/contentGenerator";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { insertContextItemSchema, insertPostDraftSchema, insertFeedbackEntrySchema } from "@shared/schema";
@@ -13,6 +13,7 @@ const weeklyRunInputSchema = z.object({
   selectedContextIds: z.array(z.string()).optional().default([]),
   distributionMode: z.enum(["linkedin", "twitter"]).optional().default("linkedin"),
   isContrarianMode: z.boolean().optional().default(false),
+  isRawTweetMode: z.boolean().optional().default(false),
   externalSignal: z.string().optional(),
   framingNote: z.string().optional(),
 });
@@ -137,7 +138,7 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ error: parsed.error.message });
       }
-      const { rawInput, selectedContextIds, distributionMode, isContrarianMode, externalSignal, framingNote } = parsed.data;
+      const { rawInput, selectedContextIds, distributionMode, isContrarianMode, isRawTweetMode, externalSignal, framingNote } = parsed.data;
 
       // Validate based on mode
       if (isContrarianMode && distributionMode === "linkedin" && !externalSignal?.trim()) {
@@ -166,16 +167,25 @@ export async function registerRoutes(
       extractedSignals = await extractSignals(rawInput, selectedContexts);
 
       if (distributionMode === "twitter") {
-        // Generate 𝕏 content: 1 newsletter section + 3 posts
-        postData = await generateTwitterContent(
-          rawInput,
-          selectedContexts,
-          extractedSignals,
-          strongExamples,
-          isContrarianMode,
-          externalSignal,
-          framingNote
-        );
+        if (isRawTweetMode) {
+          // Generate 5-7 raw tweets (single tweets, ≤280 chars each)
+          postData = await generateRawTweets(
+            rawInput,
+            selectedContexts,
+            extractedSignals
+          );
+        } else {
+          // Generate 𝕏 content: 1 newsletter section + 3 posts
+          postData = await generateTwitterContent(
+            rawInput,
+            selectedContexts,
+            extractedSignals,
+            strongExamples,
+            isContrarianMode,
+            externalSignal,
+            framingNote
+          );
+        }
       } else if (isContrarianMode) {
         // Generate 4 contrarian LinkedIn posts
         postData = await generateContrarianPosts(externalSignal!, framingNote, selectedContexts, strongExamples);
@@ -191,6 +201,7 @@ export async function registerRoutes(
         selectedContextIds: selectedContextIds || [],
         distributionMode: distributionMode || "linkedin",
         isContrarianMode: isContrarianMode || false,
+        isRawTweetMode: isRawTweetMode || false,
         externalSignal: externalSignal || null,
         framingNote: framingNote || null,
       });

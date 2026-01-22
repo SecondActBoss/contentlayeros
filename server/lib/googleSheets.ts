@@ -60,6 +60,7 @@ export async function appendPostsToSheet(
     weekNumber: number;
     postType: string;
     contrarianAngle?: string | null;
+    rawTweetType?: string | null;
     hook: string;
     rehook: string;
     body: string;
@@ -70,8 +71,8 @@ export async function appendPostsToSheet(
 ) {
   const sheets = await getUncachableGoogleSheetClient();
   
-  // Format post type label with angle for contrarian posts
-  const formatPostType = (type: string, angle?: string | null) => {
+  // Format post type label with angle for contrarian posts or rawTweetType for raw tweets
+  const formatPostType = (type: string, angle?: string | null, rawTweetType?: string | null) => {
     if (type === 'contrarian_pov' && angle) {
       const angleLabels: Record<string, string> = {
         calm_reframe: 'Calm Reframe',
@@ -80,6 +81,16 @@ export async function appendPostsToSheet(
         consequence_view: 'Consequence View',
       };
       return `Contrarian POV - ${angleLabels[angle] || angle}`;
+    }
+    if (type === 'raw_tweet' && rawTweetType) {
+      const rawTweetTypeLabels: Record<string, string> = {
+        pov_statement: 'POV Statement',
+        contrarian_reframe: 'Contrarian Reframe',
+        operator_reality: 'Operator Reality',
+        system_rule: 'System Rule',
+        quiet_insight: 'Quiet Insight',
+      };
+      return `Raw Tweet - ${rawTweetTypeLabels[rawTweetType] || rawTweetType}`;
     }
     const typeLabels: Record<string, string> = {
       educational_authority: 'Educational Authority',
@@ -90,20 +101,21 @@ export async function appendPostsToSheet(
       twitter_pov: '𝕏 POV Compression',
       twitter_paradox: '𝕏 Paradox / Reframe',
       twitter_operator: '𝕏 Operator Reality',
+      raw_tweet: 'Raw Tweet',
     };
     return typeLabels[type] || type;
   };
 
   // Get platform from post type
   const getPlatform = (type: string) => {
-    const twitterTypes = ['newsletter_section', 'twitter_pov', 'twitter_paradox', 'twitter_operator'];
+    const twitterTypes = ['newsletter_section', 'twitter_pov', 'twitter_paradox', 'twitter_operator', 'raw_tweet'];
     return twitterTypes.includes(type) ? '𝕏' : 'LinkedIn';
   };
   
   const values = posts.map(post => [
     post.weekNumber,
     getPlatform(post.postType),
-    formatPostType(post.postType, post.contrarianAngle),
+    formatPostType(post.postType, post.contrarianAngle, post.rawTweetType),
     post.hook,
     post.rehook,
     post.body,

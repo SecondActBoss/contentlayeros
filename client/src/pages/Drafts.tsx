@@ -72,6 +72,20 @@ const POST_TYPE_CONFIG = {
     description: "What everyone says vs what actually works",
     platform: "twitter",
   },
+  raw_tweet: {
+    icon: MessageCircle,
+    label: "Raw Tweet",
+    description: "Single tweet, ≤280 chars, operator tone",
+    platform: "twitter",
+  },
+};
+
+const RAW_TWEET_TYPE_LABELS: Record<string, string> = {
+  pov_statement: "POV Statement",
+  contrarian_reframe: "Contrarian Reframe",
+  operator_reality: "Operator Reality",
+  system_rule: "System Rule",
+  quiet_insight: "Quiet Insight",
 };
 
 const CONTRARIAN_ANGLE_LABELS: Record<string, string> = {
@@ -240,6 +254,9 @@ export default function Drafts() {
                   const angleLabel = draft.contrarianAngle 
                     ? CONTRARIAN_ANGLE_LABELS[draft.contrarianAngle] 
                     : null;
+                  const rawTweetTypeLabel = draft.rawTweetType
+                    ? RAW_TWEET_TYPE_LABELS[draft.rawTweetType]
+                    : null;
                   return (
                     <Card key={draft.id} className="flex flex-col">
                       <CardHeader className="pb-2">
@@ -252,6 +269,11 @@ export default function Drafts() {
                             {angleLabel && (
                               <Badge variant="outline" className="text-xs">
                                 {angleLabel}
+                              </Badge>
+                            )}
+                            {rawTweetTypeLabel && (
+                              <Badge variant="outline" className="text-xs">
+                                {rawTweetTypeLabel}
                               </Badge>
                             )}
                           </div>

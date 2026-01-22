@@ -26,6 +26,7 @@ const POST_TYPE_ICONS: Record<string, any> = {
   twitter_pov: MessageCircle,
   twitter_paradox: Zap,
   twitter_operator: FileText,
+  raw_tweet: MessageCircle,
 };
 
 const POST_TYPE_LABELS: Record<string, string> = {
@@ -38,6 +39,15 @@ const POST_TYPE_LABELS: Record<string, string> = {
   twitter_pov: "𝕏 POV Compression",
   twitter_paradox: "𝕏 Paradox / Reframe",
   twitter_operator: "𝕏 Operator Reality",
+  raw_tweet: "Raw Tweet",
+};
+
+const RAW_TWEET_TYPE_LABELS: Record<string, string> = {
+  pov_statement: "POV Statement",
+  contrarian_reframe: "Contrarian Reframe",
+  operator_reality: "Operator Reality",
+  system_rule: "System Rule",
+  quiet_insight: "Quiet Insight",
 };
 
 const CONTRARIAN_ANGLE_LABELS: Record<string, string> = {
@@ -55,6 +65,7 @@ export default function Dashboard() {
   const [extractedSignals, setExtractedSignals] = useState<ExtractedSignals | null>(null);
   const [distributionMode, setDistributionMode] = useState<DistributionMode>("linkedin");
   const [isContrarianMode, setIsContrarianMode] = useState(false);
+  const [isRawTweetMode, setIsRawTweetMode] = useState(false);
   const [externalSignal, setExternalSignal] = useState("");
   const [framingNote, setFramingNote] = useState("");
 
@@ -68,6 +79,7 @@ export default function Dashboard() {
       selectedContextIds: string[];
       distributionMode?: DistributionMode;
       isContrarianMode?: boolean;
+      isRawTweetMode?: boolean;
       externalSignal?: string;
       framingNote?: string;
     }) => {
@@ -78,11 +90,18 @@ export default function Dashboard() {
       setGeneratedPosts(data.posts || []);
       setExtractedSignals(data.extractedSignals || null);
       const postCount = data.posts?.length || 0;
-      const modeDesc = distributionMode === "twitter" 
-        ? `1 newsletter section + 3 𝕏 posts have been created.`
-        : isContrarianMode 
-          ? `${postCount} contrarian LinkedIn post drafts have been created.`
-          : `${postCount} LinkedIn post drafts have been created.`;
+      let modeDesc: string;
+      if (distributionMode === "twitter") {
+        if (isRawTweetMode) {
+          modeDesc = `${postCount} raw tweets have been created.`;
+        } else {
+          modeDesc = `1 newsletter section + 3 𝕏 posts have been created.`;
+        }
+      } else if (isContrarianMode) {
+        modeDesc = `${postCount} contrarian LinkedIn post drafts have been created.`;
+      } else {
+        modeDesc = `${postCount} LinkedIn post drafts have been created.`;
+      }
       toast({
         title: "Content generated",
         description: modeDesc,
@@ -129,6 +148,7 @@ export default function Dashboard() {
       selectedContextIds,
       distributionMode,
       isContrarianMode,
+      isRawTweetMode: distributionMode === "twitter" ? isRawTweetMode : false,
       externalSignal: isContrarianMode ? externalSignal : undefined,
       framingNote: isContrarianMode ? framingNote : undefined,
     });
@@ -151,13 +171,18 @@ export default function Dashboard() {
   };
 
   const getPageTitle = () => {
-    if (distributionMode === "twitter") return "𝕏 Mode";
+    if (distributionMode === "twitter") {
+      return isRawTweetMode ? "Raw Tweet Mode" : "𝕏 Mode";
+    }
     if (isContrarianMode) return "Be Contrary";
     return "Weekly Run";
   };
 
   const getPageDescription = () => {
     if (distributionMode === "twitter") {
+      if (isRawTweetMode) {
+        return "Generate 5-7 single tweets. Quick drafts, varied types, operator tone.";
+      }
       return "Generate 1 newsletter section + 3 𝕏 posts from your weekly materials.";
     }
     if (isContrarianMode) {
@@ -167,7 +192,9 @@ export default function Dashboard() {
   };
 
   const getButtonLabel = () => {
-    if (distributionMode === "twitter") return "Generate 𝕏 Content";
+    if (distributionMode === "twitter") {
+      return isRawTweetMode ? "Generate Raw Tweets" : "Generate 𝕏 Content";
+    }
     if (isContrarianMode) return "Generate 4 Contrarian Posts";
     return "Generate 4 Posts";
   };
@@ -221,6 +248,19 @@ export default function Dashboard() {
               checked={isContrarianMode}
               onCheckedChange={setIsContrarianMode}
               data-testid="toggle-contrarian-mode"
+            />
+          </div>
+        )}
+        {distributionMode === "twitter" && (
+          <div className="flex items-center gap-2 shrink-0">
+            <Label htmlFor="raw-tweet-toggle" className="text-sm font-medium">
+              Raw Tweets
+            </Label>
+            <Switch
+              id="raw-tweet-toggle"
+              checked={isRawTweetMode}
+              onCheckedChange={setIsRawTweetMode}
+              data-testid="toggle-raw-tweet-mode"
             />
           </div>
         )}
