@@ -1,6 +1,6 @@
 // Content generation using OpenAI for LinkedIn posts
 import OpenAI from "openai";
-import type { ContextItem, ExtractedSignals, PostDraft, FeedbackEntry, ExtractedPatterns } from "@shared/schema";
+import type { ContextItem, ExtractedSignals, PostDraft, FeedbackEntry, ExtractedPatterns, ContrarianAngle } from "@shared/schema";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -254,6 +254,7 @@ Return ONLY valid JSON, no markdown.`;
       
       posts.push({
         postType: postType.type,
+        contrarianAngle: null,
         hook: parsed.hook || "",
         rehook: parsed.rehook || "",
         body: parsed.body || "",
@@ -265,6 +266,211 @@ Return ONLY valid JSON, no markdown.`;
     } catch {
       posts.push({
         postType: postType.type,
+        contrarianAngle: null,
+        hook: "Generation failed",
+        rehook: "Please try again",
+        body: "",
+        coreInsight: "",
+        cta: null,
+        status: "draft",
+        postUrl: null,
+      });
+    }
+  }
+
+  return posts;
+}
+
+// Contrarian angle definitions
+const CONTRARIAN_ANGLES: { angle: ContrarianAngle; name: string; description: string; hookBias: string; hookExamples: string[] }[] = [
+  {
+    angle: "calm_reframe",
+    name: "Calm Reframe",
+    description: "Educated disagreement with high trust. The popular narrative is understandable but incomplete.",
+    hookBias: "Acknowledge the popular view, then gently redirect. Show you understand before disagreeing.",
+    hookExamples: [
+      "This advice works online. It breaks in operations.",
+      "The take isn't wrong. It's just incomplete.",
+      "Popular wisdom gets one thing right and one thing wrong.",
+    ],
+  },
+  {
+    angle: "operator_reality",
+    name: "Operator Reality Check",
+    description: "Ground theory in lived execution. What's true online often breaks in real work.",
+    hookBias: "Contrast theory with execution reality. Appeal to founders and COOs who've tried this.",
+    hookExamples: [
+      "This sounds great in a tweet. It fails on day 30.",
+      "I've shipped this approach. Here's what broke.",
+      "The gap between this advice and operations is massive.",
+    ],
+  },
+  {
+    angle: "systems_view",
+    name: "Systems-Level Contrarian",
+    description: "Elevate above the discourse. The problem isn't the tool or tactic - it's the lack of constraints or systems.",
+    hookBias: "Zoom out to the system. Show the real lever everyone is missing.",
+    hookExamples: [
+      "The problem isn't the tool. It's the lack of constraints.",
+      "Everyone's debating tactics. The system is the issue.",
+      "This discourse misses the architecture layer.",
+    ],
+  },
+  {
+    angle: "consequence_view",
+    name: "Consequence-Based POV",
+    description: "Practical caution without alarm. If you follow this advice, here's what quietly goes wrong.",
+    hookBias: "Show the downstream effects. Non-alarmist warning about what breaks.",
+    hookExamples: [
+      "Follow this advice. Watch what quietly breaks.",
+      "This works short-term. Long-term, it compounds badly.",
+      "The hidden cost of this approach shows up later.",
+    ],
+  },
+];
+
+// Generate 4 contrarian LinkedIn post drafts
+export async function generateContrarianPosts(
+  externalSignal: string,
+  framingNote: string | undefined,
+  contexts: ContextItem[],
+  strongExamples: FeedbackEntry[] = []
+): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
+  const contextString = contexts
+    .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
+    .join("\n\n");
+
+  const examplesString = strongExamples.length > 0
+    ? `\nSTRONG-PERFORMING EXAMPLES (learn from tone and structure, do not copy):
+${strongExamples.slice(0, 3).map((e) => `[${e.postType}]: ${e.finalContent.slice(0, 300)}...`).join("\n\n")}`
+    : "";
+
+  const posts: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
+  
+  // Track used elements for anti-repetition across this contrarian batch
+  const usedAnchors: string[] = [];
+  const usedFramings: string[] = [];
+
+  for (const angleConfig of CONTRARIAN_ANGLES) {
+    // Build anti-repetition context from previously generated posts
+    const antiRepetitionContext = posts.length > 0
+      ? `
+=== ANTI-REPETITION RULES (CRITICAL FOR THIS CONTRARIAN BATCH) ===
+
+You are generating contrarian post ${posts.length + 1} of 4.
+The reader may see all 4 takes. Each must feel like a distinct angle, not rewording.
+
+ALREADY USED IN THIS BATCH (DO NOT REUSE):
+${usedAnchors.length > 0 ? `Key phrases: ${usedAnchors.map(a => `"${a}"`).join(", ")}` : ""}
+${usedFramings.length > 0 ? `Framings used: ${usedFramings.map(f => `"${f}"`).join(", ")}` : ""}
+
+PREVIOUS POSTS IN THIS BATCH:
+${posts.map((p, i) => `Post ${i + 1} (${p.contrarianAngle}): "${p.hook}" / "${p.rehook}"`).join("\n")}
+
+ANTI-REPETITION REQUIREMENTS:
+- Use DIFFERENT key phrase than previous posts
+- Use DIFFERENT framing angle
+- Each post represents a genuinely different lens on the disagreement
+`
+      : "";
+
+    const prompt = `You are a LinkedIn ghostwriter for a founder. Generate a CONTRARIAN response to an external post/narrative.
+
+=== CRITICAL TONE RULES FOR CONTRARIAN POSTS ===
+
+All contrarian posts MUST be:
+- Calm, not combative
+- Thoughtful disagreement, not dunking or mocking
+- NEVER name or tag the original author
+- NEVER use "everyone is wrong" framing
+- NEVER use outrage language
+
+The tone should feel like:
+"I've seen this break in practice."
+
+NOT like:
+"This is stupid." or "They're wrong."
+
+SUCCESS CRITERIA:
+A strong contrarian post should make readers think:
+"I hadn't considered it that way — and that matters."
+
+NOT:
+"This person is just being spicy."
+
+=== EXTERNAL SIGNAL TO RESPOND TO ===
+${externalSignal}
+
+${framingNote ? `FRAMING GUIDANCE FROM USER:\n${framingNote}\n` : ""}
+=== YOUR CONTEXT ===
+${contextString || "Write for a professional, operator-focused audience."}
+${examplesString}
+${antiRepetitionContext}
+
+=== CONTRARIAN ANGLE: ${angleConfig.name} ===
+${angleConfig.description}
+
+HOOK BIAS FOR THIS ANGLE:
+${angleConfig.hookBias}
+
+EXAMPLE HOOKS (for tone/structure only, do not copy):
+${angleConfig.hookExamples.map((h) => `- "${h}"`).join("\n")}
+
+=== HOOK REQUIREMENTS ===
+- Line 1 (hook): 8 words or less, declarative, signals disagreement or reframing
+- Line 2 (rehook): Adds clarity, tension, or specificity
+- NO questions in Line 1
+- NO emojis
+- NO hype language
+- NO generic openings
+
+=== BODY WRITING CONSTRAINTS ===
+- Short lines (aim for 8 words or less per line)
+- Calm, authoritative tone
+- NO emojis
+- NO personal attacks or naming
+- This is a DRAFT, not publish-ready copy
+
+Return a JSON object with:
+- hook: First line (8 words or less, signals thoughtful disagreement)
+- rehook: Second line (adds tension, clarity, or narrows audience)
+- body: Main content (short paragraphs, line breaks between thoughts)
+- coreInsight: The key contrarian insight in one sentence
+- cta: Optional engagement prompt (can be empty string)
+- anchorPhrase: The primary memorable phrase (for tracking)
+- framingUsed: How you framed the disagreement (for tracking)
+
+Return ONLY valid JSON, no markdown.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+    });
+
+    const content = response.choices[0]?.message?.content || "{}";
+    try {
+      const parsed = JSON.parse(content);
+      
+      // Track used elements for anti-repetition in subsequent posts
+      if (parsed.anchorPhrase) usedAnchors.push(parsed.anchorPhrase);
+      if (parsed.framingUsed) usedFramings.push(parsed.framingUsed);
+      
+      posts.push({
+        postType: "contrarian_pov",
+        contrarianAngle: angleConfig.angle,
+        hook: parsed.hook || "",
+        rehook: parsed.rehook || "",
+        body: parsed.body || "",
+        coreInsight: parsed.coreInsight || "",
+        cta: parsed.cta || null,
+        status: "draft",
+        postUrl: null,
+      });
+    } catch {
+      posts.push({
+        postType: "contrarian_pov",
+        contrarianAngle: angleConfig.angle,
         hook: "Generation failed",
         rehook: "Please try again",
         body: "",

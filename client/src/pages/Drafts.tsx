@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet } from "lucide-react";
+import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { PostDraft, WeeklyRun, DraftStatus } from "@shared/schema";
@@ -37,6 +37,18 @@ const POST_TYPE_CONFIG = {
     label: "System Principle",
     description: "Constraint, rule, or mental model",
   },
+  contrarian_pov: {
+    icon: Zap,
+    label: "Contrarian POV",
+    description: "Thoughtful disagreement with popular narratives",
+  },
+};
+
+const CONTRARIAN_ANGLE_LABELS: Record<string, string> = {
+  calm_reframe: "Calm Reframe",
+  operator_reality: "Operator Reality",
+  systems_view: "Systems View",
+  consequence_view: "Consequence View",
 };
 
 const STATUS_COLORS = {
@@ -185,22 +197,30 @@ export default function Drafts() {
                 {draftsByRun[runId].map((draft) => {
                   const config = POST_TYPE_CONFIG[draft.postType as keyof typeof POST_TYPE_CONFIG];
                   const Icon = config?.icon || FileText;
+                  const angleLabel = draft.contrarianAngle 
+                    ? CONTRARIAN_ANGLE_LABELS[draft.contrarianAngle] 
+                    : null;
                   return (
                     <Card key={draft.id} className="flex flex-col">
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <Icon className="h-4 w-4 text-muted-foreground" />
                             <CardTitle className="text-sm font-medium">
                               {config?.label || draft.postType}
                             </CardTitle>
+                            {angleLabel && (
+                              <Badge variant="outline" className="text-xs">
+                                {angleLabel}
+                              </Badge>
+                            )}
                           </div>
                           <Badge variant={STATUS_COLORS[draft.status as keyof typeof STATUS_COLORS]}>
                             {draft.status}
                           </Badge>
                         </div>
                         <CardDescription className="text-xs">
-                          {config?.description}
+                          {angleLabel ? `${config?.description} - ${angleLabel}` : config?.description}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col">

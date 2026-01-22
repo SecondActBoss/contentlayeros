@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { extractSignals, generatePosts, extractPatterns } from "./lib/contentGenerator";
+import { extractSignals, generatePosts, generateContrarianPosts, extractPatterns } from "./lib/contentGenerator";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { insertContextItemSchema, insertPostDraftSchema, insertFeedbackEntrySchema } from "@shared/schema";
@@ -9,8 +9,11 @@ import { z } from "zod";
 
 // Validation schemas for API requests
 const weeklyRunInputSchema = z.object({
-  rawInput: z.string().min(1, "Raw input is required"),
+  rawInput: z.string(),
   selectedContextIds: z.array(z.string()).optional().default([]),
+  isContrarianMode: z.boolean().optional().default(false),
+  externalSignal: z.string().optional(),
+  framingNote: z.string().optional(),
 });
 
 const updateContextItemSchema = insertContextItemSchema.partial();
@@ -133,7 +136,15 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ error: parsed.error.message });
       }
-      const { rawInput, selectedContextIds } = parsed.data;
+      const { rawInput, selectedContextIds, isContrarianMode, externalSignal, framingNote } = parsed.data;
+
+      // Validate based on mode
+      if (isContrarianMode && !externalSignal?.trim()) {
+        return res.status(400).json({ error: "External signal is required for contrarian mode" });
+      }
+      if (!isContrarianMode && !rawInput?.trim()) {
+        return res.status(400).json({ error: "Raw input is required" });
+      }
 
       // Get selected contexts
       const allContexts = await storage.getAllContextItems();
@@ -144,24 +155,36 @@ export async function registerRoutes(
       // Get next week number
       const weekNumber = await storage.getNextWeekNumber();
 
-      // Extract signals from raw input
-      const extractedSignals = await extractSignals(rawInput, selectedContexts);
-
       // Get strong-performing examples for learning
       const strongExamples = await storage.getStrongFeedbackEntries();
 
-      // Generate 4 posts
-      const postData = await generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples);
+      let postData;
+      let extractedSignals = null;
+
+      if (isContrarianMode) {
+        // Generate 4 contrarian posts
+        postData = await generateContrarianPosts(externalSignal!, framingNote, selectedContexts, strongExamples);
+      } else {
+        // Extract signals from raw input
+        extractedSignals = await extractSignals(rawInput, selectedContexts);
+        // Generate 4 regular posts
+        postData = await generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples);
+      }
 
       // Create weekly run
       const weeklyRun = await storage.createWeeklyRun({
         weekNumber,
-        rawInput,
+        rawInput: rawInput || "",
         selectedContextIds: selectedContextIds || [],
+        isContrarianMode: isContrarianMode || false,
+        externalSignal: externalSignal || null,
+        framingNote: framingNote || null,
       });
 
-      // Update with extracted signals
-      await storage.updateWeeklyRun(weeklyRun.id, { extractedSignals });
+      // Update with extracted signals (only for regular mode)
+      if (extractedSignals) {
+        await storage.updateWeeklyRun(weeklyRun.id, { extractedSignals });
+      }
 
       // Create post drafts
       const posts = await Promise.all(
