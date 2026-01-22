@@ -485,6 +485,249 @@ Return ONLY valid JSON, no markdown.`;
   return posts;
 }
 
+// Generate 𝕏 (Twitter) content: 1 newsletter section + 3 posts
+export async function generateTwitterContent(
+  rawInput: string,
+  contexts: ContextItem[],
+  extractedSignals: ExtractedSignals,
+  strongExamples: FeedbackEntry[] = [],
+  isContrarianMode: boolean = false,
+  externalSignal?: string,
+  framingNote?: string
+): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
+  const contextString = contexts
+    .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
+    .join("\n\n");
+
+  const signalsString = `
+EXPERTISE SIGNALS: ${extractedSignals.expertise.join(", ")}
+STORY SIGNALS: ${extractedSignals.stories.join(", ")}
+TREND SIGNALS: ${extractedSignals.trends.join(", ")}
+OPINION SIGNALS: ${extractedSignals.opinions.join(", ")}`;
+
+  const contraryContext = isContrarianMode && externalSignal
+    ? `
+=== CONTRARIAN MODE ENABLED ===
+You are responding thoughtfully to this external content:
+${externalSignal}
+${framingNote ? `\nFRAMING GUIDANCE: ${framingNote}` : ""}
+
+Be calm (not combative), express thoughtful disagreement, never name the original author.
+`
+    : "";
+
+  const posts: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
+
+  // First, generate the core insight that all outputs will be derived from
+  const coreIdeaPrompt = `You are a content strategist for a thoughtful founder building authority on 𝕏 (Twitter).
+
+Based on the raw input and signals below, identify ONE powerful core insight that would resonate with operators and founders.
+${contraryContext}
+=== RAW INPUT ===
+${rawInput}
+
+=== EXTRACTED SIGNALS ===
+${signalsString}
+
+=== CONTEXT ===
+${contextString || "Write for a professional, operator-focused audience."}
+
+Return a JSON object with:
+- coreIdea: A single sentence capturing the core insight (this will drive all content)
+- paradox: The tension or counterintuitive element in this idea
+- implication: What this means for the reader's work
+
+Return ONLY valid JSON, no markdown.`;
+
+  const coreResponse = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: coreIdeaPrompt }],
+    response_format: { type: "json_object" },
+  });
+
+  let coreIdea = { coreIdea: "", paradox: "", implication: "" };
+  try {
+    coreIdea = JSON.parse(coreResponse.choices[0]?.message?.content || "{}");
+  } catch {
+    coreIdea = { coreIdea: "Generation failed", paradox: "", implication: "" };
+  }
+
+  // 1. Generate Newsletter Section (300-500 words)
+  const newsletterPrompt = `You are a thoughtful founder writing a newsletter section for operators and builders.
+
+=== CORE IDEA ===
+${coreIdea.coreIdea}
+Paradox: ${coreIdea.paradox}
+Implication: ${coreIdea.implication}
+${contraryContext}
+=== CONTEXT ===
+${contextString || "Write for a professional, operator-focused audience."}
+
+=== NEWSLETTER SECTION REQUIREMENTS ===
+Write a 300-500 word newsletter section structured as:
+1. Open with the paradox or tension
+2. Context: Why this matters now
+3. Core idea: The main insight
+4. Implication: What this means for the reader
+5. Open loop: Leave them thinking
+
+TONE CONSTRAINTS:
+- Calm, thoughtful tone
+- No hype, no listicles
+- No engagement bait
+- No emojis
+- Clarity over cleverness
+
+Return a JSON object with:
+- title: A clear, non-clickbait title (5-10 words)
+- body: The full newsletter section (300-500 words)
+- coreInsight: The core idea in one sentence
+
+Return ONLY valid JSON, no markdown.`;
+
+  const newsletterResponse = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: newsletterPrompt }],
+    response_format: { type: "json_object" },
+  });
+
+  try {
+    const parsed = JSON.parse(newsletterResponse.choices[0]?.message?.content || "{}");
+    posts.push({
+      postType: "newsletter_section",
+      contrarianAngle: null,
+      hook: parsed.title || "Newsletter Section",
+      rehook: "",
+      body: parsed.body || "",
+      coreInsight: parsed.coreInsight || coreIdea.coreIdea,
+      cta: null,
+      status: "draft",
+      postUrl: null,
+    });
+  } catch {
+    posts.push({
+      postType: "newsletter_section",
+      contrarianAngle: null,
+      hook: "Newsletter Section",
+      rehook: "",
+      body: "Generation failed. Please try again.",
+      coreInsight: "",
+      cta: null,
+      status: "draft",
+      postUrl: null,
+    });
+  }
+
+  // 2. Generate THREE 𝕏 Posts
+  const twitterPostTypes = [
+    {
+      type: "twitter_pov" as const,
+      name: "POV Compression",
+      description: "Single declarative idea, ≤280 characters, bookmarkable",
+      prompt: `Compress the core idea into a single, declarative 𝕏 post.
+- Must be ≤280 characters
+- Single powerful statement
+- Designed to be bookmarked
+- No thread language
+- No hashtags or emojis`,
+    },
+    {
+      type: "twitter_paradox" as const,
+      name: "Paradox / Reframe",
+      description: "Counterintuitive truth that challenges a popular assumption",
+      prompt: `Write a 𝕏 post that presents the paradox or reframe.
+- Must be ≤280 characters
+- Challenges a popular assumption
+- Counterintuitive truth
+- Calm, non-combative tone
+- No hashtags or emojis`,
+    },
+    {
+      type: "twitter_operator" as const,
+      name: "Operator Reality Check",
+      description: "Grounded, lived insight focused on execution",
+      prompt: `Write a 𝕏 post as an operator reality check.
+- Must be ≤280 characters
+- Grounded in lived experience
+- Focus on execution, coordination, or relief
+- Designed to prompt replies
+- No hashtags or emojis`,
+    },
+  ];
+
+  for (const postConfig of twitterPostTypes) {
+    const prompt = `You are a founder writing a single 𝕏 (Twitter) post.
+
+=== CORE IDEA ===
+${coreIdea.coreIdea}
+Paradox: ${coreIdea.paradox}
+Implication: ${coreIdea.implication}
+${contraryContext}
+=== CONTEXT ===
+${contextString || "Write for a professional, operator-focused audience."}
+
+=== POST TYPE: ${postConfig.name} ===
+${postConfig.description}
+
+${postConfig.prompt}
+
+CRITICAL CONSTRAINTS:
+- ≤280 characters (STRICT LIMIT)
+- No hashtags
+- No emojis
+- No engagement bait
+- No "thread 🧵" language
+- No hype or outrage framing
+- Clarity > cleverness
+
+SUCCESS CRITERIA:
+A reader should think: "This is a clear idea worth following."
+NOT: "This is trying to go viral."
+
+Return a JSON object with:
+- post: The complete 𝕏 post (≤280 characters)
+- coreInsight: The key insight in one sentence
+- characterCount: Number of characters in the post
+
+Return ONLY valid JSON, no markdown.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+    });
+
+    try {
+      const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+      posts.push({
+        postType: postConfig.type,
+        contrarianAngle: null,
+        hook: parsed.post || "",
+        rehook: "",
+        body: "",
+        coreInsight: parsed.coreInsight || coreIdea.coreIdea,
+        cta: null,
+        status: "draft",
+        postUrl: null,
+      });
+    } catch {
+      posts.push({
+        postType: postConfig.type,
+        contrarianAngle: null,
+        hook: "Generation failed",
+        rehook: "",
+        body: "",
+        coreInsight: "",
+        cta: null,
+        status: "draft",
+        postUrl: null,
+      });
+    }
+  }
+
+  return posts;
+}
+
 // Extract patterns from approved content for learning
 export async function extractPatterns(content: string): Promise<ExtractedPatterns> {
   const prompt = `Analyze this LinkedIn post and extract writing patterns:

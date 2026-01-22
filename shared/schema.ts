@@ -40,8 +40,22 @@ export const insertContextItemSchema = createInsertSchema(contextItems).omit({
 export type InsertContextItem = z.infer<typeof insertContextItemSchema>;
 export type ContextItem = typeof contextItems.$inferSelect;
 
+// Distribution mode - which platform to generate content for
+export type DistributionMode = "linkedin" | "twitter";
+
 // Post types as defined in the spec
-export type PostType = "educational_authority" | "founder_story" | "trend_translation" | "system_principle" | "contrarian_pov";
+export type PostType = 
+  // LinkedIn post types
+  | "educational_authority" 
+  | "founder_story" 
+  | "trend_translation" 
+  | "system_principle" 
+  | "contrarian_pov"
+  // 𝕏 (Twitter) post types
+  | "newsletter_section"
+  | "twitter_pov"
+  | "twitter_paradox"
+  | "twitter_operator";
 
 // Contrarian angle sub-types
 export type ContrarianAngle = "calm_reframe" | "operator_reality" | "systems_view" | "consequence_view";
@@ -56,6 +70,7 @@ export const weeklyRuns = pgTable("weekly_runs", {
   rawInput: text("raw_input").notNull(),
   selectedContextIds: text("selected_context_ids").array().notNull(),
   extractedSignals: jsonb("extracted_signals"), // { expertise: [], stories: [], trends: [], opinions: [] }
+  distributionMode: text("distribution_mode").default("linkedin").notNull(), // linkedin or twitter
   isContrarianMode: boolean("is_contrarian_mode").default(false).notNull(),
   externalSignal: text("external_signal"), // The external post/article to respond to in contrarian mode
   framingNote: text("framing_note"), // Optional framing note for contrarian mode
