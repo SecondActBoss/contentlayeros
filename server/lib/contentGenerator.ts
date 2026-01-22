@@ -1,6 +1,6 @@
 // Content generation using OpenAI for LinkedIn posts
 import OpenAI from "openai";
-import type { ContextItem, ExtractedSignals, PostDraft, FeedbackEntry, ExtractedPatterns, ContrarianAngle } from "@shared/schema";
+import type { ContextItem, ExtractedSignals, PostDraft, FeedbackEntry, ExtractedPatterns, ContrarianAngle, RawTweetType } from "@shared/schema";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -255,6 +255,7 @@ Return ONLY valid JSON, no markdown.`;
       posts.push({
         postType: postType.type,
         contrarianAngle: null,
+        rawTweetType: null,
         hook: parsed.hook || "",
         rehook: parsed.rehook || "",
         body: parsed.body || "",
@@ -267,6 +268,7 @@ Return ONLY valid JSON, no markdown.`;
       posts.push({
         postType: postType.type,
         contrarianAngle: null,
+        rawTweetType: null,
         hook: "Generation failed",
         rehook: "Please try again",
         body: "",
@@ -459,6 +461,7 @@ Return ONLY valid JSON, no markdown.`;
       posts.push({
         postType: "contrarian_pov",
         contrarianAngle: angleConfig.angle,
+        rawTweetType: null,
         hook: parsed.hook || "",
         rehook: parsed.rehook || "",
         body: parsed.body || "",
@@ -471,6 +474,7 @@ Return ONLY valid JSON, no markdown.`;
       posts.push({
         postType: "contrarian_pov",
         contrarianAngle: angleConfig.angle,
+        rawTweetType: null,
         hook: "Generation failed",
         rehook: "Please try again",
         body: "",
@@ -596,6 +600,7 @@ Return ONLY valid JSON, no markdown.`;
     posts.push({
       postType: "newsletter_section",
       contrarianAngle: null,
+      rawTweetType: null,
       hook: parsed.title || "Newsletter Section",
       rehook: "",
       body: parsed.body || "",
@@ -608,6 +613,7 @@ Return ONLY valid JSON, no markdown.`;
     posts.push({
       postType: "newsletter_section",
       contrarianAngle: null,
+      rawTweetType: null,
       hook: "Newsletter Section",
       rehook: "",
       body: "Generation failed. Please try again.",
@@ -702,6 +708,7 @@ Return ONLY valid JSON, no markdown.`;
       posts.push({
         postType: postConfig.type,
         contrarianAngle: null,
+        rawTweetType: null,
         hook: parsed.post || "",
         rehook: "",
         body: "",
@@ -714,6 +721,7 @@ Return ONLY valid JSON, no markdown.`;
       posts.push({
         postType: postConfig.type,
         contrarianAngle: null,
+        rawTweetType: null,
         hook: "Generation failed",
         rehook: "",
         body: "",
@@ -766,4 +774,197 @@ Return ONLY valid JSON, no markdown.`;
       framingStyle: "",
     };
   }
+}
+
+// Raw Tweet types for variety
+const RAW_TWEET_TYPES: Array<{
+  type: RawTweetType;
+  name: string;
+  description: string;
+  examples: string[];
+}> = [
+  {
+    type: "pov_statement",
+    name: "POV Statement",
+    description: "Clear belief or stance. Declarative, calm.",
+    examples: [
+      "Most startup advice is written by people who never operated.",
+      "Speed is not the goal. Removing friction is.",
+      "The best tools disappear. You just get results.",
+    ],
+  },
+  {
+    type: "contrarian_reframe",
+    name: "Contrarian Reframe",
+    description: "Disagrees with a common assumption. Non-combative.",
+    examples: [
+      "Product-market fit isn't a moment. It's a process that never ends.",
+      "Hustle culture optimizes for motion, not progress.",
+      "AI won't replace you. Someone using AI well might.",
+    ],
+  },
+  {
+    type: "operator_reality",
+    name: "Operator Reality",
+    description: "Observational. Feels lived-in.",
+    examples: [
+      "The meeting was about the meeting.",
+      "Half the tools we bought are unused. The team built their own.",
+      "Shipped fast. Fixed faster. Still fixing.",
+    ],
+  },
+  {
+    type: "system_rule",
+    name: "System Rule",
+    description: "Principle or constraint. Short and memorable.",
+    examples: [
+      "If it needs a meeting, it's not automated.",
+      "One owner. One decision. One source of truth.",
+      "Document what breaks, not what works.",
+    ],
+  },
+  {
+    type: "quiet_insight",
+    name: "Quiet Insight",
+    description: "Reflective. Slightly unfinished (invites thought).",
+    examples: [
+      "Maybe the roadmap isn't the point.",
+      "Clarity feels slow until you realize how much time confusion cost.",
+      "The best founders I know ask fewer questions, but better ones.",
+    ],
+  },
+];
+
+// Generate Raw Tweets: 5-7 single tweets ≤280 chars
+export async function generateRawTweets(
+  rawInput: string,
+  contexts: ContextItem[],
+  extractedSignals: ExtractedSignals,
+  externalSignal?: string,
+  framingNote?: string
+): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
+  const contextString = contexts
+    .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
+    .join("\n\n");
+
+  const signalsString = `
+EXPERTISE SIGNALS: ${extractedSignals.expertise.join(", ")}
+STORY SIGNALS: ${extractedSignals.stories.join(", ")}
+TREND SIGNALS: ${extractedSignals.trends.join(", ")}
+OPINION SIGNALS: ${extractedSignals.opinions.join(", ")}`;
+
+  const externalContext = externalSignal
+    ? `
+=== EXTERNAL SIGNAL (Optional reference) ===
+${externalSignal}
+${framingNote ? `FRAMING: ${framingNote}` : ""}
+`
+    : "";
+
+  const tweetTypeDescriptions = RAW_TWEET_TYPES.map(
+    (t) => `- ${t.name}: ${t.description}\n  Examples: ${t.examples.map((e) => `"${e}"`).join(", ")}`
+  ).join("\n\n");
+
+  const prompt = `You are generating raw tweets for a founder's 𝕏 (Twitter) account.
+
+=== RAW MATERIALS ===
+${rawInput}
+
+=== EXTRACTED SIGNALS ===
+${signalsString}
+${externalContext}
+=== CONTEXT ===
+${contextString || "Write for a professional, operator-focused audience."}
+
+=== TWEET TYPE VARIETY (MUST USE MIX) ===
+${tweetTypeDescriptions}
+
+=== STRICT REQUIREMENTS ===
+Generate 6 single tweets that:
+- Are each ≤ 280 characters (CRITICAL - count carefully)
+- Stand alone (no threads, no "1/", no "🧵")
+- Contain one clear idea only
+- Are immediately postable
+- Use a VARIETY of tweet types (at least 4 different types)
+- Never use the same tweet type back-to-back
+
+=== TONE CONSTRAINTS (MANDATORY) ===
+- NO emojis
+- NO hashtags
+- NO thread language
+- NO engagement bait ("Thoughts?", "Agree?", "RT if...")
+- NO hype or outrage framing
+- Tone: "Typed by a founder between meetings"
+- NOT: "Crafted by a creator"
+
+=== ANTI-OVERPOLISH RULE ===
+- Prefer short sentences
+- Avoid metaphors that require setup
+- Avoid marketing language
+- Avoid full explanations
+- These are idea sparks, not essays
+
+=== OUTPUT FORMAT ===
+Return a JSON object with:
+{
+  "tweets": [
+    {
+      "text": "The tweet text (≤280 chars)",
+      "type": "pov_statement|contrarian_reframe|operator_reality|system_rule|quiet_insight",
+      "charCount": 123
+    }
+  ]
+}
+
+Each tweet should make a reader think: "That's true — and I hadn't named it."
+NOT: "This feels like content."
+
+Return ONLY valid JSON, no markdown.`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+  });
+
+  const posts: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
+
+  try {
+    const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+    const tweets = parsed.tweets || [];
+
+    for (const tweet of tweets) {
+      // Ensure tweet is within character limit
+      const tweetText = tweet.text?.slice(0, 280) || "";
+      
+      posts.push({
+        postType: "raw_tweet",
+        contrarianAngle: null,
+        rawTweetType: tweet.type as RawTweetType || "pov_statement",
+        hook: tweetText,
+        rehook: "",
+        body: "",
+        coreInsight: `${tweet.type} tweet`,
+        cta: null,
+        status: "draft",
+        postUrl: null,
+      });
+    }
+  } catch {
+    // Generate placeholder if parsing fails
+    posts.push({
+      postType: "raw_tweet",
+      contrarianAngle: null,
+      rawTweetType: "pov_statement",
+      hook: "Generation failed. Please try again.",
+      rehook: "",
+      body: "",
+      coreInsight: "",
+      cta: null,
+      status: "draft",
+      postUrl: null,
+    });
+  }
+
+  return posts;
 }
