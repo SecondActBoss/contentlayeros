@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { ContextItem, PostDraft, ExtractedSignals } from "@shared/schema";
@@ -18,6 +19,7 @@ const POST_TYPE_ICONS = {
   founder_story: Quote,
   trend_translation: TrendingUp,
   system_principle: Lightbulb,
+  contrarian_pov: Zap,
 };
 
 const POST_TYPE_LABELS = {
@@ -25,6 +27,14 @@ const POST_TYPE_LABELS = {
   founder_story: "Founder Story",
   trend_translation: "Trend Translation",
   system_principle: "System Principle",
+  contrarian_pov: "Contrarian POV",
+};
+
+const CONTRARIAN_ANGLE_LABELS: Record<string, string> = {
+  calm_reframe: "Calm Reframe",
+  operator_reality: "Operator Reality",
+  systems_view: "Systems View",
+  consequence_view: "Consequence View",
 };
 
 export default function Dashboard() {
@@ -33,13 +43,22 @@ export default function Dashboard() {
   const [selectedContextIds, setSelectedContextIds] = useState<string[]>([]);
   const [generatedPosts, setGeneratedPosts] = useState<PostDraft[]>([]);
   const [extractedSignals, setExtractedSignals] = useState<ExtractedSignals | null>(null);
+  const [isContrarianMode, setIsContrarianMode] = useState(false);
+  const [externalSignal, setExternalSignal] = useState("");
+  const [framingNote, setFramingNote] = useState("");
 
   const { data: contextItems = [], isLoading: loadingContext } = useQuery<ContextItem[]>({
     queryKey: ["/api/context-items"],
   });
 
   const generateMutation = useMutation({
-    mutationFn: async (data: { rawInput: string; selectedContextIds: string[] }) => {
+    mutationFn: async (data: { 
+      rawInput: string; 
+      selectedContextIds: string[];
+      isContrarianMode?: boolean;
+      externalSignal?: string;
+      framingNote?: string;
+    }) => {
       const response = await apiRequest("POST", "/api/weekly-runs", data);
       return response;
     },
@@ -48,7 +67,9 @@ export default function Dashboard() {
       setExtractedSignals(data.extractedSignals || null);
       toast({
         title: "Posts generated",
-        description: "4 LinkedIn post drafts have been created.",
+        description: isContrarianMode 
+          ? "4 contrarian LinkedIn post drafts have been created."
+          : "4 LinkedIn post drafts have been created.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/weekly-runs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/post-drafts"] });
@@ -69,7 +90,15 @@ export default function Dashboard() {
   };
 
   const handleGenerate = () => {
-    if (!rawInput.trim()) {
+    if (isContrarianMode && !externalSignal.trim()) {
+      toast({
+        title: "External signal required",
+        description: "Please provide the post or article you want to respond to.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!isContrarianMode && !rawInput.trim()) {
       toast({
         title: "Input required",
         description: "Please provide your weekly materials before generating.",
@@ -77,7 +106,13 @@ export default function Dashboard() {
       });
       return;
     }
-    generateMutation.mutate({ rawInput, selectedContextIds });
+    generateMutation.mutate({ 
+      rawInput: isContrarianMode ? "" : rawInput, 
+      selectedContextIds,
+      isContrarianMode,
+      externalSignal: isContrarianMode ? externalSignal : undefined,
+      framingNote: isContrarianMode ? framingNote : undefined,
+    });
   };
 
   const groupedContext = contextItems.reduce(
@@ -98,29 +133,89 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Weekly Run</h1>
-        <p className="text-muted-foreground mt-1">
-          Turn your raw weekly materials into 4 high-quality LinkedIn post drafts.
-        </p>
-        <p className="text-xs text-muted-foreground/70 mt-2 italic">
-          Tip: paste messy thoughts - clarity comes later.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {isContrarianMode ? "Be Contrary" : "Weekly Run"}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {isContrarianMode 
+              ? "Generate thoughtful contrarian takes in response to popular narratives."
+              : "Turn your raw weekly materials into 4 high-quality LinkedIn post drafts."}
+          </p>
+          {!isContrarianMode && (
+            <p className="text-xs text-muted-foreground/70 mt-2 italic">
+              Tip: paste messy thoughts - clarity comes later.
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Label htmlFor="contrarian-toggle" className="text-sm font-medium">
+            Be Contrary
+          </Label>
+          <Switch
+            id="contrarian-toggle"
+            checked={isContrarianMode}
+            onCheckedChange={setIsContrarianMode}
+            data-testid="toggle-contrarian-mode"
+          />
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Raw Input Section */}
+        {/* Input Section */}
         <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Raw Materials</CardTitle>
-              <CardDescription>
-                Voice notes, call transcripts, build notes, reflections, links, opinions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Paste your weekly materials here...
+          {isContrarianMode ? (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">External Signal</CardTitle>
+                <CardDescription>
+                  Paste the post, article, or narrative you want to thoughtfully disagree with
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  placeholder="Paste the external content here...
+
+Examples:
+- A viral X post
+- A LinkedIn post
+- An article excerpt
+- A popular hot take or narrative"
+                  className="min-h-[200px] resize-none text-sm"
+                  value={externalSignal}
+                  onChange={(e) => setExternalSignal(e.target.value)}
+                  data-testid="input-external-signal"
+                />
+                <div>
+                  <Label htmlFor="framing-note" className="text-sm font-medium">
+                    Framing Note (optional)
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1 mb-2">
+                    Guide the angle of your disagreement
+                  </p>
+                  <Textarea
+                    id="framing-note"
+                    placeholder="e.g., 'I agree with the problem, not the conclusion' or 'This is right for creators, wrong for operators'"
+                    className="min-h-[80px] resize-none text-sm"
+                    value={framingNote}
+                    onChange={(e) => setFramingNote(e.target.value)}
+                    data-testid="input-framing-note"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Raw Materials</CardTitle>
+                <CardDescription>
+                  Voice notes, call transcripts, build notes, reflections, links, opinions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  placeholder="Paste your weekly materials here...
 
 Examples:
 - Voice note transcripts
@@ -130,13 +225,14 @@ Examples:
 - Personal reflections
 - Links to articles or X posts
 - Opinions or decisions made"
-                className="min-h-[280px] resize-none text-sm"
-                value={rawInput}
-                onChange={(e) => setRawInput(e.target.value)}
-                data-testid="input-raw-materials"
-              />
-            </CardContent>
-          </Card>
+                  className="min-h-[280px] resize-none text-sm"
+                  value={rawInput}
+                  onChange={(e) => setRawInput(e.target.value)}
+                  data-testid="input-raw-materials"
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Generated Posts Preview */}
           {generatedPosts.length > 0 && (
@@ -151,17 +247,25 @@ Examples:
                 <div className="grid gap-3 sm:grid-cols-2">
                   {generatedPosts.map((post) => {
                     const Icon = POST_TYPE_ICONS[post.postType as keyof typeof POST_TYPE_ICONS] || FileText;
+                    const angleLabel = post.contrarianAngle 
+                      ? CONTRARIAN_ANGLE_LABELS[post.contrarianAngle] 
+                      : null;
                     return (
                       <div
                         key={post.id}
                         className="p-3 rounded-md border bg-card"
-                        data-testid={`preview-post-${post.postType}`}
+                        data-testid={`preview-post-${post.postType}${post.contrarianAngle ? `-${post.contrarianAngle}` : ''}`}
                       >
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <Icon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-xs font-medium">
                             {POST_TYPE_LABELS[post.postType as keyof typeof POST_TYPE_LABELS]}
                           </span>
+                          {angleLabel && (
+                            <Badge variant="outline" className="text-xs">
+                              {angleLabel}
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm font-medium line-clamp-2">{post.hook}</p>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
@@ -308,13 +412,18 @@ Examples:
             className="w-full"
             size="lg"
             onClick={handleGenerate}
-            disabled={generateMutation.isPending || !rawInput.trim()}
+            disabled={generateMutation.isPending || (isContrarianMode ? !externalSignal.trim() : !rawInput.trim())}
             data-testid="button-generate"
           >
             {generateMutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Generating...
+              </>
+            ) : isContrarianMode ? (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Generate 4 Contrarian Takes
               </>
             ) : (
               <>

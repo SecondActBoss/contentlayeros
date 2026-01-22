@@ -1,0 +1,192 @@
+Add a “Be Contrary” Mode to the LinkedIn Content Workflow Engine
+
+We’d like to add an optional Contrarian POV Mode that can be intentionally activated by the user.
+
+This should feel like an Easy Button for thoughtful disagreement, not hot-take generation.
+
+FEATURE OVERVIEW
+
+Add a toggle or button labeled:
+
+“Be Contrary”
+
+When enabled, the system should generate contrarian LinkedIn posts in response to a provided external input (e.g. a viral 𝕏 post, LinkedIn post, article, or popular narrative).
+
+This mode is explicitly user-initiated and never automatic.
+
+INPUTS (WHEN “BE CONTRARY” IS ENABLED)
+
+In addition to the normal raw materials input, allow:
+
+External Signal Input
+
+A pasted 𝕏 post
+
+A LinkedIn post
+
+An article excerpt
+
+A summarized “hot take” narrative
+
+Optional Framing Note (Short)
+
+Example:
+“I agree with the problem, not the conclusion”
+“This is right for creators, wrong for operators”
+“This misses the systems angle”
+
+OUTPUT REQUIREMENTS
+
+When “Be Contrary” is enabled, generate exactly 4 contrarian LinkedIn post drafts, each with a different angle, not just different wording.
+
+Each draft should represent a distinct contrarian lens, such as:
+
+1. Calm Reframe
+
+“The popular narrative is understandable — but incomplete.”
+
+Purpose:
+
+Educated disagreement
+
+High trust
+
+Operator-safe
+
+2. Operator Reality Check
+
+“This is true online. It breaks in real work.”
+
+Purpose:
+
+Ground theory in lived execution
+
+Appeal to founders / COOs
+
+3. Systems-Level Contrarian
+
+“The problem isn’t the tool. It’s the lack of constraints.”
+
+Purpose:
+
+Align with AgentLayerOS philosophy
+
+Elevate above discourse
+
+4. Consequence-Based POV
+
+“If you follow this advice, here’s what quietly goes wrong.”
+
+Purpose:
+
+Practical caution
+
+Non-alarmist, non-hype
+
+CONTRARIAN TONE RULES (CRITICAL)
+
+All contrarian drafts must:
+
+Be calm, not combative
+
+Avoid dunking or mocking
+
+Avoid naming or tagging the original author
+
+Avoid “everyone is wrong” framing
+
+Avoid outrage language
+
+Tone should feel like:
+
+“I’ve seen this break in practice.”
+
+Not:
+
+“This is stupid.”
+
+HOOK REQUIREMENTS (CONTRARIAN-SPECIFIC)
+
+Hooks should:
+
+Clearly signal disagreement or reframing
+
+Be declarative, not emotional
+
+Stay within existing hook constraints:
+
+Short lines
+
+No emojis
+
+No hype
+
+No rhetorical questions in line 1
+
+Example hook patterns:
+
+“This advice works online. It breaks in operations.”
+
+“AI slop isn’t the real problem.”
+
+“The popular take misses the systems layer.”
+
+INTEGRATION WITH EXISTING SYSTEM
+
+“Be Contrary” mode:
+
+Overrides normal post-type mapping
+
+Does NOT affect:
+
+Context logic
+
+Language rules
+
+Feedback & learning system
+
+Google Sheets export
+
+Generated posts should still respect:
+
+ICP context
+
+Positioning docs
+
+Language rules
+
+OUTPUT DESTINATION
+
+Append contrarian drafts to Google Sheets with:
+
+Post Type = “Contrarian POV”
+
+Sub-label for angle:
+
+Reframe
+
+Operator Reality
+
+Systems View
+
+Consequence View
+
+SUCCESS CRITERIA
+
+A strong “Be Contrary” post should make the reader think:
+
+“I hadn’t considered it that way — and that matters.”
+
+Not:
+
+“This person is just being spicy.”
+
+IMPORTANT CONSTRAINTS
+
+This mode must be opt-in only
+
+Do not trigger automatically based on sentiment
+
+Do not increase posting frequency recommendations
+
+This is a thinking amplifier, not an outrage engine

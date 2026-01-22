@@ -41,7 +41,10 @@ export type InsertContextItem = z.infer<typeof insertContextItemSchema>;
 export type ContextItem = typeof contextItems.$inferSelect;
 
 // Post types as defined in the spec
-export type PostType = "educational_authority" | "founder_story" | "trend_translation" | "system_principle";
+export type PostType = "educational_authority" | "founder_story" | "trend_translation" | "system_principle" | "contrarian_pov";
+
+// Contrarian angle sub-types
+export type ContrarianAngle = "calm_reframe" | "operator_reality" | "systems_view" | "consequence_view";
 
 // Post draft status
 export type DraftStatus = "draft" | "edited" | "posted";
@@ -53,6 +56,9 @@ export const weeklyRuns = pgTable("weekly_runs", {
   rawInput: text("raw_input").notNull(),
   selectedContextIds: text("selected_context_ids").array().notNull(),
   extractedSignals: jsonb("extracted_signals"), // { expertise: [], stories: [], trends: [], opinions: [] }
+  isContrarianMode: boolean("is_contrarian_mode").default(false).notNull(),
+  externalSignal: text("external_signal"), // The external post/article to respond to in contrarian mode
+  framingNote: text("framing_note"), // Optional framing note for contrarian mode
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -69,7 +75,8 @@ export type WeeklyRun = typeof weeklyRuns.$inferSelect;
 export const postDrafts = pgTable("post_drafts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   weeklyRunId: varchar("weekly_run_id").notNull(),
-  postType: text("post_type").notNull(), // educational_authority, founder_story, trend_translation, system_principle
+  postType: text("post_type").notNull(), // educational_authority, founder_story, trend_translation, system_principle, contrarian_pov
+  contrarianAngle: text("contrarian_angle"), // calm_reframe, operator_reality, systems_view, consequence_view (only for contrarian_pov)
   hook: text("hook").notNull(), // Line 1
   rehook: text("rehook").notNull(), // Line 2
   body: text("body").notNull(),
