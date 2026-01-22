@@ -1,4 +1,4 @@
-// Google Sheets integration for LinkedIn Content Workflow Engine
+// Google Sheets integration for FounderEngineOS
 // Based on connection:conn_google-sheet integration
 
 import { google } from 'googleapis';

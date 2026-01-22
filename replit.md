@@ -1,8 +1,8 @@
-# LinkedIn Content Workflow Engine
+# FounderEngineOS
 
 ## Overview
 
-A context-aware content workflow engine designed for founders with two distribution modes: LinkedIn and 𝕏 (Twitter). The system transforms raw weekly materials (voice notes, call transcripts, build notes, reflections) into high-quality post drafts. This is a thinking and drafting system with human-in-the-loop design—no auto-posting.
+FounderEngineOS is a context-aware content operating system for founders with two distribution modes: LinkedIn and 𝕏 (Twitter). The system transforms raw weekly materials (voice notes, call transcripts, build notes, reflections) into high-quality post drafts. This is a thinking and drafting system with human-in-the-loop design—no auto-posting.
 
 Key capabilities:
 - **LinkedIn Mode**: Weekly content generation for 4 post types (Educational Authority, Founder Story, Trend Translation, System Principle)
