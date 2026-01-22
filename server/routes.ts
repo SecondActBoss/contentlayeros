@@ -417,6 +417,9 @@ export async function registerRoutes(
   });
 
   // Phoenix Guardrail: Fatigue Detection
+  // 𝕏 post types for filtering
+  const TWITTER_POST_TYPES = ["newsletter_section", "twitter_pov", "twitter_paradox", "twitter_operator", "raw_tweet"];
+  
   app.post("/api/drafts/:draftId/fatigue-check", async (req, res) => {
     try {
       const draft = await storage.getPostDraft(req.params.draftId);
@@ -424,10 +427,27 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Draft not found" });
       }
 
-      // Get recent approved posts (posted or edited status from the last 7 days)
+      // Only run fatigue detection for 𝕏 posts
+      if (!TWITTER_POST_TYPES.includes(draft.postType)) {
+        return res.json({
+          overallFatigueRisk: "low",
+          similarPosts: [],
+          recommendations: ["Fatigue detection is only available for 𝕏 posts."],
+        });
+      }
+
+      // Get recent approved 𝕏 posts from the last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
       const allDrafts = await storage.getAllPostDrafts();
       const recentApproved = allDrafts
-        .filter((d: PostDraft) => d.status === "posted" && d.id !== draft.id)
+        .filter((d: PostDraft) => 
+          d.status === "posted" && 
+          d.id !== draft.id &&
+          TWITTER_POST_TYPES.includes(d.postType) &&
+          new Date(d.createdAt) >= sevenDaysAgo
+        )
         .slice(-7)
         .map((d: PostDraft) => ({ hook: d.hook, body: d.body, coreInsight: d.coreInsight }));
 

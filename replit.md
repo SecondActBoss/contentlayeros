@@ -76,6 +76,14 @@ Preferred communication style: Simple, everyday language.
    - **Quiet Insight**: Reflective observation
 3. Constraints: ≤280 chars, no emojis, no hashtags, no thread language, operator tone
 
+**Phoenix Algorithm Optimization (𝕏 Only):**
+All 𝕏 content is optimized for the Phoenix algorithm with:
+- **Reply-inviting endings**: Natural closings that prompt operator replies (not engagement bait like "thoughts?")
+- **Dwell-time formatting**: Strategic line breaks and short paragraphs to slow readers down
+- **Platform retention**: No external links, hashtags, or emojis (keeps readers on platform)
+- **Fatigue detection**: API endpoint to check semantic similarity against recent approved posts
+- **Phoenix metadata**: Each draft includes replyLikelihood, dwellLikelihood, fatigueRisk, and authorEngagementReminder
+
 ### Project Structure
 ```
 client/src/        - React frontend application

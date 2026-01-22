@@ -299,23 +299,27 @@ export default function Drafts() {
                             </p>
                           )}
                           {/* Phoenix Metadata for 𝕏 posts */}
-                          {config?.platform === "twitter" && draft.replyLikelihood && (
-                            <div className="mt-3 p-2 bg-muted/50 rounded-md space-y-1">
+                          {config?.platform === "twitter" && (draft.replyLikelihood || draft.dwellLikelihood || draft.fatigueRisk) && (
+                            <div className="mt-3 p-2 bg-muted/50 rounded-md space-y-1" data-testid={`phoenix-metadata-${draft.id}`}>
                               <div className="flex items-center gap-2 flex-wrap">
-                                <Badge variant="outline" className="text-xs">
-                                  Reply: {draft.replyLikelihood}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  Dwell: {draft.dwellLikelihood}
-                                </Badge>
+                                {draft.replyLikelihood && (
+                                  <Badge variant="outline" className="text-xs" data-testid={`badge-reply-${draft.id}`}>
+                                    Reply: {draft.replyLikelihood}
+                                  </Badge>
+                                )}
+                                {draft.dwellLikelihood && (
+                                  <Badge variant="outline" className="text-xs" data-testid={`badge-dwell-${draft.id}`}>
+                                    Dwell: {draft.dwellLikelihood}
+                                  </Badge>
+                                )}
                                 {draft.fatigueRisk && draft.fatigueRisk !== "low" && (
-                                  <Badge variant={draft.fatigueRisk === "high" ? "destructive" : "secondary"} className="text-xs">
+                                  <Badge variant={draft.fatigueRisk === "high" ? "destructive" : "secondary"} className="text-xs" data-testid={`badge-fatigue-${draft.id}`}>
                                     Fatigue: {draft.fatigueRisk}
                                   </Badge>
                                 )}
                               </div>
                               {draft.authorEngagementReminder && (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-muted-foreground" data-testid={`text-engagement-reminder-${draft.id}`}>
                                   {draft.authorEngagementReminder}
                                 </p>
                               )}
