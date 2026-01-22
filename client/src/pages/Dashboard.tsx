@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap, Newspaper, MessageCircle } from "lucide-react";
-import { SiX } from "react-icons/si";
+import { SiX, SiLinkedin } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { ContextItem, PostDraft, ExtractedSignals, DistributionMode } from "@shared/schema";
@@ -209,7 +209,7 @@ export default function Dashboard() {
       >
         <TabsList className="grid w-full max-w-xs grid-cols-2">
           <TabsTrigger value="linkedin" data-testid="tab-linkedin">
-            <FileText className="h-4 w-4 mr-2" />
+            <SiLinkedin className="h-3 w-3 mr-2" />
             LinkedIn
           </TabsTrigger>
           <TabsTrigger value="twitter" data-testid="tab-twitter">
