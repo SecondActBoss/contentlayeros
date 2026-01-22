@@ -1,0 +1,167 @@
+Add a “Raw Tweet Mode” for Ultra-Fast 𝕏 Posting
+
+We’d like to add an optional Raw Tweet Mode inside the existing 𝕏 Mode of the Content Engine.
+
+This mode is designed for speed and signal, not polish.
+
+FEATURE OVERVIEW
+
+Add a toggle labeled:
+
+Raw Tweet Mode
+
+When enabled, the system should generate short, high-signal single-tweet drafts optimized for immediate posting on 𝕏.
+
+This mode is meant for:
+
+Daily posting
+
+Idea testing
+
+Lightweight engagement
+
+Minimal editing
+
+INPUTS (RAW TWEET MODE)
+
+Use the same inputs as 𝕏 Mode:
+
+Raw Materials
+
+Context selection (ICP, positioning, language rules)
+
+Optional external signal (𝕏 post, article, trend)
+
+No additional inputs required.
+
+OUTPUT REQUIREMENTS
+
+When Raw Tweet Mode is enabled, generate:
+
+✅ 5–7 Single-Tweet Drafts
+
+Each draft must:
+
+Be ≤ 280 characters
+
+Stand alone (no threads)
+
+Contain one clear idea only
+
+Be immediately postable
+
+TWEET TYPES (MUST VARY)
+
+The system should deliberately mix tweet types in each run, such as:
+
+POV Statement
+
+Clear belief or stance
+
+Declarative, calm
+
+Contrarian Reframe
+
+Disagrees with a common assumption
+
+Non-combative
+
+Operator Reality
+
+Observational
+
+Feels lived-in
+
+System Rule
+
+Principle or constraint
+
+Short and memorable
+
+Quiet Insight
+
+Reflective
+
+Slightly unfinished (invites thought)
+
+Avoid generating multiple tweets of the same type back-to-back.
+
+TONE & CONSTRAINTS (STRICT)
+
+All raw tweets must follow:
+
+No emojis
+
+No hashtags
+
+No “thread 🧵” language
+
+No engagement bait (“Thoughts?”, “Agree?”)
+
+No hype or outrage framing
+
+Tone should feel:
+
+“Typed by a founder between meetings.”
+
+Not:
+
+“Crafted by a creator.”
+
+ANTI-OVERPOLISH RULE
+
+Raw Tweet Mode should:
+
+Prefer short sentences
+
+Avoid metaphors that require setup
+
+Avoid marketing language
+
+Avoid full explanations
+
+These are idea sparks, not essays.
+
+OUTPUT DESTINATION
+
+Append outputs to Google Sheets with:
+
+Platform = 𝕏
+
+Mode = Raw Tweet
+
+Tweet Type
+
+Draft Text
+
+Status
+
+Keep Raw Tweet outputs clearly separated from:
+
+Newsletter Sections
+
+Standard 𝕏 Mode drafts
+
+LinkedIn drafts
+
+IMPORTANT CONSTRAINTS
+
+Do NOT auto-post
+
+Do NOT schedule
+
+Do NOT reuse language verbatim from the same weekly run
+
+Do NOT pull from previous tweets unless explicitly included in Raw Materials
+
+This mode is opt-in only and never runs by default.
+
+SUCCESS CRITERIA
+
+A strong raw tweet should make a reader think:
+
+“That’s true — and I hadn’t named it.”
+
+Not:
+
+“This feels like content.”
