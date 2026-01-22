@@ -81,6 +81,13 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async deleteWeeklyRun(id: string): Promise<void> {
+    // First delete all associated post drafts
+    await db.delete(postDrafts).where(eq(postDrafts.weeklyRunId, id));
+    // Then delete the weekly run itself
+    await db.delete(weeklyRuns).where(eq(weeklyRuns.id, id));
+  }
+
   async getNextWeekNumber(): Promise<number> {
     const runs = await db.select().from(weeklyRuns).orderBy(desc(weeklyRuns.weekNumber)).limit(1);
     if (runs.length === 0) return 1;
