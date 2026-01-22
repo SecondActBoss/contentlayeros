@@ -214,7 +214,7 @@ export default function Dashboard() {
           </TabsTrigger>
           <TabsTrigger value="twitter" data-testid="tab-twitter">
             <SiX className="h-3 w-3 mr-2" />
-            𝕏 Mode
+            Mode
           </TabsTrigger>
         </TabsList>
       </Tabs>
