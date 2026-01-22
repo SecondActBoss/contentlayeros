@@ -138,6 +138,20 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/weekly-runs/:id", async (req, res) => {
+    try {
+      const run = await storage.getWeeklyRun(req.params.id);
+      if (!run) {
+        return res.status(404).json({ error: "Weekly run not found" });
+      }
+      await storage.deleteWeeklyRun(req.params.id);
+      res.json({ success: true, message: `Week ${run.weekNumber} deleted successfully` });
+    } catch (error) {
+      console.error("Error deleting weekly run:", error);
+      res.status(500).json({ error: "Failed to delete weekly run" });
+    }
+  });
+
   // Main workflow: Generate posts from raw input
   app.post("/api/weekly-runs", async (req, res) => {
     try {

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle } from "lucide-react";
+import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2 } from "lucide-react";
 import { SiX } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -106,8 +106,11 @@ export default function Drafts() {
   const [selectedDraft, setSelectedDraft] = useState<PostDraft | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [weekToDelete, setWeekToDelete] = useState<{ id: string; weekNumber: number } | null>(null);
   const [spreadsheetId, setSpreadsheetId] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedTabId, setSelectedTabId] = useState<string | null>(null);
 
   const { data: drafts = [], isLoading } = useQuery<PostDraft[]>({
     queryKey: ["/api/post-drafts"],
@@ -142,6 +145,22 @@ export default function Drafts() {
     },
     onError: () => {
       toast({ title: "Export failed", description: "Failed to export to Google Sheets.", variant: "destructive" });
+    },
+  });
+
+  const deleteWeekMutation = useMutation({
+    mutationFn: async (runId: string) => {
+      return apiRequest("DELETE", `/api/weekly-runs/${runId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/drafts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/weekly-runs"] });
+      toast({ title: "Deleted", description: "Weekly run and all its drafts have been deleted." });
+      setDeleteDialogOpen(false);
+      setWeekToDelete(null);
+    },
+    onError: () => {
+      toast({ title: "Delete failed", description: "Failed to delete the weekly run.", variant: "destructive" });
     },
   });
 
@@ -234,17 +253,39 @@ export default function Drafts() {
           </CardContent>
         </Card>
       ) : (
-        <Tabs defaultValue={runIds[0]} className="w-full">
-          <TabsList className="mb-4">
-            {runIds.map((runId, index) => {
-              const run = weeklyRuns.find((r) => r.id === runId);
-              return (
-                <TabsTrigger key={runId} value={runId} data-testid={`tab-week-${index}`}>
-                  Week {run?.weekNumber || index + 1}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+        <Tabs 
+          value={selectedTabId || runIds[0]} 
+          onValueChange={setSelectedTabId} 
+          className="w-full"
+        >
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <TabsList>
+              {runIds.map((runId, index) => {
+                const run = weeklyRuns.find((r) => r.id === runId);
+                return (
+                  <TabsTrigger key={runId} value={runId} data-testid={`tab-week-${index}`}>
+                    Week {run?.weekNumber || index + 1}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const currentRunId = selectedTabId || runIds[0];
+                const run = weeklyRuns.find((r) => r.id === currentRunId);
+                if (run) {
+                  setWeekToDelete({ id: run.id, weekNumber: run.weekNumber });
+                  setDeleteDialogOpen(true);
+                }
+              }}
+              data-testid="button-delete-week"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete Week
+            </Button>
+          </div>
           {runIds.map((runId) => (
             <TabsContent key={runId} value={runId}>
               <div className="grid gap-4 md:grid-cols-2">
@@ -495,6 +536,32 @@ export default function Drafts() {
             >
               {exportMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Export
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Week Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Week {weekToDelete?.weekNumber}?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete this weekly run and all its draft posts. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} data-testid="button-cancel-delete">
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => weekToDelete && deleteWeekMutation.mutate(weekToDelete.id)}
+              disabled={deleteWeekMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteWeekMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

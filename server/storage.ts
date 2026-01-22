@@ -21,6 +21,7 @@ export interface IStorage {
   getWeeklyRun(id: string): Promise<WeeklyRun | undefined>;
   createWeeklyRun(run: InsertWeeklyRun): Promise<WeeklyRun>;
   updateWeeklyRun(id: string, data: Partial<WeeklyRun>): Promise<WeeklyRun | undefined>;
+  deleteWeeklyRun(id: string): Promise<void>;
   getNextWeekNumber(): Promise<number>;
 
   // Post Drafts
@@ -140,6 +141,16 @@ export class MemStorage implements IStorage {
     const updated = { ...existing, ...data };
     this.weeklyRuns.set(id, updated);
     return updated;
+  }
+
+  async deleteWeeklyRun(id: string): Promise<void> {
+    // Delete all associated post drafts first
+    const drafts = await this.getPostDraftsByRun(id);
+    for (const draft of drafts) {
+      this.postDrafts.delete(draft.id);
+    }
+    // Then delete the weekly run
+    this.weeklyRuns.delete(id);
   }
 
   async getNextWeekNumber(): Promise<number> {
