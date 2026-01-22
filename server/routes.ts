@@ -275,6 +275,7 @@ export async function registerRoutes(
         return {
           weekNumber: run?.weekNumber || 0,
           postType: draft.postType,
+          contrarianAngle: draft.contrarianAngle,
           hook: draft.hook,
           rehook: draft.rehook,
           body: draft.body,

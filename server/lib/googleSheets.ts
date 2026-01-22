@@ -59,6 +59,7 @@ export async function appendPostsToSheet(
   posts: Array<{
     weekNumber: number;
     postType: string;
+    contrarianAngle?: string | null;
     hook: string;
     rehook: string;
     body: string;
@@ -69,9 +70,29 @@ export async function appendPostsToSheet(
 ) {
   const sheets = await getUncachableGoogleSheetClient();
   
+  // Format post type label with angle for contrarian posts
+  const formatPostType = (type: string, angle?: string | null) => {
+    if (type === 'contrarian_pov' && angle) {
+      const angleLabels: Record<string, string> = {
+        calm_reframe: 'Calm Reframe',
+        operator_reality: 'Operator Reality',
+        systems_view: 'Systems View',
+        consequence_view: 'Consequence View',
+      };
+      return `Contrarian POV - ${angleLabels[angle] || angle}`;
+    }
+    const typeLabels: Record<string, string> = {
+      educational_authority: 'Educational Authority',
+      founder_story: 'Founder Story',
+      trend_translation: 'Trend Translation',
+      system_principle: 'System Principle',
+    };
+    return typeLabels[type] || type;
+  };
+  
   const values = posts.map(post => [
     post.weekNumber,
-    post.postType,
+    formatPostType(post.postType, post.contrarianAngle),
     post.hook,
     post.rehook,
     post.body,
