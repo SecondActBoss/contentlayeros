@@ -99,7 +99,7 @@ export default function Dashboard() {
       gateWeeklyOperatorFocus?: boolean;
     }) => {
       const response = await apiRequest("POST", "/api/weekly-runs", data);
-      return response;
+      return response.json();
     },
     onSuccess: (data: any) => {
       setGeneratedPosts(data.posts || []);
