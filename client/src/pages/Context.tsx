@@ -229,6 +229,12 @@ export default function Context() {
             <p className="text-muted-foreground text-center mt-1 max-w-sm">
               Add your first context item to help guide content generation.
             </p>
+            <div className="flex flex-wrap justify-center gap-2 mt-4">
+              <Badge variant="outline">ICP</Badge>
+              <Badge variant="outline">Positioning</Badge>
+              <Badge variant="outline">Language Rules</Badge>
+              <Badge variant="outline">Visual Reference</Badge>
+            </div>
           </CardContent>
         </Card>
       ) : (

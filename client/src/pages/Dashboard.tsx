@@ -103,6 +103,9 @@ export default function Dashboard() {
         <p className="text-muted-foreground mt-1">
           Turn your raw weekly materials into 4 high-quality LinkedIn post drafts.
         </p>
+        <p className="text-xs text-muted-foreground/70 mt-2 italic">
+          Tip: paste messy thoughts - clarity comes later.
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

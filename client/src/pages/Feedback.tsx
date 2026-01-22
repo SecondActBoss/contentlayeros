@@ -157,9 +157,10 @@ export default function Feedback() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes (Optional)</Label>
-                <Input
+                <Textarea
                   id="notes"
-                  placeholder='e.g., "High operator DMs", "Saved a lot", "Good comments, low reach"'
+                  placeholder="Why did this work? e.g., Lots of operator DMs, Saved a ton, Good comments low reach"
+                  className="min-h-[80px] resize-none"
                   value={formData.notes}
                   onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                   data-testid="input-feedback-notes"
