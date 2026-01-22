@@ -9,25 +9,35 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap, Newspaper, MessageCircle } from "lucide-react";
+import { SiX } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { ContextItem, PostDraft, ExtractedSignals } from "@shared/schema";
+import type { ContextItem, PostDraft, ExtractedSignals, DistributionMode } from "@shared/schema";
 
-const POST_TYPE_ICONS = {
+const POST_TYPE_ICONS: Record<string, any> = {
   educational_authority: FileText,
   founder_story: Quote,
   trend_translation: TrendingUp,
   system_principle: Lightbulb,
   contrarian_pov: Zap,
+  newsletter_section: Newspaper,
+  twitter_pov: MessageCircle,
+  twitter_paradox: Zap,
+  twitter_operator: FileText,
 };
 
-const POST_TYPE_LABELS = {
+const POST_TYPE_LABELS: Record<string, string> = {
   educational_authority: "Educational Authority",
   founder_story: "Founder Story",
   trend_translation: "Trend Translation",
   system_principle: "System Principle",
   contrarian_pov: "Contrarian POV",
+  newsletter_section: "Newsletter Section",
+  twitter_pov: "𝕏 POV Compression",
+  twitter_paradox: "𝕏 Paradox / Reframe",
+  twitter_operator: "𝕏 Operator Reality",
 };
 
 const CONTRARIAN_ANGLE_LABELS: Record<string, string> = {
@@ -43,6 +53,7 @@ export default function Dashboard() {
   const [selectedContextIds, setSelectedContextIds] = useState<string[]>([]);
   const [generatedPosts, setGeneratedPosts] = useState<PostDraft[]>([]);
   const [extractedSignals, setExtractedSignals] = useState<ExtractedSignals | null>(null);
+  const [distributionMode, setDistributionMode] = useState<DistributionMode>("linkedin");
   const [isContrarianMode, setIsContrarianMode] = useState(false);
   const [externalSignal, setExternalSignal] = useState("");
   const [framingNote, setFramingNote] = useState("");
@@ -55,6 +66,7 @@ export default function Dashboard() {
     mutationFn: async (data: { 
       rawInput: string; 
       selectedContextIds: string[];
+      distributionMode?: DistributionMode;
       isContrarianMode?: boolean;
       externalSignal?: string;
       framingNote?: string;
@@ -65,11 +77,15 @@ export default function Dashboard() {
     onSuccess: (data: any) => {
       setGeneratedPosts(data.posts || []);
       setExtractedSignals(data.extractedSignals || null);
+      const postCount = data.posts?.length || 0;
+      const modeDesc = distributionMode === "twitter" 
+        ? `1 newsletter section + 3 𝕏 posts have been created.`
+        : isContrarianMode 
+          ? `${postCount} contrarian LinkedIn post drafts have been created.`
+          : `${postCount} LinkedIn post drafts have been created.`;
       toast({
-        title: "Posts generated",
-        description: isContrarianMode 
-          ? "4 contrarian LinkedIn post drafts have been created."
-          : "4 LinkedIn post drafts have been created.",
+        title: "Content generated",
+        description: modeDesc,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/weekly-runs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/post-drafts"] });
@@ -77,7 +93,7 @@ export default function Dashboard() {
     onError: (error: any) => {
       toast({
         title: "Generation failed",
-        description: error.message || "Failed to generate posts. Please try again.",
+        description: error.message || "Failed to generate content. Please try again.",
         variant: "destructive",
       });
     },
@@ -90,7 +106,8 @@ export default function Dashboard() {
   };
 
   const handleGenerate = () => {
-    if (isContrarianMode && !externalSignal.trim()) {
+    // For LinkedIn contrarian mode, need external signal
+    if (distributionMode === "linkedin" && isContrarianMode && !externalSignal.trim()) {
       toast({
         title: "External signal required",
         description: "Please provide the post or article you want to respond to.",
@@ -98,17 +115,19 @@ export default function Dashboard() {
       });
       return;
     }
-    if (!isContrarianMode && !rawInput.trim()) {
+    // All modes need raw input
+    if (!rawInput.trim()) {
       toast({
         title: "Input required",
-        description: "Please provide your weekly materials before generating.",
+        description: "Please provide your materials before generating.",
         variant: "destructive",
       });
       return;
     }
     generateMutation.mutate({ 
-      rawInput: isContrarianMode ? "" : rawInput, 
+      rawInput, 
       selectedContextIds,
+      distributionMode,
       isContrarianMode,
       externalSignal: isContrarianMode ? externalSignal : undefined,
       framingNote: isContrarianMode ? framingNote : undefined,
@@ -131,41 +150,87 @@ export default function Dashboard() {
     visual: "Visual Reference",
   };
 
+  const getPageTitle = () => {
+    if (distributionMode === "twitter") return "𝕏 Mode";
+    if (isContrarianMode) return "Be Contrary";
+    return "Weekly Run";
+  };
+
+  const getPageDescription = () => {
+    if (distributionMode === "twitter") {
+      return "Generate 1 newsletter section + 3 𝕏 posts from your weekly materials.";
+    }
+    if (isContrarianMode) {
+      return "Generate thoughtful contrarian takes in response to popular narratives.";
+    }
+    return "Turn your raw weekly materials into 4 high-quality LinkedIn post drafts.";
+  };
+
+  const getButtonLabel = () => {
+    if (distributionMode === "twitter") return "Generate 𝕏 Content";
+    if (isContrarianMode) return "Generate 4 Contrarian Posts";
+    return "Generate 4 Posts";
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6 max-w-6xl mx-auto">
+      {/* Distribution Mode Tabs */}
+      <Tabs 
+        value={distributionMode} 
+        onValueChange={(v) => setDistributionMode(v as DistributionMode)}
+        className="w-full"
+      >
+        <TabsList className="grid w-full max-w-xs grid-cols-2">
+          <TabsTrigger value="linkedin" data-testid="tab-linkedin">
+            <FileText className="h-4 w-4 mr-2" />
+            LinkedIn
+          </TabsTrigger>
+          <TabsTrigger value="twitter" data-testid="tab-twitter">
+            <SiX className="h-3 w-3 mr-2" />
+            𝕏 Mode
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isContrarianMode ? "Be Contrary" : "Weekly Run"}
+            {getPageTitle()}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {isContrarianMode 
-              ? "Generate thoughtful contrarian takes in response to popular narratives."
-              : "Turn your raw weekly materials into 4 high-quality LinkedIn post drafts."}
+            {getPageDescription()}
           </p>
-          {!isContrarianMode && (
+          {distributionMode === "linkedin" && !isContrarianMode && (
             <p className="text-xs text-muted-foreground/70 mt-2 italic">
               Tip: paste messy thoughts - clarity comes later.
             </p>
           )}
+          {distributionMode === "twitter" && (
+            <p className="text-xs text-muted-foreground/70 mt-2 italic">
+              No hashtags. No emojis. Clarity over cleverness.
+            </p>
+          )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Label htmlFor="contrarian-toggle" className="text-sm font-medium">
-            Be Contrary
-          </Label>
-          <Switch
-            id="contrarian-toggle"
-            checked={isContrarianMode}
-            onCheckedChange={setIsContrarianMode}
-            data-testid="toggle-contrarian-mode"
-          />
-        </div>
+        {distributionMode === "linkedin" && (
+          <div className="flex items-center gap-2 shrink-0">
+            <Label htmlFor="contrarian-toggle" className="text-sm font-medium">
+              Be Contrary
+            </Label>
+            <Switch
+              id="contrarian-toggle"
+              checked={isContrarianMode}
+              onCheckedChange={setIsContrarianMode}
+              data-testid="toggle-contrarian-mode"
+            />
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Input Section */}
         <div className="lg:col-span-2 space-y-4">
-          {isContrarianMode ? (
+          {/* LinkedIn Contrarian Mode */}
+          {distributionMode === "linkedin" && isContrarianMode ? (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">External Signal</CardTitle>
@@ -412,7 +477,7 @@ Examples:
             className="w-full"
             size="lg"
             onClick={handleGenerate}
-            disabled={generateMutation.isPending || (isContrarianMode ? !externalSignal.trim() : !rawInput.trim())}
+            disabled={generateMutation.isPending || !rawInput.trim() || (distributionMode === "linkedin" && isContrarianMode && !externalSignal.trim())}
             data-testid="button-generate"
           >
             {generateMutation.isPending ? (
@@ -420,15 +485,20 @@ Examples:
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Generating...
               </>
+            ) : distributionMode === "twitter" ? (
+              <>
+                <SiX className="h-3 w-3 mr-2" />
+                {getButtonLabel()}
+              </>
             ) : isContrarianMode ? (
               <>
                 <Zap className="h-4 w-4 mr-2" />
-                Generate 4 Contrarian Takes
+                {getButtonLabel()}
               </>
             ) : (
               <>
                 <Play className="h-4 w-4 mr-2" />
-                Generate 4 Drafts
+                {getButtonLabel()}
               </>
             )}
           </Button>

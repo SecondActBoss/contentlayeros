@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { extractSignals, generatePosts, generateContrarianPosts, extractPatterns } from "./lib/contentGenerator";
+import { extractSignals, generatePosts, generateContrarianPosts, generateTwitterContent, extractPatterns } from "./lib/contentGenerator";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { insertContextItemSchema, insertPostDraftSchema, insertFeedbackEntrySchema } from "@shared/schema";
@@ -11,6 +11,7 @@ import { z } from "zod";
 const weeklyRunInputSchema = z.object({
   rawInput: z.string(),
   selectedContextIds: z.array(z.string()).optional().default([]),
+  distributionMode: z.enum(["linkedin", "twitter"]).optional().default("linkedin"),
   isContrarianMode: z.boolean().optional().default(false),
   externalSignal: z.string().optional(),
   framingNote: z.string().optional(),
@@ -136,13 +137,13 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ error: parsed.error.message });
       }
-      const { rawInput, selectedContextIds, isContrarianMode, externalSignal, framingNote } = parsed.data;
+      const { rawInput, selectedContextIds, distributionMode, isContrarianMode, externalSignal, framingNote } = parsed.data;
 
       // Validate based on mode
-      if (isContrarianMode && !externalSignal?.trim()) {
+      if (isContrarianMode && distributionMode === "linkedin" && !externalSignal?.trim()) {
         return res.status(400).json({ error: "External signal is required for contrarian mode" });
       }
-      if (!isContrarianMode && !rawInput?.trim()) {
+      if (!rawInput?.trim()) {
         return res.status(400).json({ error: "Raw input is required" });
       }
 
@@ -161,13 +162,25 @@ export async function registerRoutes(
       let postData;
       let extractedSignals = null;
 
-      if (isContrarianMode) {
-        // Generate 4 contrarian posts
+      // Extract signals from raw input (used by all modes except pure contrarian)
+      extractedSignals = await extractSignals(rawInput, selectedContexts);
+
+      if (distributionMode === "twitter") {
+        // Generate 𝕏 content: 1 newsletter section + 3 posts
+        postData = await generateTwitterContent(
+          rawInput,
+          selectedContexts,
+          extractedSignals,
+          strongExamples,
+          isContrarianMode,
+          externalSignal,
+          framingNote
+        );
+      } else if (isContrarianMode) {
+        // Generate 4 contrarian LinkedIn posts
         postData = await generateContrarianPosts(externalSignal!, framingNote, selectedContexts, strongExamples);
       } else {
-        // Extract signals from raw input
-        extractedSignals = await extractSignals(rawInput, selectedContexts);
-        // Generate 4 regular posts
+        // Generate 4 regular LinkedIn posts
         postData = await generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples);
       }
 
@@ -176,12 +189,13 @@ export async function registerRoutes(
         weekNumber,
         rawInput: rawInput || "",
         selectedContextIds: selectedContextIds || [],
+        distributionMode: distributionMode || "linkedin",
         isContrarianMode: isContrarianMode || false,
         externalSignal: externalSignal || null,
         framingNote: framingNote || null,
       });
 
-      // Update with extracted signals (only for regular mode)
+      // Update with extracted signals
       if (extractedSignals) {
         await storage.updateWeeklyRun(weeklyRun.id, { extractedSignals });
       }
