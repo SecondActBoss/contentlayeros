@@ -1,4 +1,4 @@
-// Google Sheets integration for FounderEngineOS
+// Google Sheets integration for ContentLayerOS
 // Based on connection:conn_google-sheet integration
 
 import { google } from 'googleapis';
