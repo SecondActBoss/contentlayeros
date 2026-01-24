@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { extractSignals, generatePosts, generateContrarianPosts, generateTwitterContent, generateRawTweets, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
+import { extractSignals, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
 import { runThinkingGates } from "./lib/thinkingGates";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -225,8 +225,10 @@ export async function registerRoutes(
         // Generate 4 contrarian LinkedIn posts
         postData = await generateContrarianPosts(externalSignal!, framingNote, selectedContexts, strongExamples);
       } else {
-        // Generate 4 regular LinkedIn posts
-        postData = await generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples);
+        // Generate 4 regular LinkedIn posts + 3 carousels
+        const regularPosts = await generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples);
+        const carouselPosts = await generateCarousels(rawInput, selectedContexts, extractedSignals, strongExamples);
+        postData = [...regularPosts, ...carouselPosts];
       }
 
       // Create weekly run
@@ -258,6 +260,8 @@ export async function registerRoutes(
           storage.createPostDraft({
             ...post,
             weeklyRunId: weeklyRun.id,
+            // Cast carouselSlides to match expected jsonb type
+            carouselSlides: post.carouselSlides as any,
           })
         )
       );

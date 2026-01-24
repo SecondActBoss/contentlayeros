@@ -5,7 +5,8 @@
 ContentLayerOS is a context-aware content operating system for founders with two distribution modes: LinkedIn and 𝕏 (Twitter). The system transforms raw weekly materials (voice notes, call transcripts, build notes, reflections) into high-quality post drafts. This is a thinking and drafting system with human-in-the-loop design—no auto-posting.
 
 Key capabilities:
-- **LinkedIn Mode**: Weekly content generation for 4 post types (Educational Authority, Founder Story, Trend Translation, System Principle)
+- **LinkedIn Mode**: Weekly content generation for 4 post types (Educational Authority, Founder Story, Trend Translation, System Principle) + 3 LinkedIn Carousels
+- **LinkedIn Carousel Mode**: Generate 3 carousel drafts with distinct themes (Step-by-Step Framework, Myth vs Reality, Lessons from Experience) - each with 7 slides (hook, 5 content, CTA)
 - **"Be Contrary" mode** (LinkedIn): Generate thoughtful contrarian responses to popular narratives with 4 distinct angles
 - **𝕏 Mode**: Generate 1 newsletter section (300-500 words) + 3 Twitter posts (≤280 chars)
 - **Raw Tweet Mode** (𝕏): Generate 5-7 single tweets with variety across five types: POV Statement, Contrarian Reframe, Operator Reality, System Rule, Quiet Insight
@@ -49,8 +50,17 @@ Preferred communication style: Simple, everyday language.
 
 **LinkedIn Regular Mode:**
 1. Raw input + selected context items → Signal extraction (OpenAI)
-2. Extracted signals → 4 post drafts (one per post type)
+2. Extracted signals → 4 post drafts (one per post type) + 3 carousel drafts
 3. Pattern extraction from feedback for future improvements
+
+**LinkedIn Carousel Generation:**
+1. Uses same extracted signals as regular posts
+2. Generates 3 carousels with distinct themes:
+   - **Step-by-Step Framework**: Practical numbered guide walking through a process
+   - **Myth vs Reality**: Challenges misconceptions with operator-grounded truth
+   - **Lessons from Experience**: First-person insights from building/operating
+3. Each carousel has 7 slides: hook slide, 5 content slides, CTA slide
+4. Each slide contains headline (4-10 words) + body text (1-3 sentences)
 
 **LinkedIn "Be Contrary" Mode:**
 1. External signal (viral post, article, narrative) + optional framing note

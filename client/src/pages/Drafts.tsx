@@ -11,11 +11,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2 } from "lucide-react";
+import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers } from "lucide-react";
 import { SiX } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { PostDraft, WeeklyRun, DraftStatus } from "@shared/schema";
+import type { PostDraft, WeeklyRun, DraftStatus, CarouselSlide } from "@shared/schema";
 
 const POST_TYPE_CONFIG = {
   educational_authority: {
@@ -78,6 +78,18 @@ const POST_TYPE_CONFIG = {
     description: "Single tweet, ≤280 chars, operator tone",
     platform: "twitter",
   },
+  linkedin_carousel: {
+    icon: Layers,
+    label: "LinkedIn Carousel",
+    description: "Multi-slide visual content for high engagement",
+    platform: "linkedin",
+  },
+};
+
+const CAROUSEL_THEME_LABELS: Record<string, string> = {
+  step_by_step: "Step-by-Step Framework",
+  myth_busting: "Myth vs Reality",
+  lessons_learned: "Lessons from Experience",
 };
 
 const RAW_TWEET_TYPE_LABELS: Record<string, string> = {
@@ -165,7 +177,18 @@ export default function Drafts() {
   });
 
   const handleCopyDraft = async (draft: PostDraft) => {
-    const fullPost = `${draft.hook}\n${draft.rehook}\n\n${draft.body}${draft.cta ? `\n\n${draft.cta}` : ""}`;
+    let fullPost: string;
+    
+    if (draft.postType === "linkedin_carousel" && draft.carouselSlides) {
+      const slides = draft.carouselSlides as CarouselSlide[];
+      const slidesText = slides.map(slide => 
+        `[Slide ${slide.slideNumber} - ${slide.slideType}]\n${slide.headline}\n${slide.body}`
+      ).join("\n\n");
+      fullPost = `${draft.hook}\n\n${slidesText}${draft.coreInsight ? `\n\nCore Insight: ${draft.coreInsight}` : ""}`;
+    } else {
+      fullPost = `${draft.hook}\n${draft.rehook}\n\n${draft.body}${draft.cta ? `\n\n${draft.cta}` : ""}`;
+    }
+    
     await navigator.clipboard.writeText(fullPost);
     setCopiedId(draft.id);
     toast({ title: "Copied", description: "Post copied to clipboard." });
@@ -332,16 +355,58 @@ export default function Drafts() {
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col">
                         <div className="flex-1 space-y-2">
-                          <p className="font-medium text-sm">{draft.hook}</p>
-                          <p className="text-sm text-muted-foreground">{draft.rehook}</p>
-                          <Separator className="my-2" />
-                          <ScrollArea className="h-[120px]">
-                            <p className="text-sm whitespace-pre-wrap">{draft.body}</p>
-                          </ScrollArea>
-                          {draft.cta && (
-                            <p className="text-xs text-muted-foreground italic mt-2">
-                              {draft.cta}
-                            </p>
+                          {/* Carousel slides display */}
+                          {draft.postType === "linkedin_carousel" && draft.carouselSlides ? (
+                            <>
+                              <p className="font-medium text-sm">{draft.hook}</p>
+                              {draft.carouselTheme && (
+                                <Badge variant="outline" className="text-xs">
+                                  {CAROUSEL_THEME_LABELS[draft.carouselTheme] || draft.carouselTheme}
+                                </Badge>
+                              )}
+                              <Separator className="my-2" />
+                              <ScrollArea className="h-[180px]">
+                                <div className="space-y-3" data-testid={`carousel-slides-${draft.id}`}>
+                                  {(draft.carouselSlides as CarouselSlide[]).map((slide, idx) => (
+                                    <div 
+                                      key={idx} 
+                                      className="p-2 rounded-md border bg-muted/30"
+                                      data-testid={`carousel-slide-${draft.id}-${idx}`}
+                                    >
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <Badge variant="secondary" className="text-xs px-1.5">
+                                          {slide.slideNumber}
+                                        </Badge>
+                                        <span className="text-xs text-muted-foreground capitalize">
+                                          {slide.slideType}
+                                        </span>
+                                      </div>
+                                      <p className="font-medium text-sm">{slide.headline}</p>
+                                      <p className="text-xs text-muted-foreground mt-1">{slide.body}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                              {draft.coreInsight && (
+                                <p className="text-xs text-muted-foreground italic mt-2">
+                                  Core insight: {draft.coreInsight}
+                                </p>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <p className="font-medium text-sm">{draft.hook}</p>
+                              <p className="text-sm text-muted-foreground">{draft.rehook}</p>
+                              <Separator className="my-2" />
+                              <ScrollArea className="h-[120px]">
+                                <p className="text-sm whitespace-pre-wrap">{draft.body}</p>
+                              </ScrollArea>
+                              {draft.cta && (
+                                <p className="text-xs text-muted-foreground italic mt-2">
+                                  {draft.cta}
+                                </p>
+                              )}
+                            </>
                           )}
                           {/* Phoenix Metadata for 𝕏 posts */}
                           {config?.platform === "twitter" && (draft.replyLikelihood || draft.dwellLikelihood || draft.fatigueRisk) && (

@@ -267,6 +267,8 @@ Return ONLY valid JSON, no markdown.`;
         dwellLikelihood: null,
         fatigueRisk: null,
         authorEngagementReminder: null,
+        carouselSlides: null,
+        carouselTheme: null,
       });
     } catch {
       posts.push({
@@ -284,6 +286,8 @@ Return ONLY valid JSON, no markdown.`;
         dwellLikelihood: null,
         fatigueRisk: null,
         authorEngagementReminder: null,
+        carouselSlides: null,
+        carouselTheme: null,
       });
     }
   }
@@ -481,6 +485,8 @@ Return ONLY valid JSON, no markdown.`;
         dwellLikelihood: null,
         fatigueRisk: null,
         authorEngagementReminder: null,
+        carouselSlides: null,
+        carouselTheme: null,
       });
     } catch {
       posts.push({
@@ -498,11 +504,158 @@ Return ONLY valid JSON, no markdown.`;
         dwellLikelihood: null,
         fatigueRisk: null,
         authorEngagementReminder: null,
+        carouselSlides: null,
+        carouselTheme: null,
       });
     }
   }
 
   return posts;
+}
+
+// LinkedIn Carousel theme definitions for generating 3 distinct carousels
+const CAROUSEL_THEMES = [
+  {
+    theme: "step_by_step",
+    name: "Step-by-Step Framework",
+    description: "A practical, numbered guide that walks through a process or methodology. Easy to follow, highly actionable.",
+    slideGuidance: "Each slide should be one clear step with a memorable headline and 1-2 sentence explanation.",
+  },
+  {
+    theme: "myth_busting",
+    name: "Myth vs Reality",
+    description: "Challenges common misconceptions with operator-grounded truth. Each slide debunks one myth.",
+    slideGuidance: "Slide format: 'Myth: [common belief]' then 'Reality: [what operators actually experience]'",
+  },
+  {
+    theme: "lessons_learned",
+    name: "Lessons from Experience",
+    description: "First-person insights from building, operating, or scaling. Personal but universal.",
+    slideGuidance: "Each slide is one lesson with context. Keep it honest and specific, not generic advice.",
+  },
+];
+
+// Generate 3 LinkedIn Carousel drafts
+export async function generateCarousels(
+  rawInput: string,
+  contexts: ContextItem[],
+  signals: ExtractedSignals,
+  strongExamples: FeedbackEntry[] = []
+): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
+  const contextString = contexts
+    .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
+    .join("\n\n");
+
+  const signalsString = `
+MONETIZABLE EXPERTISE:
+${signals.expertise.map((e) => `- ${e}`).join("\n")}
+
+FOUNDER STORIES:
+${signals.stories.map((s) => `- ${s}`).join("\n")}
+
+TRENDS & ARBITRAGE:
+${signals.trends.map((t) => `- ${t}`).join("\n")}
+
+STRONG OPINIONS:
+${signals.opinions.map((o) => `- ${o}`).join("\n")}`;
+
+  const carousels: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
+
+  for (const themeConfig of CAROUSEL_THEMES) {
+    const prompt = `You are a LinkedIn carousel content creator for a founder. Generate a ${themeConfig.name} carousel.
+
+CONTEXT:
+${contextString || "Write for a professional, operator-focused audience."}
+
+EXTRACTED SIGNALS:
+${signalsString}
+
+=== CAROUSEL TYPE: ${themeConfig.name} ===
+${themeConfig.description}
+
+SLIDE GUIDANCE:
+${themeConfig.slideGuidance}
+
+=== CAROUSEL STRUCTURE REQUIREMENTS ===
+
+Generate a 7-slide carousel with this structure:
+1. HOOK SLIDE (Slide 1): A bold statement or question that stops the scroll. 4-8 words max.
+2. CONTENT SLIDES (Slides 2-6): The core content following the theme format. Each slide has:
+   - headline: 4-10 words, the key point
+   - body: 1-3 sentences expanding on the headline
+3. CTA SLIDE (Slide 7): A clear call-to-action. What should they do next?
+
+=== TONE & STYLE RULES ===
+- Calm, authoritative operator voice
+- NO emojis
+- NO hype language ("game-changing", "revolutionary")
+- Short, punchy text (carousels are visual, text must be scannable)
+- Each slide should stand alone but flow together
+
+=== OUTPUT FORMAT ===
+Return a JSON object with:
+- theme: "${themeConfig.theme}"
+- title: Overall carousel topic (5-12 words)
+- coreInsight: The key takeaway in one sentence
+- slides: Array of 7 objects, each with:
+  - slideNumber: 1-7
+  - headline: The main text (4-10 words)
+  - body: Supporting text (1-3 sentences, keep brief for carousel format)
+  - slideType: "hook" (slide 1), "content" (slides 2-6), or "cta" (slide 7)
+
+Return ONLY valid JSON, no markdown.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+    });
+
+    const content = response.choices[0]?.message?.content || "{}";
+    try {
+      const parsed = JSON.parse(content);
+      
+      carousels.push({
+        postType: "linkedin_carousel",
+        contrarianAngle: null,
+        rawTweetType: null,
+        hook: parsed.title || `${themeConfig.name} Carousel`,
+        rehook: themeConfig.name,
+        body: "", // Body not used for carousels - slides contain the content
+        coreInsight: parsed.coreInsight || "",
+        cta: null,
+        status: "draft",
+        postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
+        carouselSlides: parsed.slides || [],
+        carouselTheme: themeConfig.theme,
+      });
+    } catch {
+      carousels.push({
+        postType: "linkedin_carousel",
+        contrarianAngle: null,
+        rawTweetType: null,
+        hook: "Carousel Generation Failed",
+        rehook: themeConfig.name,
+        body: "",
+        coreInsight: "",
+        cta: null,
+        status: "draft",
+        postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
+        carouselSlides: [],
+        carouselTheme: themeConfig.theme,
+      });
+    }
+  }
+
+  return carousels;
 }
 
 // Generate 𝕏 (Twitter) content: 1 newsletter section + 3 posts
@@ -635,6 +788,8 @@ Return ONLY valid JSON, no markdown.`;
       dwellLikelihood: "high",
       fatigueRisk: "low",
       authorEngagementReminder: "Reply to comments in the first 15-30 minutes to boost conversation signals.",
+      carouselSlides: null,
+      carouselTheme: null,
     });
   } catch {
     posts.push({
@@ -652,6 +807,8 @@ Return ONLY valid JSON, no markdown.`;
       dwellLikelihood: null,
       fatigueRisk: null,
       authorEngagementReminder: null,
+      carouselSlides: null,
+      carouselTheme: null,
     });
   }
 
@@ -761,6 +918,8 @@ Return ONLY valid JSON, no markdown.`;
         dwellLikelihood: isParadox ? "high" : "medium",
         fatigueRisk: "low",
         authorEngagementReminder: "Reply to comments in the first 15-30 minutes to boost conversation signals.",
+        carouselSlides: null,
+        carouselTheme: null,
       });
     } catch {
       posts.push({
@@ -778,6 +937,8 @@ Return ONLY valid JSON, no markdown.`;
         dwellLikelihood: null,
         fatigueRisk: null,
         authorEngagementReminder: null,
+        carouselSlides: null,
+        carouselTheme: null,
       });
     }
   }
@@ -1086,6 +1247,8 @@ Return ONLY valid JSON, no markdown.`;
         dwellLikelihood: isQuietInsight ? "high" : "medium",
         fatigueRisk: "low",
         authorEngagementReminder: "Reply to comments in the first 15-30 minutes to boost conversation signals.",
+        carouselSlides: null,
+        carouselTheme: null,
       });
     }
   } catch {
@@ -1105,6 +1268,8 @@ Return ONLY valid JSON, no markdown.`;
       dwellLikelihood: null,
       fatigueRisk: null,
       authorEngagementReminder: null,
+      carouselSlides: null,
+      carouselTheme: null,
     });
   }
 

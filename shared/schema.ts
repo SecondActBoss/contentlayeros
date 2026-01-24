@@ -51,6 +51,7 @@ export type PostType =
   | "trend_translation" 
   | "system_principle" 
   | "contrarian_pov"
+  | "linkedin_carousel"
   // 𝕏 (Twitter) post types
   | "newsletter_section"
   | "twitter_pov"
@@ -58,6 +59,14 @@ export type PostType =
   | "twitter_operator"
   // Raw Tweet mode
   | "raw_tweet";
+
+// LinkedIn Carousel slide structure
+export interface CarouselSlide {
+  slideNumber: number;
+  headline: string;
+  body: string;
+  slideType: "hook" | "content" | "cta";
+}
 
 // Contrarian angle sub-types
 export type ContrarianAngle = "calm_reframe" | "operator_reality" | "systems_view" | "consequence_view";
@@ -191,6 +200,9 @@ export const postDrafts = pgTable("post_drafts", {
   dwellLikelihood: text("dwell_likelihood"), // high, medium, low - predicted read depth
   fatigueRisk: text("fatigue_risk"), // low, medium, high - risk of mute/not interested
   authorEngagementReminder: text("author_engagement_reminder"), // Reminder for author to engage
+  // LinkedIn Carousel data (only for linkedin_carousel post type)
+  carouselSlides: jsonb("carousel_slides"), // Array of CarouselSlide objects
+  carouselTheme: text("carousel_theme"), // Theme/topic of the carousel
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
