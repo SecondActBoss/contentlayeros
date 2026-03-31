@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { extractSignals, extractCoreIdea, generateSourceArticle, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, generateAuthorityArticle, generateTriPublishPack, generateQuoteReposts, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
+import { extractSignals, extractCoreIdea, generateSourceArticle, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, generateAuthorityArticle, generateTriPublishPack, generateQuoteReposts, generateArticleAnalysis, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
 import { runThinkingGates } from "./lib/thinkingGates";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -222,6 +222,21 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error generating quote reposts:", error);
       res.status(500).json({ error: "Failed to generate quote reposts" });
+    }
+  });
+
+  // Article Analysis: extract concepts and generate repurpose suggestions
+  app.post("/api/article-analysis", async (req, res) => {
+    try {
+      const { articleTitle, articleBody } = req.body;
+      if (!articleBody?.trim()) {
+        return res.status(400).json({ error: "Article body is required" });
+      }
+      const analysis = await generateArticleAnalysis(articleTitle || "", articleBody);
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error generating article analysis:", error);
+      res.status(500).json({ error: "Failed to analyze article" });
     }
   });
 

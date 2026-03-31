@@ -2027,3 +2027,78 @@ Return ONLY valid JSON, no markdown.`;
 
   return results;
 }
+
+export async function generateArticleAnalysis(
+  articleTitle: string,
+  articleBody: string
+): Promise<{
+  namedConcepts: string[];
+  coreThesis: string;
+  keyPhrases: string[];
+  linkedinHooks: string[];
+  xHooks: string[];
+  contrarianAngles: string[];
+}> {
+  const prompt = `You are a content strategist analyzing an authority article to extract key assets and generate repurpose suggestions.
+
+=== ARTICLE TITLE ===
+${articleTitle}
+
+=== ARTICLE BODY ===
+${articleBody}
+
+=== TASK ===
+Extract and generate the following:
+
+1. NAMED CONCEPTS: Any explicitly named frameworks, concepts, or models introduced in the article (e.g., "Coordination Debt", "Silent Revenue Loss"). List 1–3.
+
+2. CORE THESIS: A single declarative sentence that captures the article's central argument. No hedge words.
+
+3. KEY PHRASES: 4–6 memorable short phrases or lines from the article worth reusing in other content. Prefer concrete, punchy language.
+
+4. LINKEDIN HOOKS: 3 strong opening lines for LinkedIn posts derived from this article. Each should be 1–2 sentences. Conversational, opinionated, no emojis.
+
+5. X HOOKS: 3 single tweets (≤280 chars) derived from this article. Operator tone. No hashtags, no emojis, no thread language.
+
+6. CONTRARIAN ANGLES: 2 thoughtful counter-perspectives or tensions someone could argue against this article. Not refutations — productive disagreements that deepen the thinking.
+
+=== OUTPUT FORMAT ===
+Return a JSON object:
+{
+  "namedConcepts": ["concept 1", "concept 2"],
+  "coreThesis": "The central argument in one declarative sentence.",
+  "keyPhrases": ["phrase 1", "phrase 2", "phrase 3", "phrase 4"],
+  "linkedinHooks": ["hook 1", "hook 2", "hook 3"],
+  "xHooks": ["tweet 1", "tweet 2", "tweet 3"],
+  "contrarianAngles": ["angle 1", "angle 2"]
+}
+
+Return ONLY valid JSON, no markdown, no explanation.`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+  });
+
+  try {
+    const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+    return {
+      namedConcepts: parsed.namedConcepts || [],
+      coreThesis: parsed.coreThesis || "",
+      keyPhrases: parsed.keyPhrases || [],
+      linkedinHooks: parsed.linkedinHooks || [],
+      xHooks: parsed.xHooks || [],
+      contrarianAngles: parsed.contrarianAngles || [],
+    };
+  } catch {
+    return {
+      namedConcepts: [],
+      coreThesis: "",
+      keyPhrases: [],
+      linkedinHooks: [],
+      xHooks: [],
+      contrarianAngles: [],
+    };
+  }
+}

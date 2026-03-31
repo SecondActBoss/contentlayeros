@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap, Newspaper, MessageCircle, ChevronDown, Brain, Target, Search, Database, ShoppingCart, Focus, BookOpen } from "lucide-react";
+import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap, Newspaper, MessageCircle, ChevronDown, Brain, Target, Search, Database, ShoppingCart, Focus, BookOpen, Check, Copy } from "lucide-react";
 import { SiX, SiLinkedin } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +60,15 @@ const CONTRARIAN_ANGLE_LABELS: Record<string, string> = {
   consequence_view: "Consequence View",
 };
 
+type ArticleAnalysis = {
+  namedConcepts: string[];
+  coreThesis: string;
+  keyPhrases: string[];
+  linkedinHooks: string[];
+  xHooks: string[];
+  contrarianAngles: string[];
+};
+
 export default function Dashboard() {
   const { toast } = useToast();
   const [rawInput, setRawInput] = useState("");
@@ -81,10 +90,26 @@ export default function Dashboard() {
   const [gateContentInfrastructure, setGateContentInfrastructure] = useState(false);
   const [gateSilentSalesMap, setGateSilentSalesMap] = useState(false);
   const [gateWeeklyOperatorFocus, setGateWeeklyOperatorFocus] = useState(false);
+  const [articleAnalysis, setArticleAnalysis] = useState<ArticleAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [copiedAnalysisItem, setCopiedAnalysisItem] = useState<string | null>(null);
 
   const { data: contextItems = [], isLoading: loadingContext } = useQuery<ContextItem[]>({
     queryKey: ["/api/context-items"],
   });
+
+  const runArticleAnalysis = async (articleTitle: string, articleBody: string) => {
+    setIsAnalyzing(true);
+    try {
+      const response = await apiRequest("POST", "/api/article-analysis", { articleTitle, articleBody });
+      const data = await response.json();
+      setArticleAnalysis(data);
+    } catch {
+      // silently fail — analysis is non-critical
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const generateMutation = useMutation({
     mutationFn: async (data: { 
@@ -111,6 +136,7 @@ export default function Dashboard() {
       setGeneratedPosts(data.posts || []);
       setExtractedSignals(data.extractedSignals || null);
       setGateOutputs(data.gateOutputs || null);
+      setArticleAnalysis(null);
       const postCount = data.posts?.length || 0;
       let modeDesc: string;
       if (distributionMode === "twitter") {
@@ -121,6 +147,10 @@ export default function Dashboard() {
         }
       } else if (isAuthorityArticleMode) {
         modeDesc = `Authority article generated and used as the source for ${postCount - 1} content drafts.`;
+        const authorityDraft = data.posts?.find((p: any) => p.postType === "authority_article");
+        if (authorityDraft) {
+          runArticleAnalysis(authorityDraft.hook, authorityDraft.body);
+        }
       } else if (isContrarianMode) {
         modeDesc = `${postCount} contrarian LinkedIn post drafts have been created.`;
       } else {
@@ -213,7 +243,7 @@ export default function Dashboard() {
     if (distributionMode === "twitter") {
       return isRawTweetMode ? "Raw Tweet Mode" : "𝕏 Mode";
     }
-    if (isAuthorityArticleMode) return "Authority Article";
+    if (isAuthorityArticleMode) return "Authority Article (Source of Truth)";
     if (isContrarianMode) return "Be Contrary";
     return "Content Run";
   };
@@ -226,7 +256,7 @@ export default function Dashboard() {
       return "Generate 1 newsletter section + 3 𝕏 posts from your weekly materials.";
     }
     if (isAuthorityArticleMode) {
-      return "Generate a long-form authority article, then derive all posts and carousels from it for full consistency.";
+      return "This article becomes the foundation for all posts, carousels, and X content.";
     }
     if (isContrarianMode) {
       return "Generate thoughtful contrarian takes in response to popular narratives.";
@@ -388,7 +418,7 @@ Examples:
                   Voice notes, call transcripts, build notes, reflections, links, opinions
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <Textarea
                   placeholder="Paste your weekly materials here...
 
@@ -405,6 +435,11 @@ Examples:
                   onChange={(e) => setRawInput(e.target.value)}
                   data-testid="input-raw-materials"
                 />
+                {isAuthorityArticleMode && (
+                  <p className="text-xs text-muted-foreground italic" data-testid="hint-concept-naming">
+                    Tip: Strong articles often introduce a named concept (e.g., "Coordination Debt").
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
@@ -424,7 +459,7 @@ Examples:
               </CardHeader>
               <CardContent>
                 <Textarea
-                  placeholder="e.g., 'missed calls and silent revenue loss' or 'AI Employees vs AI tools — why the distinction matters'"
+                  placeholder="Define the tension or idea (e.g., 'Missed calls = silent revenue loss' or 'AI Employees vs tools')"
                   className="min-h-[80px] resize-none text-sm"
                   value={articleAngle}
                   onChange={(e) => setArticleAngle(e.target.value)}
@@ -579,8 +614,206 @@ Examples:
             </Card>
           </Collapsible>
 
-          {/* Generated Posts Preview */}
-          {generatedPosts.length > 0 && (
+          {/* Authority Article — 3-tab strategic view */}
+          {generatedPosts.some((p) => p.postType === "authority_article") && (() => {
+            const authorityDraft = generatedPosts.find((p) => p.postType === "authority_article")!;
+            const derivedPosts = generatedPosts.filter((p) => p.postType !== "authority_article");
+            const copyItem = async (text: string, id: string) => {
+              await navigator.clipboard.writeText(text);
+              setCopiedAnalysisItem(id);
+              setTimeout(() => setCopiedAnalysisItem(null), 2000);
+            };
+            return (
+              <>
+                <Card data-testid="card-authority-article">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      <CardTitle className="text-base">{authorityDraft.hook}</CardTitle>
+                    </div>
+                    <CardDescription>Strategic asset — foundation for all content in this run</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs defaultValue="article">
+                      <TabsList className="mb-4">
+                        <TabsTrigger value="article" data-testid="tab-article">Article</TabsTrigger>
+                        <TabsTrigger value="concepts" data-testid="tab-concepts">Key Concepts</TabsTrigger>
+                        <TabsTrigger value="repurpose" data-testid="tab-repurpose">Repurpose</TabsTrigger>
+                      </TabsList>
+
+                      {/* Article Tab */}
+                      <TabsContent value="article">
+                        <ScrollArea className="h-[360px] pr-2">
+                          <div className="space-y-3 text-sm leading-relaxed whitespace-pre-line" data-testid="article-body">
+                            {authorityDraft.body}
+                          </div>
+                        </ScrollArea>
+                        <div className="mt-3 flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyItem(`${authorityDraft.hook}\n\n${authorityDraft.body}`, "article")}
+                            data-testid="button-copy-article"
+                          >
+                            {copiedAnalysisItem === "article" ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+                            {copiedAnalysisItem === "article" ? "Copied" : "Copy Article"}
+                          </Button>
+                          {authorityDraft.coreInsight && (
+                            <Badge variant="secondary" className="text-xs" data-testid="badge-named-concept">
+                              {authorityDraft.coreInsight}
+                            </Badge>
+                          )}
+                        </div>
+                      </TabsContent>
+
+                      {/* Key Concepts Tab */}
+                      <TabsContent value="concepts">
+                        {isAnalyzing ? (
+                          <div className="flex items-center gap-2 py-8 text-muted-foreground text-sm">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Extracting concepts...
+                          </div>
+                        ) : articleAnalysis ? (
+                          <div className="space-y-5 text-sm">
+                            {articleAnalysis.namedConcepts.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Named Concepts</h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {articleAnalysis.namedConcepts.map((c, i) => (
+                                    <Badge key={i} variant="default" className="text-xs" data-testid={`concept-${i}`}>{c}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {articleAnalysis.coreThesis && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Core Thesis</h4>
+                                <p className="text-sm font-medium" data-testid="core-thesis">{articleAnalysis.coreThesis}</p>
+                              </div>
+                            )}
+                            {articleAnalysis.keyPhrases.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Key Phrases</h4>
+                                <div className="space-y-1">
+                                  {articleAnalysis.keyPhrases.map((phrase, i) => (
+                                    <div key={i} className="flex items-center gap-2 p-2 rounded bg-muted/50" data-testid={`key-phrase-${i}`}>
+                                      <span className="text-sm flex-1">"{phrase}"</span>
+                                      <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => copyItem(phrase, `phrase-${i}`)}>
+                                        {copiedAnalysisItem === `phrase-${i}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground py-4">Analysis unavailable.</p>
+                        )}
+                      </TabsContent>
+
+                      {/* Repurpose Suggestions Tab */}
+                      <TabsContent value="repurpose">
+                        {isAnalyzing ? (
+                          <div className="flex items-center gap-2 py-8 text-muted-foreground text-sm">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Generating repurpose suggestions...
+                          </div>
+                        ) : articleAnalysis ? (
+                          <div className="space-y-5 text-sm">
+                            {articleAnalysis.linkedinHooks.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                                  <SiLinkedin className="h-3 w-3" /> LinkedIn Hooks
+                                </h4>
+                                <div className="space-y-2">
+                                  {articleAnalysis.linkedinHooks.map((hook, i) => (
+                                    <div key={i} className="flex items-start gap-2 p-2 rounded border" data-testid={`linkedin-hook-${i}`}>
+                                      <p className="text-sm flex-1">{hook}</p>
+                                      <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0" onClick={() => copyItem(hook, `lhook-${i}`)}>
+                                        {copiedAnalysisItem === `lhook-${i}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {articleAnalysis.xHooks.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                                  <SiX className="h-3 w-3" /> 𝕏 Hooks
+                                </h4>
+                                <div className="space-y-2">
+                                  {articleAnalysis.xHooks.map((hook, i) => (
+                                    <div key={i} className="flex items-start gap-2 p-2 rounded border" data-testid={`x-hook-${i}`}>
+                                      <p className="text-sm flex-1">{hook}</p>
+                                      <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0" onClick={() => copyItem(hook, `xhook-${i}`)}>
+                                        {copiedAnalysisItem === `xhook-${i}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {articleAnalysis.contrarianAngles.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Contrarian Angles</h4>
+                                <div className="space-y-2">
+                                  {articleAnalysis.contrarianAngles.map((angle, i) => (
+                                    <div key={i} className="flex items-start gap-2 p-2 rounded border border-dashed" data-testid={`contrarian-angle-${i}`}>
+                                      <p className="text-sm flex-1">{angle}</p>
+                                      <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0" onClick={() => copyItem(angle, `angle-${i}`)}>
+                                        {copiedAnalysisItem === `angle-${i}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground py-4">Analysis unavailable.</p>
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
+
+                {/* Derived posts grid */}
+                {derivedPosts.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Derived Content</CardTitle>
+                      <CardDescription>
+                        4 posts + 3 carousels generated from the authority article — review in Drafts
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {derivedPosts.map((post) => {
+                          const Icon = POST_TYPE_ICONS[post.postType as keyof typeof POST_TYPE_ICONS] || FileText;
+                          return (
+                            <div key={post.id} className="p-3 rounded-md border bg-card" data-testid={`preview-post-${post.postType}`}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Icon className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-xs font-medium">
+                                  {POST_TYPE_LABELS[post.postType as keyof typeof POST_TYPE_LABELS]}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium line-clamp-2">{post.hook}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            );
+          })()}
+
+          {/* Generated Posts Preview — non-authority modes */}
+          {generatedPosts.length > 0 && !generatedPosts.some((p) => p.postType === "authority_article") && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Generated Drafts</CardTitle>
@@ -589,12 +822,6 @@ Examples:
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {generatedPosts.some((p) => p.postType === "authority_article") && (
-                  <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-muted/60 border text-sm" data-testid="indicator-authority-source">
-                    <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-muted-foreground">Authority Article generated — used as source for all content below</span>
-                  </div>
-                )}
                 <div className="grid gap-3 sm:grid-cols-2">
                   {generatedPosts.map((post) => {
                     const Icon = POST_TYPE_ICONS[post.postType as keyof typeof POST_TYPE_ICONS] || FileText;
