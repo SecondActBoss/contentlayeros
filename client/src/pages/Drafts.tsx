@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers, BookOpen, Globe, Package, Repeat2 } from "lucide-react";
+import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers, BookOpen, Globe, Package, Repeat2, CheckCircle2, Circle } from "lucide-react";
 import { SiX, SiLinkedin } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -196,6 +196,8 @@ export default function Drafts() {
   const [quoteRepostingRunId, setQuoteRepostingRunId] = useState<string | null>(null);
   const [executionPlanMode, setExecutionPlanMode] = useState(false);
   const [copiedFirstComment, setCopiedFirstComment] = useState<string | null>(null);
+  const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
+  const [draftChecklists, setDraftChecklists] = useState<Record<string, { posted: boolean; firstComment: boolean; replied: boolean }>>({});
 
   const { data: drafts = [], isLoading } = useQuery<PostDraft[]>({
     queryKey: ["/api/post-drafts"],
@@ -359,6 +361,26 @@ export default function Drafts() {
     setTimeout(() => setCopiedFirstComment(null), 2000);
   };
 
+  const toggleChecklist = (draftId: string, key: "posted" | "firstComment" | "replied") => {
+    setDraftChecklists(prev => ({
+      ...prev,
+      [draftId]: {
+        posted: false, firstComment: false, replied: false,
+        ...prev[draftId],
+        [key]: !(prev[draftId]?.[key]),
+      },
+    }));
+  };
+
+  const toggleComplete = (draftId: string) => {
+    setCompletedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(draftId)) next.delete(draftId);
+      else next.add(draftId);
+      return next;
+    });
+  };
+
   const renderDraftBody = (draft: PostDraft) => {
     const isTripack = draft.postType.startsWith("tripack_");
     if (draft.postType === "authority_article" || isTripack) {
@@ -434,6 +456,61 @@ export default function Drafts() {
     const section2Drafts = runDrafts.filter(d => !day1Ids.has(d.id) && d.postType !== "authority_article");
     const dayLabels = ["Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"];
 
+    const allTrackedDrafts = [
+      ...(day1Article ? [day1Article] : []),
+      ...(day1FeedPost ? [day1FeedPost] : []),
+      ...(xArticleDraft ? [xArticleDraft] : []),
+      ...section2Drafts,
+    ];
+    const completedCount = allTrackedDrafts.filter(d => completedItems.has(d.id)).length;
+    const totalCount = allTrackedDrafts.length;
+    const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+    const checklistSection = (draft: PostDraft) => {
+      const cl = draftChecklists[draft.id] || { posted: false, firstComment: false, replied: false };
+      const isCompleted = completedItems.has(draft.id);
+      const checklistItems: { key: "posted" | "firstComment" | "replied"; label: string }[] = [
+        { key: "posted", label: "Posted" },
+        { key: "firstComment", label: "1st Comment Added" },
+        { key: "replied", label: "Replied to comments (first 30 min)" },
+      ];
+      return (
+        <div className="space-y-3 pt-3 border-t" data-testid={`checklist-${draft.id}`}>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Execution Checklist</p>
+          <div className="space-y-2">
+            {checklistItems.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => toggleChecklist(draft.id, key)}
+                className="flex items-center gap-2.5 w-full text-left hover:opacity-75 transition-opacity"
+                data-testid={`checklist-${key}-${draft.id}`}
+              >
+                {cl[key] ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                ) : (
+                  <Circle className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                )}
+                <span className={`text-sm ${cl[key] ? "line-through text-muted-foreground" : ""}`}>{label}</span>
+              </button>
+            ))}
+          </div>
+          <Button
+            size="sm"
+            variant={isCompleted ? "secondary" : "default"}
+            className="w-full"
+            onClick={() => toggleComplete(draft.id)}
+            data-testid={`button-mark-complete-${draft.id}`}
+          >
+            {isCompleted ? (
+              <><Check className="h-4 w-4 mr-2" />Completed — click to undo</>
+            ) : (
+              "Mark Complete"
+            )}
+          </Button>
+        </div>
+      );
+    };
+
     const stepCircle = (n: number) => (
       <div className="absolute left-0 top-3 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">{n}</div>
     );
@@ -463,6 +540,31 @@ export default function Drafts() {
 
     return (
       <div className="space-y-10" data-testid="execution-plan-view">
+        {/* ── PROGRESS BAR ─────────────────────────────────────────────────── */}
+        {totalCount > 0 && (
+          <div className="rounded-xl border bg-card p-4 space-y-2.5" data-testid="execution-progress-bar">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Execution Progress</span>
+              <span className="text-sm font-semibold text-primary" data-testid="progress-label">
+                {completedCount} / {totalCount} completed
+              </span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
+                data-testid="progress-fill"
+              />
+            </div>
+            {completedCount === totalCount && totalCount > 0 && (
+              <p className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1.5" data-testid="progress-complete-msg">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                All items complete — system executed.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* ── SECTION 1: DAY 1 LAUNCH ───────────────────────────────────────── */}
         {(day1Article || day1FeedPost || xArticleDraft) && (
           <div>
@@ -476,20 +578,24 @@ export default function Drafts() {
               {day1Article && (
                 <div className="relative pl-10" data-testid="execution-step-article">
                   {stepCircle(1)}
-                  <Card>
+                  <Card className={`transition-opacity duration-300 ${completedItems.has(day1Article.id) ? "opacity-50" : ""}`}>
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="text-xs font-semibold text-primary uppercase tracking-wide">Publish FIRST</p>
                           <CardTitle className="text-sm font-medium mt-0.5">{linkedinPulseDraft ? "LinkedIn Pulse Article" : "LinkedIn Authority Article"}</CardTitle>
                         </div>
-                        <Badge variant={STATUS_COLORS[day1Article.status as keyof typeof STATUS_COLORS]}>{day1Article.status}</Badge>
+                        <div className="flex items-center gap-2">
+                          {completedItems.has(day1Article.id) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                          <Badge variant={STATUS_COLORS[day1Article.status as keyof typeof STATUS_COLORS]}>{day1Article.status}</Badge>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {renderDraftBody(day1Article)}
                       <p className="text-xs text-muted-foreground italic">Post this as a LinkedIn Article. Builds authority and long-term visibility (SEO + AI citations).</p>
                       {actionRow(day1Article)}
+                      {checklistSection(day1Article)}
                     </CardContent>
                   </Card>
                 </div>
@@ -499,7 +605,7 @@ export default function Drafts() {
               {day1FeedPost && (
                 <div className="relative pl-10" data-testid="execution-step-feed-post">
                   {stepCircle(2)}
-                  <Card>
+                  <Card className={`transition-opacity duration-300 ${completedItems.has(day1FeedPost.id) ? "opacity-50" : ""}`}>
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -507,7 +613,10 @@ export default function Drafts() {
                           <CardTitle className="text-sm font-medium mt-0.5">#1 LinkedIn Feed Post</CardTitle>
                           <p className="text-xs text-muted-foreground mt-0.5">{POST_TYPE_CONFIG[day1FeedPost.postType as keyof typeof POST_TYPE_CONFIG]?.label}</p>
                         </div>
-                        <Badge variant={STATUS_COLORS[day1FeedPost.status as keyof typeof STATUS_COLORS]}>{day1FeedPost.status}</Badge>
+                        <div className="flex items-center gap-2">
+                          {completedItems.has(day1FeedPost.id) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                          <Badge variant={STATUS_COLORS[day1FeedPost.status as keyof typeof STATUS_COLORS]}>{day1FeedPost.status}</Badge>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -515,6 +624,7 @@ export default function Drafts() {
                       {firstCommentBox(`fc-li-${day1FeedPost.id}`)}
                       <p className="text-xs text-muted-foreground italic">Post this as the first comment immediately after publishing your post. Add your article link.</p>
                       {actionRow(day1FeedPost)}
+                      {checklistSection(day1FeedPost)}
                     </CardContent>
                   </Card>
                 </div>
@@ -524,14 +634,17 @@ export default function Drafts() {
               {xArticleDraft && (
                 <div className="relative pl-10" data-testid="execution-step-x-article">
                   {stepCircle(3)}
-                  <Card>
+                  <Card className={`transition-opacity duration-300 ${completedItems.has(xArticleDraft.id) ? "opacity-50" : ""}`}>
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Publish after LinkedIn</p>
                           <CardTitle className="text-sm font-medium mt-0.5">X Article (Long-form)</CardTitle>
                         </div>
-                        <Badge variant={STATUS_COLORS[xArticleDraft.status as keyof typeof STATUS_COLORS]}>{xArticleDraft.status}</Badge>
+                        <div className="flex items-center gap-2">
+                          {completedItems.has(xArticleDraft.id) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                          <Badge variant={STATUS_COLORS[xArticleDraft.status as keyof typeof STATUS_COLORS]}>{xArticleDraft.status}</Badge>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -539,6 +652,7 @@ export default function Drafts() {
                       {firstCommentBox(`fc-x-${xArticleDraft.id}`)}
                       <p className="text-xs text-muted-foreground italic">Use this as your reply or follow-up tweet to drive traffic back to your article.</p>
                       {actionRow(xArticleDraft)}
+                      {checklistSection(xArticleDraft)}
                     </CardContent>
                   </Card>
                 </div>
@@ -564,14 +678,17 @@ export default function Drafts() {
                 const platformTag = PLATFORM_TAGS[draft.postType];
                 const isWide = draft.postType === "linkedin_carousel" || draft.postType.startsWith("tripack_");
                 return (
-                  <Card key={draft.id} className={`flex flex-col${isWide ? " md:col-span-2" : ""}`}>
+                  <Card key={draft.id} className={`flex flex-col transition-opacity duration-300${isWide ? " md:col-span-2" : ""}${completedItems.has(draft.id) ? " opacity-50" : ""}`}>
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Icon className="h-4 w-4 text-muted-foreground" />
                           <CardTitle className="text-sm font-medium">{config?.label || draft.postType}</CardTitle>
                         </div>
-                        <Badge variant={STATUS_COLORS[draft.status as keyof typeof STATUS_COLORS]}>{draft.status}</Badge>
+                        <div className="flex items-center gap-2">
+                          {completedItems.has(draft.id) && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                          <Badge variant={STATUS_COLORS[draft.status as keyof typeof STATUS_COLORS]}>{draft.status}</Badge>
+                        </div>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         <Badge variant="secondary" className="text-xs" data-testid={`badge-timing-${draft.id}`}>{dayLabel}</Badge>
@@ -582,6 +699,7 @@ export default function Drafts() {
                     <CardContent className="flex flex-col gap-3 flex-1">
                       <div className="flex-1 space-y-2">{renderDraftBody(draft)}</div>
                       {actionRow(draft)}
+                      {checklistSection(draft)}
                     </CardContent>
                   </Card>
                 );
