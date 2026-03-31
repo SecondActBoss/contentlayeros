@@ -120,7 +120,7 @@ export default function Dashboard() {
           modeDesc = `1 newsletter section + 3 𝕏 posts have been created.`;
         }
       } else if (isAuthorityArticleMode) {
-        modeDesc = `Authority article has been created. Use it as the source for all downstream content.`;
+        modeDesc = `Authority article generated and used as the source for ${postCount - 1} content drafts.`;
       } else if (isContrarianMode) {
         modeDesc = `${postCount} contrarian LinkedIn post drafts have been created.`;
       } else {
@@ -215,7 +215,7 @@ export default function Dashboard() {
     }
     if (isAuthorityArticleMode) return "Authority Article";
     if (isContrarianMode) return "Be Contrary";
-    return "Weekly Run";
+    return "Content Run";
   };
 
   const getPageDescription = () => {
@@ -226,19 +226,19 @@ export default function Dashboard() {
       return "Generate 1 newsletter section + 3 𝕏 posts from your weekly materials.";
     }
     if (isAuthorityArticleMode) {
-      return "Generate one long-form authority article (800–1500 words). Use it as the source for all downstream content.";
+      return "Generate a long-form authority article, then derive all posts and carousels from it for full consistency.";
     }
     if (isContrarianMode) {
       return "Generate thoughtful contrarian takes in response to popular narratives.";
     }
-    return "Turn your raw weekly materials into 4 high-quality LinkedIn post drafts.";
+    return "Turn raw materials into a complete content system — starting with a core authority article.";
   };
 
   const getButtonLabel = () => {
     if (distributionMode === "twitter") {
       return isRawTweetMode ? "Generate Raw Tweets" : "Generate 𝕏 Content";
     }
-    if (isAuthorityArticleMode) return "Generate Authority Article";
+    if (isAuthorityArticleMode) return "Generate Content System";
     if (isContrarianMode) return "Generate 4 Contrarian Posts";
     return "Generate 4 Posts";
   };
@@ -284,19 +284,26 @@ export default function Dashboard() {
         </div>
         {distributionMode === "linkedin" && (
           <div className="flex items-center gap-3 shrink-0 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="authority-article-toggle" className="text-sm font-medium">
-                Authority Article
-              </Label>
-              <Switch
-                id="authority-article-toggle"
-                checked={isAuthorityArticleMode}
-                onCheckedChange={(checked) => {
-                  setIsAuthorityArticleMode(checked);
-                  if (checked) setIsContrarianMode(false);
-                }}
-                data-testid="toggle-authority-article-mode"
-              />
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="authority-article-toggle" className="text-sm font-medium">
+                  Authority Article
+                </Label>
+                <Switch
+                  id="authority-article-toggle"
+                  checked={isAuthorityArticleMode}
+                  onCheckedChange={(checked) => {
+                    setIsAuthorityArticleMode(checked);
+                    if (checked) setIsContrarianMode(false);
+                  }}
+                  data-testid="toggle-authority-article-mode"
+                />
+              </div>
+              {isAuthorityArticleMode && (
+                <p className="text-xs text-muted-foreground text-right max-w-[220px]">
+                  All posts and carousels will be derived from this article for consistency and authority.
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Label htmlFor="contrarian-toggle" className="text-sm font-medium">
@@ -582,6 +589,12 @@ Examples:
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {generatedPosts.some((p) => p.postType === "authority_article") && (
+                  <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-muted/60 border text-sm" data-testid="indicator-authority-source">
+                    <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">Authority Article generated — used as source for all content below</span>
+                  </div>
+                )}
                 <div className="grid gap-3 sm:grid-cols-2">
                   {generatedPosts.map((post) => {
                     const Icon = POST_TYPE_ICONS[post.postType as keyof typeof POST_TYPE_ICONS] || FileText;
@@ -971,6 +984,11 @@ Examples:
             </CardContent>
           </Card>
 
+          {distributionMode === "linkedin" && isAuthorityArticleMode && !generateMutation.isPending && (
+            <p className="text-xs text-center text-muted-foreground -mb-1">
+              Step 1: Authority Article → Step 2: All Content
+            </p>
+          )}
           <Button
             className="w-full"
             size="lg"

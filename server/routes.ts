@@ -287,7 +287,7 @@ export async function registerRoutes(
       );
 
       // ── Step 3: Generate source article (primary input for all downstream) ─
-      const sourceArticleText = await generateSourceArticle(
+      let sourceArticleText = await generateSourceArticle(
         rawInput,
         selectedContexts,
         extractedSignals,
@@ -322,8 +322,21 @@ export async function registerRoutes(
           );
         }
       } else if (isAuthorityArticleMode) {
-        // Generate 1 authority article (full 800-1500 word version)
-        postData = await generateAuthorityArticle(rawInput, selectedContexts, extractedSignals, articleAngle);
+        // Step 1: Generate the authority article (800-1500 words)
+        const authorityDrafts = await generateAuthorityArticle(rawInput, selectedContexts, extractedSignals, articleAngle);
+        const authorityDraft = authorityDrafts[0];
+
+        // Step 2: Use authority article body as the source for all downstream generators
+        const authorityArticleBody = `${authorityDraft.hook}\n\n${authorityDraft.body}`;
+        sourceArticleText = authorityArticleBody;
+
+        // Step 3: Generate posts + carousels from the authority article
+        const [regularPosts, carouselPosts] = await Promise.all([
+          generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples, authorityArticleBody),
+          generateCarousels(rawInput, selectedContexts, extractedSignals, strongExamples, authorityArticleBody),
+        ]);
+
+        postData = [authorityDraft, ...regularPosts, ...carouselPosts];
       } else if (isContrarianMode) {
         // Generate 4 contrarian LinkedIn posts
         postData = await generateContrarianPosts(
