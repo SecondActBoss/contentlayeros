@@ -366,13 +366,15 @@ export default function Drafts() {
                 d.postType.startsWith("tripack_")
               );
               const isGenerating = triPublishingRunId === currentRunId;
-              if (!currentRun?.sourceArticle || hasTripack) return null;
+              const hasSourceArticle = !!currentRun?.sourceArticle;
+              if (hasTripack) return null;
               return (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => triPublishMutation.mutate(currentRunId)}
-                  disabled={isGenerating}
+                  onClick={() => hasSourceArticle && triPublishMutation.mutate(currentRunId)}
+                  disabled={isGenerating || !hasSourceArticle}
+                  title={!hasSourceArticle ? "Re-run generation to enable Tri-Publish Pack" : undefined}
                   data-testid="button-tri-publish"
                 >
                   {isGenerating ? (
