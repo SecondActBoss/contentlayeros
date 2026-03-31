@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers, BookOpen, Globe, Package, Repeat2 } from "lucide-react";
 import { SiX, SiLinkedin } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -137,6 +138,44 @@ const CONTRARIAN_ANGLE_LABELS: Record<string, string> = {
   consequence_view: "Consequence View",
 };
 
+const FIRST_COMMENT = "I wrote a deeper breakdown on this if you want to go further 👇";
+
+const PURPOSE_TAGS: Record<string, string> = {
+  educational_authority: "Build authority",
+  founder_story: "Drive engagement",
+  trend_translation: "Introduce contrarian POV",
+  system_principle: "Reinforce core concept",
+  contrarian_pov: "Challenge assumptions",
+  linkedin_carousel: "Drive engagement",
+  twitter_pov: "Expand reach on 𝕏",
+  twitter_paradox: "Expand reach on 𝕏",
+  twitter_operator: "Expand reach on 𝕏",
+  raw_tweet: "Expand reach on 𝕏",
+  newsletter_section: "Drive newsletter growth",
+  tripack_x_article: "Reach via 𝕏",
+  tripack_linkedin_pulse: "SEO + AI citations",
+  tripack_website: "Owned audience",
+  quote_repost: "Amplify via reposts",
+};
+
+const PLATFORM_TAGS: Record<string, string> = {
+  educational_authority: "LinkedIn",
+  founder_story: "LinkedIn",
+  trend_translation: "LinkedIn",
+  system_principle: "LinkedIn",
+  contrarian_pov: "LinkedIn",
+  linkedin_carousel: "LinkedIn",
+  twitter_pov: "X",
+  twitter_paradox: "X",
+  twitter_operator: "X",
+  raw_tweet: "X",
+  newsletter_section: "X",
+  tripack_x_article: "X",
+  tripack_linkedin_pulse: "LinkedIn",
+  tripack_website: "Website",
+  quote_repost: "X",
+};
+
 const STATUS_COLORS = {
   draft: "secondary",
   edited: "outline",
@@ -155,6 +194,8 @@ export default function Drafts() {
   const [selectedTabId, setSelectedTabId] = useState<string | null>(null);
   const [triPublishingRunId, setTriPublishingRunId] = useState<string | null>(null);
   const [quoteRepostingRunId, setQuoteRepostingRunId] = useState<string | null>(null);
+  const [executionPlanMode, setExecutionPlanMode] = useState(false);
+  const [copiedFirstComment, setCopiedFirstComment] = useState<string | null>(null);
 
   const { data: drafts = [], isLoading } = useQuery<PostDraft[]>({
     queryKey: ["/api/post-drafts"],
@@ -305,34 +346,326 @@ export default function Drafts() {
     return (runB?.weekNumber || 0) - (runA?.weekNumber || 0);
   });
 
-  // Separate drafts by platform
-  const linkedInDrafts = drafts.filter(d => {
-    const config = POST_TYPE_CONFIG[d.postType as keyof typeof POST_TYPE_CONFIG];
-    return config?.platform === "linkedin" || !config?.platform;
-  });
-  const twitterDrafts = drafts.filter(d => {
-    const config = POST_TYPE_CONFIG[d.postType as keyof typeof POST_TYPE_CONFIG];
-    return config?.platform === "twitter";
-  });
+  // Helpers for execution plan
+  const extractCoreThesis = (body: string | null): string | null => {
+    if (!body) return null;
+    const sentences = body.match(/[^.!?]+[.!?]+/g) || [];
+    return sentences.slice(0, 2).join(" ").trim() || null;
+  };
+
+  const copyFirstComment = async (key: string) => {
+    await navigator.clipboard.writeText(FIRST_COMMENT);
+    setCopiedFirstComment(key);
+    setTimeout(() => setCopiedFirstComment(null), 2000);
+  };
+
+  const renderDraftBody = (draft: PostDraft) => {
+    const isTripack = draft.postType.startsWith("tripack_");
+    if (draft.postType === "authority_article" || isTripack) {
+      return (
+        <>
+          <p className="font-semibold text-base leading-tight">{draft.hook}</p>
+          {draft.postType === "tripack_linkedin_pulse" && (
+            <div className="flex flex-col gap-1.5">
+              {draft.rehook && <div className="flex items-start gap-2 flex-wrap"><Badge variant="outline" className="text-xs shrink-0">SEO Title</Badge><span className="text-xs text-muted-foreground">{draft.rehook}</span></div>}
+              {draft.coreInsight && <div className="flex items-start gap-2 flex-wrap"><Badge variant="outline" className="text-xs shrink-0">Meta</Badge><span className="text-xs text-muted-foreground">{draft.coreInsight}</span></div>}
+            </div>
+          )}
+          <Separator className="my-2" />
+          <ScrollArea className="h-[260px]"><p className="text-sm whitespace-pre-wrap leading-relaxed">{draft.body}</p></ScrollArea>
+        </>
+      );
+    }
+    if (draft.postType === "linkedin_carousel" && draft.carouselSlides) {
+      const slides = draft.carouselSlides as CarouselSlide[];
+      return (
+        <>
+          <p className="font-medium text-sm">{draft.hook}</p>
+          {draft.carouselTheme && <Badge variant="outline" className="text-xs">{CAROUSEL_THEME_LABELS[draft.carouselTheme] || draft.carouselTheme}</Badge>}
+          <Separator className="my-2" />
+          <ScrollArea className="h-[160px]">
+            <div className="space-y-3">
+              {slides.map((slide, idx) => (
+                <div key={idx} className="p-2 rounded-md border bg-muted/30">
+                  <div className="flex items-center gap-2 mb-1"><Badge variant="secondary" className="text-xs px-1.5">{slide.slideNumber}</Badge><span className="text-xs text-muted-foreground capitalize">{slide.slideType}</span></div>
+                  <p className="font-medium text-sm">{slide.headline}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{slide.body}</p>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </>
+      );
+    }
+    if (draft.postType === "quote_repost") {
+      return (
+        <div className="space-y-2">
+          {draft.rehook && <Badge variant="secondary" className="text-xs">{draft.rehook}</Badge>}
+          <p className="text-sm font-medium leading-snug">"{draft.hook}"</p>
+        </div>
+      );
+    }
+    return (
+      <>
+        <p className="font-medium text-sm">{draft.hook}</p>
+        <p className="text-sm text-muted-foreground">{draft.rehook}</p>
+        <Separator className="my-2" />
+        <ScrollArea className="h-[120px]"><p className="text-sm whitespace-pre-wrap">{draft.body}</p></ScrollArea>
+        {draft.cta && <p className="text-xs text-muted-foreground italic mt-2">{draft.cta}</p>}
+      </>
+    );
+  };
+
+  const renderExecutionPlanForRun = (runId: string) => {
+    const runDrafts = draftsByRun[runId];
+    if (!runDrafts?.length) return null;
+
+    const authorityDraft = runDrafts.find(d => d.postType === "authority_article");
+    const linkedinPulseDraft = runDrafts.find(d => d.postType === "tripack_linkedin_pulse");
+    const xArticleDraft = runDrafts.find(d => d.postType === "tripack_x_article");
+    const day1Article = linkedinPulseDraft || authorityDraft;
+
+    const feedPostOrder = ["educational_authority", "founder_story", "trend_translation", "system_principle", "contrarian_pov"];
+    const day1FeedPost = runDrafts
+      .filter(d => feedPostOrder.includes(d.postType))
+      .sort((a, b) => feedPostOrder.indexOf(a.postType) - feedPostOrder.indexOf(b.postType))[0];
+
+    const day1Ids = new Set([day1Article?.id, day1FeedPost?.id, xArticleDraft?.id].filter(Boolean));
+    const section2Drafts = runDrafts.filter(d => !day1Ids.has(d.id) && d.postType !== "authority_article");
+    const dayLabels = ["Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"];
+
+    const stepCircle = (n: number) => (
+      <div className="absolute left-0 top-3 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">{n}</div>
+    );
+
+    const firstCommentBox = (fcKey: string) => (
+      <div className="p-3 rounded-md bg-muted/50 border space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">1st Comment</p>
+          <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => copyFirstComment(fcKey)} data-testid={`button-copy-fc-${fcKey}`}>
+            {copiedFirstComment === fcKey ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+            {copiedFirstComment === fcKey ? "Copied" : "Copy"}
+          </Button>
+        </div>
+        <p className="text-sm">{FIRST_COMMENT}</p>
+      </div>
+    );
+
+    const actionRow = (draft: PostDraft) => (
+      <div className="flex gap-2 pt-3 border-t">
+        <Button variant="outline" size="sm" onClick={() => handleCopyDraft(draft)} data-testid={`button-copy-${draft.id}`}>
+          {copiedId === draft.id ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}Copy
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => handleEditDraft(draft)} data-testid={`button-edit-${draft.id}`}>Edit</Button>
+        {draft.postUrl && <Button variant="ghost" size="sm" asChild><a href={draft.postUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /></a></Button>}
+      </div>
+    );
+
+    return (
+      <div className="space-y-10" data-testid="execution-plan-view">
+        {/* ── SECTION 1: DAY 1 LAUNCH ───────────────────────────────────────── */}
+        {(day1Article || day1FeedPost || xArticleDraft) && (
+          <div>
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-lg">🚀</span>
+              <h3 className="font-semibold text-base tracking-tight">DAY 1 LAUNCH</h3>
+              <Badge variant="default" className="text-xs">Execute in sequence</Badge>
+            </div>
+            <div className="space-y-5">
+              {/* Step 1: LinkedIn Article */}
+              {day1Article && (
+                <div className="relative pl-10" data-testid="execution-step-article">
+                  {stepCircle(1)}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold text-primary uppercase tracking-wide">Publish FIRST</p>
+                          <CardTitle className="text-sm font-medium mt-0.5">{linkedinPulseDraft ? "LinkedIn Pulse Article" : "LinkedIn Authority Article"}</CardTitle>
+                        </div>
+                        <Badge variant={STATUS_COLORS[day1Article.status as keyof typeof STATUS_COLORS]}>{day1Article.status}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {renderDraftBody(day1Article)}
+                      <p className="text-xs text-muted-foreground italic">Post this as a LinkedIn Article. Builds authority and long-term visibility (SEO + AI citations).</p>
+                      {actionRow(day1Article)}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Step 2: LinkedIn Feed Post */}
+              {day1FeedPost && (
+                <div className="relative pl-10" data-testid="execution-step-feed-post">
+                  {stepCircle(2)}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Post 5–10 minutes AFTER article</p>
+                          <CardTitle className="text-sm font-medium mt-0.5">#1 LinkedIn Feed Post</CardTitle>
+                          <p className="text-xs text-muted-foreground mt-0.5">{POST_TYPE_CONFIG[day1FeedPost.postType as keyof typeof POST_TYPE_CONFIG]?.label}</p>
+                        </div>
+                        <Badge variant={STATUS_COLORS[day1FeedPost.status as keyof typeof STATUS_COLORS]}>{day1FeedPost.status}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {renderDraftBody(day1FeedPost)}
+                      {firstCommentBox(`fc-li-${day1FeedPost.id}`)}
+                      <p className="text-xs text-muted-foreground italic">Post this as the first comment immediately after publishing your post. Add your article link.</p>
+                      {actionRow(day1FeedPost)}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Step 3: X Article */}
+              {xArticleDraft && (
+                <div className="relative pl-10" data-testid="execution-step-x-article">
+                  {stepCircle(3)}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Publish after LinkedIn</p>
+                          <CardTitle className="text-sm font-medium mt-0.5">X Article (Long-form)</CardTitle>
+                        </div>
+                        <Badge variant={STATUS_COLORS[xArticleDraft.status as keyof typeof STATUS_COLORS]}>{xArticleDraft.status}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {renderDraftBody(xArticleDraft)}
+                      {firstCommentBox(`fc-x-${xArticleDraft.id}`)}
+                      <p className="text-xs text-muted-foreground italic">Use this as your reply or follow-up tweet to drive traffic back to your article.</p>
+                      {actionRow(xArticleDraft)}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── SECTION 2: SUPPORTING CONTENT ──────────────────────────────────── */}
+        {section2Drafts.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-5">
+              <span className="text-lg">📅</span>
+              <h3 className="font-semibold text-base tracking-tight">SUPPORTING CONTENT</h3>
+              <Badge variant="outline" className="text-xs">Week 1</Badge>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {section2Drafts.map((draft, idx) => {
+                const config = POST_TYPE_CONFIG[draft.postType as keyof typeof POST_TYPE_CONFIG];
+                const Icon = config?.icon || FileText;
+                const dayLabel = dayLabels[idx] || `Day ${idx + 2}`;
+                const purposeTag = PURPOSE_TAGS[draft.postType] || "Supporting content";
+                const platformTag = PLATFORM_TAGS[draft.postType];
+                const isWide = draft.postType === "linkedin_carousel" || draft.postType.startsWith("tripack_");
+                return (
+                  <Card key={draft.id} className={`flex flex-col${isWide ? " md:col-span-2" : ""}`}>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          <CardTitle className="text-sm font-medium">{config?.label || draft.postType}</CardTitle>
+                        </div>
+                        <Badge variant={STATUS_COLORS[draft.status as keyof typeof STATUS_COLORS]}>{draft.status}</Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        <Badge variant="secondary" className="text-xs" data-testid={`badge-timing-${draft.id}`}>{dayLabel}</Badge>
+                        <Badge variant="outline" className="text-xs" data-testid={`badge-purpose-${draft.id}`}>{purposeTag}</Badge>
+                        {platformTag && <Badge variant="outline" className="text-xs" data-testid={`badge-platform-${draft.id}`}>{platformTag}</Badge>}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-3 flex-1">
+                      <div className="flex-1 space-y-2">{renderDraftBody(draft)}</div>
+                      {actionRow(draft)}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── SECTION 3: CORE ARTICLE (REFERENCE) ────────────────────────────── */}
+        {authorityDraft && (
+          <div>
+            <div className="flex items-center gap-2 mb-5">
+              <span className="text-lg">🧠</span>
+              <h3 className="font-semibold text-base tracking-tight">CORE ARTICLE (REFERENCE)</h3>
+            </div>
+            <Card data-testid="section-core-article">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Core Authority Article (Source)</CardTitle>
+                <CardDescription className="text-xs">All content in this run is derived from this</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {authorityDraft.coreInsight && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Key Concepts Extracted</p>
+                    <div className="flex flex-wrap gap-2">
+                      {authorityDraft.coreInsight.split(" + ").map((concept, i) => (
+                        <Badge key={i} variant="default" className="text-xs" data-testid={`ref-concept-${i}`}>{concept.trim()}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {authorityDraft.body && (() => {
+                  const thesis = extractCoreThesis(authorityDraft.body);
+                  return thesis ? (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Core Thesis</p>
+                      <p className="text-sm italic text-muted-foreground" data-testid="ref-core-thesis">{thesis}</p>
+                    </div>
+                  ) : null;
+                })()}
+                <Separator />
+                <p className="font-medium text-sm">{authorityDraft.hook}</p>
+                <ScrollArea className="h-[160px]">
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed text-muted-foreground">{authorityDraft.body}</p>
+                </ScrollArea>
+                {actionRow(authorityDraft)}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Content Drafts</h1>
           <p className="text-muted-foreground mt-1">
-            View, edit, and export your generated content drafts.
+            {executionPlanMode ? "Execution-ready publishing sequence — follow top to bottom." : "View, edit, and export your generated content drafts."}
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setExportDialogOpen(true)}
-          disabled={drafts.length === 0}
-          data-testid="button-export-sheets"
-        >
-          <Sheet className="h-4 w-4 mr-2" />
-          Export to Sheets
-        </Button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border bg-card" data-testid="toggle-execution-mode">
+            <Switch
+              id="execution-mode-toggle"
+              checked={executionPlanMode}
+              onCheckedChange={setExecutionPlanMode}
+            />
+            <Label htmlFor="execution-mode-toggle" className="text-sm font-medium cursor-pointer whitespace-nowrap">
+              {executionPlanMode ? "Execution Plan" : "Drafts View"}
+            </Label>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setExportDialogOpen(true)}
+            disabled={drafts.length === 0}
+            data-testid="button-export-sheets"
+          >
+            <Sheet className="h-4 w-4 mr-2" />
+            Export to Sheets
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -438,6 +771,7 @@ export default function Drafts() {
           </div>
           {runIds.map((runId) => (
             <TabsContent key={runId} value={runId}>
+              {executionPlanMode ? renderExecutionPlanForRun(runId) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {draftsByRun[runId].map((draft) => {
                   const config = POST_TYPE_CONFIG[draft.postType as keyof typeof POST_TYPE_CONFIG];
@@ -656,6 +990,7 @@ export default function Drafts() {
                   );
                 })}
               </div>
+              )}
             </TabsContent>
           ))}
         </Tabs>

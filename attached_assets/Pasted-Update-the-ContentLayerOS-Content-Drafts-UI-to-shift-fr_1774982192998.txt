@@ -1,0 +1,251 @@
+Update the ContentLayerOS "Content Drafts" UI to shift from content-type grouping to a structured publishing sequence.
+
+---
+
+## GOAL
+
+Transform the UI from:
+
+→ “List of content drafts”
+
+Into:
+
+→ “Execution-ready content plan”
+
+Each item should clearly tell the user:
+
+* What to post
+* Where to post
+* When to post
+* What to do immediately after posting
+
+---
+
+## NEW UI STRUCTURE
+
+Group content into 3 sections:
+
+---
+
+# SECTION 1: 🚀 DAY 1 LAUNCH
+
+This is the highest-priority section and should always appear at the top.
+
+---
+
+## 1. LinkedIn Authority Article
+
+Label:
+"LinkedIn Article (Authority / Pulse)"
+
+Sub-label:
+"Publish FIRST"
+
+Display:
+
+* Title
+* Full article content
+
+Add helper text:
+
+"Post this as a LinkedIn Article. This builds authority and long-term visibility (SEO + AI citations)."
+
+---
+
+## 2. LinkedIn Feed Post
+
+Label:
+"#1 LinkedIn Feed Post"
+
+Sub-label:
+"Post 5–10 minutes AFTER article"
+
+Display:
+
+* Post content
+
+---
+
+### ADD NEW FIELD: "1st Comment"
+
+Auto-generate and display:
+
+"I wrote a deeper breakdown on this if you want to go further 👇"
+
+UI:
+
+* Separate text box
+* Copy button
+
+Helper text:
+
+"Post this as the first comment immediately after publishing your post. Add your article link."
+
+---
+
+## 3. X Article
+
+Label:
+"X Article (Long-form)"
+
+Sub-label:
+"Publish after LinkedIn"
+
+Display:
+
+* Article content
+
+---
+
+### ADD NEW FIELD: "1st Comment"
+
+Auto-generate same comment:
+
+"I wrote a deeper breakdown on this if you want to go further 👇"
+
+Helper text:
+
+"Use this as your reply or follow-up tweet to drive traffic."
+
+---
+
+---
+
+# SECTION 2: 📅 SUPPORTING CONTENT (WEEK 1)
+
+Group remaining content under this section.
+
+---
+
+## For EACH content piece:
+
+Include:
+
+### Label (existing)
+
+* LinkedIn Carousel
+* System Principle
+* Founder Story
+* Trend Translation
+
+---
+
+### ADD: "Recommended Post Timing"
+
+Display a tag like:
+
+* "Post Day 2"
+* "Post Day 3"
+* "Post Day 4"
+
+---
+
+### ADD: "Purpose Tag"
+
+Examples:
+
+* "Build authority"
+* "Drive engagement"
+* "Reinforce core concept"
+* "Introduce contrarian POV"
+
+---
+
+### ADD: "Platform Tag"
+
+Examples:
+
+* LinkedIn
+* X
+* Both
+
+---
+
+---
+
+# SECTION 3: 🧠 CORE ARTICLE (REFERENCE)
+
+Move the "Authority Article" block to the bottom.
+
+Label:
+
+"Core Authority Article (Source)"
+
+Sub-label:
+
+"All content is derived from this"
+
+---
+
+## ADD:
+
+### "Key Concepts Extracted"
+
+Display:
+
+* Coordination Debt
+* Silent Revenue Loss
+
+---
+
+### "Core Thesis"
+
+Auto-extract 1–2 sentence summary
+
+---
+
+---
+
+# ADD GLOBAL FEATURE
+
+## "Execution Mode Toggle"
+
+At top of page:
+
+[ ] Show as Drafts
+[✓] Show as Execution Plan
+
+---
+
+When "Execution Plan" is ON:
+
+* Apply new structured layout
+
+When OFF:
+
+* Show original draft view (backwards compatibility)
+
+---
+
+# DESIGN PRINCIPLES
+
+* Reduce thinking required by user
+* Make sequence obvious
+* Make actions clear
+* Make this feel like a playbook, not a CMS
+
+---
+
+# IMPORTANT
+
+Do NOT remove:
+
+* Copy buttons
+* Edit functionality
+* Existing content generation logic
+
+Only change presentation + add metadata
+
+---
+
+# END STATE
+
+User should be able to:
+
+1. Open page
+2. Follow steps top to bottom
+3. Execute full content strategy without thinking
+
+This is not a content viewer.
+
+This is a publishing system.
