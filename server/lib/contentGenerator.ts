@@ -1886,3 +1886,127 @@ Return ONLY valid JSON, no markdown, no explanation.`;
     ];
   }
 }
+
+// ─── QUOTE REPOST ENGINE ──────────────────────────────────────────────────────
+
+const QUOTE_REPOST_TYPES = [
+  { key: "agreement_with_twist", label: "Agreement with Twist" },
+  { key: "thoughtful_disagreement", label: "Thoughtful Disagreement" },
+  { key: "operator_experience", label: "Operator Experience Validation" },
+  { key: "expansion_of_idea", label: "Expansion of Idea" },
+  { key: "contrarian_angle", label: "Contrarian Angle" },
+];
+
+export async function generateQuoteReposts(
+  sourceArticle: string,
+  contexts: ContextItem[]
+): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
+  const contextString = contexts
+    .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
+    .join("\n\n");
+
+  const typeDescriptions = QUOTE_REPOST_TYPES.map(
+    (t) => `- ${t.label}: A line that ${
+      t.key === "agreement_with_twist" ? "agrees with the core idea but adds a nuance or condition" :
+      t.key === "thoughtful_disagreement" ? "respectfully pushes back on one part of the argument" :
+      t.key === "operator_experience" ? "validates the idea through lived operator or founder experience" :
+      t.key === "expansion_of_idea" ? "extends the idea one step further with a related insight" :
+      "flips the premise in a calm, non-combative way"
+    }`
+  ).join("\n");
+
+  const prompt = `You are writing 5 quote-repost lines for a founder's 𝕏 (Twitter) article. These lines encourage others to share and react naturally — not to bait engagement.
+
+=== SOURCE ARTICLE ===
+${sourceArticle}
+
+=== CONTEXT ===
+${contextString || "Operator-focused founders and builders."}
+
+=== FIVE TYPES REQUIRED ===
+${typeDescriptions}
+
+=== RULES FOR ALL LINES ===
+- 1–2 sentences max
+- No emojis, no hashtags
+- No bait language ("thoughts?", "do you agree?", "comment below")
+- Each should feel like something a real operator would naturally say
+- Calm, direct, authoritative tone
+- Must feel natural to repost — like a genuine reaction, not a prompt
+
+=== STRONG EXAMPLES (style only — do not copy) ===
+- "This is right, but only if you're past the first 10 hires."
+- "We tried this. It broke in week 3."
+- "The real issue isn't mentioned here…"
+- "This hits, but misses one key piece."
+- "Operators will understand this immediately."
+
+=== OUTPUT FORMAT ===
+Return a JSON object with exactly 5 items:
+{
+  "agreement_with_twist": "the line",
+  "thoughtful_disagreement": "the line",
+  "operator_experience": "the line",
+  "expansion_of_idea": "the line",
+  "contrarian_angle": "the line"
+}
+
+Return ONLY valid JSON, no markdown.`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+  });
+
+  const results: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
+
+  try {
+    const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+
+    for (const type of QUOTE_REPOST_TYPES) {
+      const line = parsed[type.key] || "Generation failed for this type.";
+      results.push({
+        postType: "quote_repost",
+        contrarianAngle: type.key,
+        rawTweetType: null,
+        hook: line,
+        rehook: type.label,
+        body: "",
+        coreInsight: null,
+        cta: null,
+        status: "draft",
+        postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
+        carouselSlides: null,
+        carouselTheme: null,
+      });
+    }
+  } catch {
+    for (const type of QUOTE_REPOST_TYPES) {
+      results.push({
+        postType: "quote_repost",
+        contrarianAngle: type.key,
+        rawTweetType: null,
+        hook: "Generation failed. Please try again.",
+        rehook: type.label,
+        body: "",
+        coreInsight: null,
+        cta: null,
+        status: "draft",
+        postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
+        carouselSlides: null,
+        carouselTheme: null,
+      });
+    }
+  }
+
+  return results;
+}

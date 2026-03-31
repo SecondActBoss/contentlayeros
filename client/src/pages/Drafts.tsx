@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers, BookOpen, Globe, Package } from "lucide-react";
+import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers, BookOpen, Globe, Package, Repeat2 } from "lucide-react";
 import { SiX, SiLinkedin } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -108,6 +108,12 @@ const POST_TYPE_CONFIG = {
     description: "Definitive owned version with full depth (1200–2000 words)",
     platform: "tripack",
   },
+  quote_repost: {
+    icon: Repeat2,
+    label: "Quote Repost",
+    description: "Natural reaction line designed to encourage quote reposts on 𝕏",
+    platform: "x_repost",
+  },
 };
 
 const CAROUSEL_THEME_LABELS: Record<string, string> = {
@@ -148,6 +154,7 @@ export default function Drafts() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedTabId, setSelectedTabId] = useState<string | null>(null);
   const [triPublishingRunId, setTriPublishingRunId] = useState<string | null>(null);
+  const [quoteRepostingRunId, setQuoteRepostingRunId] = useState<string | null>(null);
 
   const { data: drafts = [], isLoading } = useQuery<PostDraft[]>({
     queryKey: ["/api/post-drafts"],
@@ -217,6 +224,22 @@ export default function Drafts() {
     },
   });
 
+  const quoteRepostMutation = useMutation({
+    mutationFn: async (runId: string) => {
+      setQuoteRepostingRunId(runId);
+      return apiRequest("POST", `/api/weekly-runs/${runId}/quote-reposts`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/post-drafts"] });
+      toast({ title: "Quote Reposts generated", description: "5 quote-repost lines are ready in your drafts." });
+      setQuoteRepostingRunId(null);
+    },
+    onError: () => {
+      toast({ title: "Generation failed", description: "Could not generate quote reposts. Make sure this run has a source article.", variant: "destructive" });
+      setQuoteRepostingRunId(null);
+    },
+  });
+
   const handleCopyDraft = async (draft: PostDraft) => {
     let fullPost: string;
     
@@ -226,6 +249,8 @@ export default function Drafts() {
       fullPost = `${draft.hook}\n\n${draft.body}`;
     } else if (draft.postType === "tripack_linkedin_pulse") {
       fullPost = `${draft.hook}\n\n${draft.body}${draft.rehook ? `\n\n[SEO Title: ${draft.rehook}]` : ""}${draft.coreInsight ? `\n[Meta Description: ${draft.coreInsight}]` : ""}`;
+    } else if (draft.postType === "quote_repost") {
+      fullPost = draft.hook;
     } else if (draft.postType === "linkedin_carousel" && draft.carouselSlides) {
       const slides = draft.carouselSlides as CarouselSlide[];
       const slidesText = slides.map(slide => 
@@ -367,23 +392,47 @@ export default function Drafts() {
               );
               const isGenerating = triPublishingRunId === currentRunId;
               const hasSourceArticle = !!currentRun?.sourceArticle;
-              if (hasTripack) return null;
+              const hasQuoteReposts = draftsByRun[currentRunId]?.some((d) =>
+                d.postType === "quote_repost"
+              );
+              const isQuoteGenerating = quoteRepostingRunId === currentRunId;
               return (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => hasSourceArticle && triPublishMutation.mutate(currentRunId)}
-                  disabled={isGenerating || !hasSourceArticle}
-                  title={!hasSourceArticle ? "Re-run generation to enable Tri-Publish Pack" : undefined}
-                  data-testid="button-tri-publish"
-                >
-                  {isGenerating ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <Package className="h-4 w-4 mr-1" />
+                <>
+                  {!hasTripack && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => hasSourceArticle && triPublishMutation.mutate(currentRunId)}
+                      disabled={isGenerating || !hasSourceArticle}
+                      title={!hasSourceArticle ? "Re-run generation to enable Tri-Publish Pack" : undefined}
+                      data-testid="button-tri-publish"
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Package className="h-4 w-4 mr-1" />
+                      )}
+                      {isGenerating ? "Generating…" : "Tri-Publish Pack"}
+                    </Button>
                   )}
-                  {isGenerating ? "Generating…" : "Tri-Publish Pack"}
-                </Button>
+                  {!hasQuoteReposts && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => hasSourceArticle && quoteRepostMutation.mutate(currentRunId)}
+                      disabled={isQuoteGenerating || !hasSourceArticle}
+                      title={!hasSourceArticle ? "Re-run generation to enable Quote Repost Engine" : undefined}
+                      data-testid="button-quote-reposts"
+                    >
+                      {isQuoteGenerating ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Repeat2 className="h-4 w-4 mr-1" />
+                      )}
+                      {isQuoteGenerating ? "Generating…" : "Quote Reposts"}
+                    </Button>
+                  )}
+                </>
               );
             })()}
           </div>
@@ -475,6 +524,18 @@ export default function Drafts() {
                                 </p>
                               </ScrollArea>
                             </>
+                          ) : draft.postType === "quote_repost" ? (
+                            /* Quote Repost display */
+                            <div className="space-y-2">
+                              {draft.rehook && (
+                                <Badge variant="secondary" className="text-xs" data-testid={`badge-repost-type-${draft.id}`}>
+                                  {draft.rehook}
+                                </Badge>
+                              )}
+                              <p className="text-sm font-medium leading-snug" data-testid={`quote-repost-line-${draft.id}`}>
+                                "{draft.hook}"
+                              </p>
+                            </div>
                           ) : draft.postType === "linkedin_carousel" && draft.carouselSlides ? (
                             /* Carousel slides display */
                             <>
