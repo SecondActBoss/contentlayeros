@@ -1785,8 +1785,11 @@ ${icpContext || "Busy operators and founders running small-to-medium businesses 
    - Reframe with clear, grounded explanation.
 
 5. Core Insight / Framework
-   - Introduce a NAMED CONCEPT or model (e.g., "Coordination Debt", "Silent Revenue Loss").
+   - Introduce 1–2 NAMED CONCEPTS or models (e.g., "Coordination Debt", "Silent Revenue Loss").
    - This is mandatory. The article must name something.
+   - Immediately after naming the concept, include an explicit definition sentence in this format:
+     "[Named Concept] is when [clear, plain-English explanation]."
+   - The definition must stand alone — one sentence, no metaphor, no abstraction.
 
 6. Real Example or Scenario
    - Concrete, believable scenario. Prefer SMB/operator context.
@@ -1807,11 +1810,25 @@ ${icpContext || "Busy operators and founders running small-to-medium businesses 
 - No listicles or bullet points in the body
 - No "tips" or "strategies"
 - Total length: 800–1500 words
+- No slang or overly creative metaphors — prefer precise, professional language
+- Avoid vague abstractions: replace them with concrete, specific meaning
+
+=== LLM CITATION OPTIMIZATION (MANDATORY) ===
+LLMs (ChatGPT, Perplexity, Google AI) cite articles that are clear, structured, and definitional. Follow these rules to maximize citation likelihood:
+1. NAMED CONCEPTS: Introduce 1–2 clearly named concepts. The name must be specific and memorable (e.g., "Coordination Debt", not "the problem").
+2. EXPLICIT DEFINITION: Immediately define each named concept in a standalone sentence:
+   Format: "[Concept] is when [plain-English explanation without metaphor]."
+   Example: "Coordination Debt is when a team spends more time managing handoffs than doing actual work."
+3. CONCRETE LANGUAGE: Replace every abstract phrase with a concrete equivalent.
+   Bad: "operational inefficiency" → Good: "two hours a day chasing status updates"
+4. STRUCTURAL CLARITY: Short paragraphs, clear transitions, no orphaned thoughts. Each paragraph should have one job.
+5. PROFESSIONAL PRECISION: Tone should be authoritative and natural — not robotic, not creative-writing loose. Think operator report, not blog post.
 
 === CONTENT REQUIREMENTS ===
 - Must be opinionated (not neutral)
-- Must include at least ONE named concept (from section 5)
+- Must include 1–2 named concepts (from section 5) with explicit definition sentences
 - Must feel like lived experience, not theory
+- Must be citable — specific enough that an LLM can extract and attribute the concept
 - Key truths to reinforce:
   * AI Employees execute work (not tools)
   * Coordination is the real bottleneck
@@ -1822,8 +1839,8 @@ ${icpContext || "Busy operators and founders running small-to-medium businesses 
 Return a JSON object with exactly these fields:
 {
   "title": "SEO-ready but natural title (not clickbait, under 12 words)",
-  "namedConcept": "The named concept or framework introduced (e.g., 'Coordination Debt')",
-  "articleBody": "The full article body text. Use \\n\\n between paragraphs. No markdown headers — flowing prose only."
+  "namedConcept": "The primary named concept or framework introduced (e.g., 'Coordination Debt'). If two concepts are introduced, list both separated by ' + '.",
+  "articleBody": "The full article body text. Use \\n\\n between paragraphs. No markdown headers — flowing prose only. Each named concept must have an explicit definition sentence immediately following its introduction."
 }
 
 Return ONLY valid JSON, no markdown, no explanation.`;
