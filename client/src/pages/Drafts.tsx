@@ -11,8 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers, BookOpen } from "lucide-react";
-import { SiX } from "react-icons/si";
+import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers, BookOpen, Globe, Package } from "lucide-react";
+import { SiX, SiLinkedin } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { PostDraft, WeeklyRun, DraftStatus, CarouselSlide } from "@shared/schema";
@@ -90,6 +90,24 @@ const POST_TYPE_CONFIG = {
     description: "Long-form source article (800–1500 words) for all downstream content",
     platform: "linkedin",
   },
+  tripack_x_article: {
+    icon: SiX,
+    label: "𝕏 Article",
+    description: "Platform-adapted for virality and engagement (700–1200 words)",
+    platform: "tripack",
+  },
+  tripack_linkedin_pulse: {
+    icon: SiLinkedin,
+    label: "LinkedIn Pulse Article",
+    description: "SEO + LLM citation optimized (900–1500 words)",
+    platform: "tripack",
+  },
+  tripack_website: {
+    icon: Globe,
+    label: "Website Article",
+    description: "Definitive owned version with full depth (1200–2000 words)",
+    platform: "tripack",
+  },
 };
 
 const CAROUSEL_THEME_LABELS: Record<string, string> = {
@@ -129,6 +147,7 @@ export default function Drafts() {
   const [spreadsheetId, setSpreadsheetId] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedTabId, setSelectedTabId] = useState<string | null>(null);
+  const [triPublishingRunId, setTriPublishingRunId] = useState<string | null>(null);
 
   const { data: drafts = [], isLoading } = useQuery<PostDraft[]>({
     queryKey: ["/api/post-drafts"],
@@ -182,11 +201,31 @@ export default function Drafts() {
     },
   });
 
+  const triPublishMutation = useMutation({
+    mutationFn: async (runId: string) => {
+      setTriPublishingRunId(runId);
+      return apiRequest("POST", `/api/weekly-runs/${runId}/tri-publish`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/post-drafts"] });
+      toast({ title: "Tri-Publish Pack generated", description: "3 platform-adapted articles are ready in your drafts." });
+      setTriPublishingRunId(null);
+    },
+    onError: () => {
+      toast({ title: "Generation failed", description: "Could not generate the Tri-Publish Pack. Make sure this run has a source article.", variant: "destructive" });
+      setTriPublishingRunId(null);
+    },
+  });
+
   const handleCopyDraft = async (draft: PostDraft) => {
     let fullPost: string;
     
     if (draft.postType === "authority_article") {
       fullPost = `${draft.hook}\n\n${draft.body}${draft.coreInsight ? `\n\n[Named Concept: ${draft.coreInsight}]` : ""}`;
+    } else if (draft.postType === "tripack_x_article" || draft.postType === "tripack_website") {
+      fullPost = `${draft.hook}\n\n${draft.body}`;
+    } else if (draft.postType === "tripack_linkedin_pulse") {
+      fullPost = `${draft.hook}\n\n${draft.body}${draft.rehook ? `\n\n[SEO Title: ${draft.rehook}]` : ""}${draft.coreInsight ? `\n[Meta Description: ${draft.coreInsight}]` : ""}`;
     } else if (draft.postType === "linkedin_carousel" && draft.carouselSlides) {
       const slides = draft.carouselSlides as CarouselSlide[];
       const slidesText = slides.map(slide => 
@@ -320,6 +359,31 @@ export default function Drafts() {
               <Trash2 className="h-4 w-4 mr-1" />
               Delete Week
             </Button>
+            {(() => {
+              const currentRunId = selectedTabId || runIds[0];
+              const currentRun = weeklyRuns.find((r) => r.id === currentRunId);
+              const hasTripack = draftsByRun[currentRunId]?.some((d) =>
+                d.postType.startsWith("tripack_")
+              );
+              const isGenerating = triPublishingRunId === currentRunId;
+              if (!currentRun?.sourceArticle || hasTripack) return null;
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => triPublishMutation.mutate(currentRunId)}
+                  disabled={isGenerating}
+                  data-testid="button-tri-publish"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Package className="h-4 w-4 mr-1" />
+                  )}
+                  {isGenerating ? "Generating…" : "Tri-Publish Pack"}
+                </Button>
+              );
+            })()}
           </div>
           {runIds.map((runId) => (
             <TabsContent key={runId} value={runId}>
@@ -333,8 +397,9 @@ export default function Drafts() {
                   const rawTweetTypeLabel = draft.rawTweetType
                     ? RAW_TWEET_TYPE_LABELS[draft.rawTweetType]
                     : null;
+                  const isTripack = draft.postType.startsWith("tripack_");
                   return (
-                    <Card key={draft.id} className={`flex flex-col ${draft.postType === "authority_article" ? "md:col-span-2" : ""}`}>
+                    <Card key={draft.id} className={`flex flex-col ${draft.postType === "authority_article" || isTripack ? "md:col-span-2" : ""}`}>
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -377,6 +442,33 @@ export default function Drafts() {
                               <Separator className="my-2" />
                               <ScrollArea className="h-[300px]">
                                 <p className="text-sm whitespace-pre-wrap leading-relaxed" data-testid={`article-body-${draft.id}`}>
+                                  {draft.body}
+                                </p>
+                              </ScrollArea>
+                            </>
+                          ) : isTripack ? (
+                            /* Tri-Publish Pack article display */
+                            <>
+                              <p className="font-semibold text-base leading-tight" data-testid={`tripack-title-${draft.id}`}>{draft.hook}</p>
+                              {draft.postType === "tripack_linkedin_pulse" && (
+                                <div className="flex flex-col gap-1.5">
+                                  {draft.rehook && (
+                                    <div className="flex items-start gap-2 flex-wrap">
+                                      <Badge variant="outline" className="text-xs shrink-0">SEO Title</Badge>
+                                      <span className="text-xs text-muted-foreground">{draft.rehook}</span>
+                                    </div>
+                                  )}
+                                  {draft.coreInsight && (
+                                    <div className="flex items-start gap-2 flex-wrap">
+                                      <Badge variant="outline" className="text-xs shrink-0">Meta</Badge>
+                                      <span className="text-xs text-muted-foreground">{draft.coreInsight}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <Separator className="my-2" />
+                              <ScrollArea className="h-[320px]">
+                                <p className="text-sm whitespace-pre-wrap leading-relaxed" data-testid={`tripack-body-${draft.id}`}>
                                   {draft.body}
                                 </p>
                               </ScrollArea>

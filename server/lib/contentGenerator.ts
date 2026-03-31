@@ -1455,6 +1455,273 @@ Return ONLY valid JSON, no markdown.`;
   return posts;
 }
 
+// ─── TRI-PUBLISH PACK ────────────────────────────────────────────────────────
+
+// Generate 3 platform-adapted versions of the source article
+export async function generateTriPublishPack(
+  sourceArticle: string,
+  contexts: ContextItem[]
+): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
+  const contextString = contexts
+    .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
+    .join("\n\n");
+
+  const [xResult, linkedinResult, websiteResult] = await Promise.all([
+    // ── 1. X Article (virality + engagement) ─────────────────────────────────
+    openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: `You are adapting an authority article for 𝕏 (Twitter) — the algorithm rewards dwell time, scroll-stopping hooks, and genuine engagement.
+
+=== SOURCE ARTICLE (adapt this — do not invent new ideas) ===
+${sourceArticle}
+
+=== CONTEXT ===
+${contextString || "Operator-focused founders and builders."}
+
+=== X ARTICLE ADAPTATION RULES ===
+- Target length: 700–1200 words
+- Hook: Sharper, more contrarian than the original first sentence. Must stop scroll.
+- Paragraphs: 1-2 sentences max. Aggressive line breaks to slow the reader.
+- Language: More punchy and direct. Less academic.
+- Tension: Dial up contrast throughout. Show what breaks, what's hard.
+- Ending: Invite a quiet reply (not "thoughts?"). Something that makes operators reflect.
+- No emojis, no hashtags, no external links.
+
+=== SAME THESIS ===
+The core idea must remain identical — this is adaptation, not reinvention.
+
+Return a JSON object:
+{
+  "title": "Sharp X-native title (under 10 words, declarative)",
+  "articleBody": "Full adapted article. Use \\n\\n between paragraphs."
+}
+
+Return ONLY valid JSON, no markdown.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    }),
+
+    // ── 2. LinkedIn Pulse Article (SEO + LLM citation) ─────────────────────
+    openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: `You are adapting an authority article for LinkedIn Pulse — the goal is SEO ranking and LLM citation as a credible source.
+
+=== SOURCE ARTICLE (adapt this — do not invent new ideas) ===
+${sourceArticle}
+
+=== CONTEXT ===
+${contextString || "Operator-focused founders and builders."}
+
+=== LINKEDIN PULSE ADAPTATION RULES ===
+- Target length: 900–1500 words
+- Structure: Clear, well-organized. Use natural paragraph breaks.
+- Definitions: Explicitly define any named concepts for clarity.
+- Keywords: Naturally include 1–2 keyword phrases that operators would search for.
+- Explanations: Slightly more explicit than the original — help new readers follow.
+- Tone: Professional but still conversational. No jargon without definition.
+
+=== SEO REQUIREMENTS ===
+- SEO title: Different from the main title. Optimized for search queries (under 60 chars).
+- Meta description: 1–2 sentence summary including the keyword phrase (under 155 chars).
+
+=== SAME THESIS ===
+The core idea must remain identical.
+
+Return a JSON object:
+{
+  "title": "Main article title (human-readable H1, under 12 words)",
+  "seoTitle": "SEO-optimized title (under 60 characters, includes searchable keyword)",
+  "metaDescription": "1–2 sentence summary for search engines (under 155 chars)",
+  "articleBody": "Full adapted article. Use \\n\\n between paragraphs."
+}
+
+Return ONLY valid JSON, no markdown.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    }),
+
+    // ── 3. Website Article (ownership + depth) ────────────────────────────────
+    openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: `You are adapting an authority article for a founder's owned website — this is the definitive, most comprehensive version. It lives permanently and drives search traffic.
+
+=== SOURCE ARTICLE (adapt this — do not invent new ideas) ===
+${sourceArticle}
+
+=== CONTEXT ===
+${contextString || "Operator-focused founders and builders."}
+
+=== WEBSITE ARTICLE ADAPTATION RULES ===
+- Target length: 1200–2000 words
+- Add 1–2 NEW sections not in the source:
+  * Option: Deeper explanation of the named concept
+  * Option: Extended real-world scenario/case study
+  * Option: Common misconceptions addressed
+- Expand examples with more specifics and context.
+- Broader keyword coverage throughout.
+- Headings: Use clear section headings (write them in plain text like "The Problem With Coordination" not markdown — just label them clearly in the text).
+- Tone: Authoritative, permanent. Written to last.
+
+=== SAME THESIS ===
+The core idea must remain identical — this is the deepest expression of the same truth.
+
+Return a JSON object:
+{
+  "title": "Definitive article title (under 12 words)",
+  "articleBody": "Full website article. Use \\n\\n between paragraphs. Section headings written as bold opening sentences like: 'The Real Problem: Coordination, Not Intelligence.'"
+}
+
+Return ONLY valid JSON, no markdown.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  ]);
+
+  const results: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
+
+  // Parse X Article
+  try {
+    const x = JSON.parse(xResult.choices[0]?.message?.content || "{}");
+    results.push({
+      postType: "tripack_x_article",
+      contrarianAngle: null,
+      rawTweetType: null,
+      hook: x.title || "X Article",
+      rehook: null,
+      body: x.articleBody || "",
+      coreInsight: null,
+      cta: null,
+      status: "draft",
+      postUrl: null,
+      replyLikelihood: null,
+      dwellLikelihood: null,
+      fatigueRisk: null,
+      authorEngagementReminder: null,
+      carouselSlides: null,
+      carouselTheme: null,
+    });
+  } catch {
+    results.push({
+      postType: "tripack_x_article",
+      contrarianAngle: null,
+      rawTweetType: null,
+      hook: "X Article",
+      rehook: null,
+      body: "Generation failed. Please try again.",
+      coreInsight: null,
+      cta: null,
+      status: "draft",
+      postUrl: null,
+      replyLikelihood: null,
+      dwellLikelihood: null,
+      fatigueRisk: null,
+      authorEngagementReminder: null,
+      carouselSlides: null,
+      carouselTheme: null,
+    });
+  }
+
+  // Parse LinkedIn Pulse Article
+  try {
+    const li = JSON.parse(linkedinResult.choices[0]?.message?.content || "{}");
+    results.push({
+      postType: "tripack_linkedin_pulse",
+      contrarianAngle: null,
+      rawTweetType: null,
+      hook: li.title || "LinkedIn Pulse Article",
+      rehook: li.seoTitle || null,
+      body: li.articleBody || "",
+      coreInsight: li.metaDescription || null,
+      cta: null,
+      status: "draft",
+      postUrl: null,
+      replyLikelihood: null,
+      dwellLikelihood: null,
+      fatigueRisk: null,
+      authorEngagementReminder: null,
+      carouselSlides: null,
+      carouselTheme: null,
+    });
+  } catch {
+    results.push({
+      postType: "tripack_linkedin_pulse",
+      contrarianAngle: null,
+      rawTweetType: null,
+      hook: "LinkedIn Pulse Article",
+      rehook: null,
+      body: "Generation failed. Please try again.",
+      coreInsight: null,
+      cta: null,
+      status: "draft",
+      postUrl: null,
+      replyLikelihood: null,
+      dwellLikelihood: null,
+      fatigueRisk: null,
+      authorEngagementReminder: null,
+      carouselSlides: null,
+      carouselTheme: null,
+    });
+  }
+
+  // Parse Website Article
+  try {
+    const web = JSON.parse(websiteResult.choices[0]?.message?.content || "{}");
+    results.push({
+      postType: "tripack_website",
+      contrarianAngle: null,
+      rawTweetType: null,
+      hook: web.title || "Website Article",
+      rehook: null,
+      body: web.articleBody || "",
+      coreInsight: null,
+      cta: null,
+      status: "draft",
+      postUrl: null,
+      replyLikelihood: null,
+      dwellLikelihood: null,
+      fatigueRisk: null,
+      authorEngagementReminder: null,
+      carouselSlides: null,
+      carouselTheme: null,
+    });
+  } catch {
+    results.push({
+      postType: "tripack_website",
+      contrarianAngle: null,
+      rawTweetType: null,
+      hook: "Website Article",
+      rehook: null,
+      body: "Generation failed. Please try again.",
+      coreInsight: null,
+      cta: null,
+      status: "draft",
+      postUrl: null,
+      replyLikelihood: null,
+      dwellLikelihood: null,
+      fatigueRisk: null,
+      authorEngagementReminder: null,
+      carouselSlides: null,
+      carouselTheme: null,
+    });
+  }
+
+  return results;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Generate ONE Authority Article (800–1500 words, 8-part structure)
 export async function generateAuthorityArticle(
   rawInput: string,

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { extractSignals, extractCoreIdea, generateSourceArticle, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, generateAuthorityArticle, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
+import { extractSignals, extractCoreIdea, generateSourceArticle, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, generateAuthorityArticle, generateTriPublishPack, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
 import { runThinkingGates } from "./lib/thinkingGates";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -151,6 +151,42 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting weekly run:", error);
       res.status(500).json({ error: "Failed to delete weekly run" });
+    }
+  });
+
+  // Tri-Publish Pack: generate 3 platform-adapted versions of the source article
+  app.post("/api/weekly-runs/:id/tri-publish", async (req, res) => {
+    try {
+      const run = await storage.getWeeklyRun(req.params.id);
+      if (!run) {
+        return res.status(404).json({ error: "Weekly run not found" });
+      }
+      if (!run.sourceArticle) {
+        return res.status(400).json({ error: "This run does not have a source article. Please re-generate to create one." });
+      }
+
+      // Get context items used in this run
+      const allContexts = await storage.getActiveContextItems();
+      const selectedContexts = allContexts.filter((c) =>
+        run.selectedContextIds.includes(c.id)
+      );
+
+      const packDrafts = await generateTriPublishPack(run.sourceArticle, selectedContexts);
+
+      const savedDrafts = await Promise.all(
+        packDrafts.map((draft) =>
+          storage.createPostDraft({
+            ...draft,
+            weeklyRunId: run.id,
+            carouselSlides: draft.carouselSlides as any,
+          })
+        )
+      );
+
+      res.json(savedDrafts);
+    } catch (error) {
+      console.error("Error generating tri-publish pack:", error);
+      res.status(500).json({ error: "Failed to generate tri-publish pack" });
     }
   });
 

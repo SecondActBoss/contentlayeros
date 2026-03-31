@@ -111,6 +111,15 @@ The source article ensures thematic cohesion across all content types. Each down
    - **Quiet Insight**: Reflective observation
 3. Constraints: ≤280 chars, no emojis, no hashtags, no thread language, operator tone
 
+**Tri-Publish Pack (Post-Generation Module):**
+Available on any run that has a source article. Generates 3 platform-adapted versions in parallel:
+1. **𝕏 Article** (700–1200 words): Sharper hook, punchy language, aggressive line breaks, dwell-time optimized
+2. **LinkedIn Pulse Article** (900–1500 words): SEO + LLM citation optimized; includes SEO title (stored in `rehook`), meta description (stored in `coreInsight`), explicit definitions, natural keyword coverage
+3. **Website Article** (1200–2000 words): Definitive owned version; expanded examples, 1–2 additional sections, broader keyword coverage
+- Same core thesis across all three — adaptation only, no reinvention
+- Triggered via "Tri-Publish Pack" button in Drafts page (only appears when sourceArticle exists and pack not yet generated)
+- Stored as PostDrafts with types: `tripack_x_article`, `tripack_linkedin_pulse`, `tripack_website`
+
 **Phoenix Algorithm Optimization (𝕏 Only):**
 All 𝕏 content is optimized for the Phoenix algorithm with:
 - **Reply-inviting endings**: Natural closings that prompt operator replies (not engagement bait like "thoughts?")
