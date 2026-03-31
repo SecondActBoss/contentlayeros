@@ -97,7 +97,7 @@ export async function appendPostsToSheet(
       founder_story: 'Founder Story',
       trend_translation: 'Trend Translation',
       system_principle: 'System Principle',
-      newsletter_section: 'Newsletter Section',
+      newsletter_section: '𝕏 Article',
       twitter_pov: '𝕏 POV Compression',
       twitter_paradox: '𝕏 Paradox / Reframe',
       twitter_operator: '𝕏 Operator Reality',

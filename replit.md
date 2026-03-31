@@ -8,7 +8,7 @@ Key capabilities:
 - **LinkedIn Mode**: Weekly content generation for 4 post types (Educational Authority, Founder Story, Trend Translation, System Principle) + 3 LinkedIn Carousels
 - **LinkedIn Carousel Mode**: Generate 3 carousel drafts with distinct themes (Step-by-Step Framework, Myth vs Reality, Lessons from Experience) - each with 7 slides (hook, 5 content, CTA)
 - **"Be Contrary" mode** (LinkedIn): Generate thoughtful contrarian responses to popular narratives with 4 distinct angles
-- **𝕏 Mode**: Generate 1 newsletter section (300-500 words) + 3 Twitter posts (≤280 chars)
+- **𝕏 Mode**: Generate 1 𝕏 Article (600-950 words, viral story arc) + 9 Twitter posts (≤280 chars)
 - **Raw Tweet Mode** (𝕏): Generate 5-7 single tweets with variety across five types: POV Statement, Contrarian Reframe, Operator Reality, System Rule, Quiet Insight
 - Context management (ICP, positioning, language rules, visual references)
 - Feedback learning system for performance tracking
@@ -98,8 +98,8 @@ The source article ensures thematic cohesion across all content types. Each down
 
 **𝕏 Standard Mode:**
 1. Raw input + selected context items → Signal extraction (OpenAI)
-2. Generate 1 newsletter section (300-500 words) + 3 Twitter posts (≤280 chars)
-3. Newsletter uses paradox/open loop structure; posts compress ideas
+2. Generate 1 𝕏 Article (600-950 words, viral story arc) + 9 Twitter posts (≤280 chars)
+3. Article follows Hook → Pain → Old solutions → Breakthrough → Vision → CTA arc; posts each have a distinct angle (POV, Paradox, Operator Reality, System Rule, Contrarian Truth, Quiet Insight, Story Moment, Future Vision, Mirror)
 
 **𝕏 Raw Tweet Mode:**
 1. Raw input + selected context items → Signal extraction (OpenAI)

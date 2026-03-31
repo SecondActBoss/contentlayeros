@@ -51,8 +51,8 @@ const POST_TYPE_CONFIG = {
   },
   newsletter_section: {
     icon: Newspaper,
-    label: "Newsletter Section",
-    description: "300-500 word newsletter piece with paradox and open loop",
+    label: "𝕏 Article",
+    description: "600-950 word viral 𝕏 Article with story arc and CTA",
     platform: "twitter",
   },
   twitter_pov: {
@@ -151,7 +151,7 @@ const PURPOSE_TAGS: Record<string, string> = {
   twitter_paradox: "Expand reach on 𝕏",
   twitter_operator: "Expand reach on 𝕏",
   raw_tweet: "Expand reach on 𝕏",
-  newsletter_section: "Drive newsletter growth",
+  newsletter_section: "𝕏 Article — read, save, comment",
   tripack_x_article: "Reach via 𝕏",
   tripack_linkedin_pulse: "SEO + AI citations",
   tripack_website: "Owned audience",

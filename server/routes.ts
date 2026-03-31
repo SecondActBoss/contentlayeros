@@ -324,7 +324,7 @@ export async function registerRoutes(
             sourceArticleText
           );
         } else {
-          // Generate 𝕏 content: 1 newsletter section + 3 posts
+          // Generate 𝕏 content: 1 X Article + 9 posts
           postData = await generateTwitterContent(
             rawInput,
             selectedContexts,

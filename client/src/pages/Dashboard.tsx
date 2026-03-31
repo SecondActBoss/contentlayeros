@@ -180,7 +180,7 @@ export default function Dashboard() {
         if (isRawTweetMode) {
           modeDesc = `${postCount} raw tweets have been created.`;
         } else {
-          modeDesc = `1 newsletter section + 3 𝕏 posts have been created.`;
+          modeDesc = `1 𝕏 Article + 9 𝕏 posts have been created.`;
         }
       } else if (isAuthorityArticleMode) {
         modeDesc = `Authority article generated and used as the source for ${postCount - 1} content drafts.`;
@@ -290,7 +290,7 @@ export default function Dashboard() {
       if (isRawTweetMode) {
         return "Generate 5-7 single tweets. Quick drafts, varied types, operator tone.";
       }
-      return "Generate 1 newsletter section + 3 𝕏 posts from your weekly materials.";
+      return "Generate 1 𝕏 Article + 9 𝕏 posts from your weekly materials.";
     }
     if (isAuthorityArticleMode) {
       return "This article becomes the foundation for all posts, carousels, and X content.";

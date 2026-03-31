@@ -823,7 +823,7 @@ Return ONLY valid JSON, no markdown.`;
   return carousels;
 }
 
-// Generate 𝕏 (Twitter) content: 1 newsletter section + 3 posts
+// Generate 𝕏 (Twitter) content: 1 X Article + 9 posts
 export async function generateTwitterContent(
   rawInput: string,
   contexts: ContextItem[],
@@ -899,41 +899,46 @@ Return ONLY valid JSON, no markdown.`;
     }
   }
 
-  // 1. Generate Newsletter Section (300-500 words)
-  const newsletterPrompt = `You are a thoughtful founder writing a newsletter section for operators and builders.
+  // 1. Generate 𝕏 Article (600-950 words)
+  const newsletterPrompt = `You are the world's best writer of viral 𝕏 Articles. You have helped multiple 7- and 8-figure operators and founders turn rough ideas into high-engagement Articles that get tens of thousands of views, saves, and comments.
+
+Your style is:
+- Direct, authoritative, and conversational (never corporate)
+- Short paragraphs (1–3 sentences max)
+- Bold subheads for scannability
+- Heavy use of line breaks and white space
+- Occasional **bold** for emphasis inside paragraphs
+- One relatable opening scene that makes the reader feel seen
+- Data or credible stats to back up claims (use real numbers where possible)
+- Clear story arc: Hook → Pain → Why it's worse than you think → Failed old solutions → Breakthrough new solution → Moment of reflection → Inspiring future vision → Strong CTA
 
 === CORE IDEA ===
 ${coreIdea.coreIdea}
 Paradox: ${coreIdea.paradox}
 Implication: ${coreIdea.implication}
 ${contraryContext}
+=== RAW MATERIALS ===
+${rawInput}
+
+=== EXTRACTED SIGNALS ===
+${signalsString}
+
 === CONTEXT ===
 ${contextString || "Write for a professional, operator-focused audience."}
 ${sourceArticleContext}
-=== NEWSLETTER SECTION REQUIREMENTS ===
-Write a 300-500 word newsletter section structured as:
-1. Open with the paradox or tension
-2. Context: Why this matters now
-3. Core idea: The main insight
-4. Implication: What this means for the reader
-5. Open loop: Leave them thinking
+TASK:
+Take the Raw Materials above and transform them into a complete, publication-ready 𝕏 Article at the highest level.
 
-=== DWELL-TIME OPTIMIZATION ===
-- Use short paragraphs (2-3 sentences max)
-- Include strategic line breaks between key ideas
-- Let whitespace slow the reader down
-- Each section should invite the reader to pause and think
-
-TONE CONSTRAINTS:
-- Calm, thoughtful tone
-- No hype, no listicles
-- No engagement bait
-- No emojis or external links (keeps readers on platform)
-- Clarity over cleverness
+Rules:
+- Give it a punchy, curiosity-driven title that includes the core paradox or insight
+- Keep the total length roughly 600–950 words (ideal for 𝕏 Articles)
+- End with an engagement question or call-to-action that invites comments (e.g., "Drop a 🔥 if this hit home" or "What's your biggest challenge right now?")
+- Never mention tools, AI, or the writing process in the final Article
+- Make it feel like it came straight from a battle-tested operator who just figured something out
 
 Return a JSON object with:
-- title: A clear, non-clickbait title (5-10 words)
-- body: The full newsletter section (300-500 words)
+- title: A punchy, curiosity-driven title that includes the core paradox or insight (≤12 words)
+- body: The full 𝕏 Article (600–950 words, publication-ready)
 - coreInsight: The core idea in one sentence
 
 Return ONLY valid JSON, no markdown.`;
@@ -986,16 +991,16 @@ Return ONLY valid JSON, no markdown.`;
     });
   }
 
-  // 2. Generate THREE 𝕏 Posts
+  // 2. Generate NINE 𝕏 Posts
   // Phoenix-optimized prompts for 𝕏 algorithm alignment
   const twitterPostTypes = [
     {
       type: "twitter_pov" as const,
-      name: "POV Compression",
-      description: "Single declarative idea, ≤280 characters, bookmarkable",
+      name: "POV Statement",
+      description: "Declarative belief — single powerful statement, bookmarkable",
       prompt: `Compress the core idea into a single, declarative 𝕏 post.
 - Must be ≤280 characters
-- Single powerful statement
+- Single powerful statement of belief — no preamble
 - Designed to be bookmarked
 - No thread language
 - No hashtags, emojis, or external links
@@ -1026,6 +1031,77 @@ Return ONLY valid JSON, no markdown.`;
 - No hashtags, emojis, or external links
 - End with a phrase that naturally prompts replies (operators sharing their experience)
 - Example endings: "still learning how to..." or "the fix was simpler than I expected" — not "what's your take?"`,
+    },
+    {
+      type: "twitter_pov" as const,
+      name: "System Rule",
+      description: "Mental model or operating constraint that snaps a concept into place",
+      prompt: `Write a 𝕏 post that reads like a discovered operating rule.
+- Must be ≤280 characters
+- State it like a law of physics for operators — blunt and precise
+- Could start with: "The rule is..." / "Every time..." / "The faster you..." / "Most people think X. The real constraint is Y."
+- No hashtags, emojis, or external links
+- Should feel like a mental model worth screenshotting`,
+    },
+    {
+      type: "twitter_paradox" as const,
+      name: "Contrarian Truth",
+      description: "Flips a widely-held belief with calm authority",
+      prompt: `Write a 𝕏 post that flips a conventional take without being combative.
+- Must be ≤280 characters
+- Opens by acknowledging the popular belief, then pivots
+- Example structure: "Everyone says X. The truth: Y." or "X sounds smart. It's actually the problem."
+- Calm and confident — not cynical or provocative for its own sake
+- No hashtags, emojis, or external links
+- Leave the reader slightly unsettled — in a good way`,
+    },
+    {
+      type: "twitter_operator" as const,
+      name: "Quiet Insight",
+      description: "Reflective, slower observation — the kind that makes people feel understood",
+      prompt: `Write a 𝕏 post that reads like a quiet realization.
+- Must be ≤280 characters
+- Reflective, contemplative tone — not a declaration
+- The reader should feel: "I've thought this but never said it"
+- No hashtags, emojis, or external links
+- Use line breaks to create breathing room
+- Do not end with a question — let it land in silence`,
+    },
+    {
+      type: "twitter_pov" as const,
+      name: "Story Moment",
+      description: "A specific scene or micro-story that makes the core idea tangible",
+      prompt: `Write a 𝕏 post structured around a single moment or scene.
+- Must be ≤280 characters
+- Opens with a concrete moment: a conversation, a decision, a realization
+- The scene implies the lesson — don't over-explain
+- No hashtags, emojis, or external links
+- Should feel cinematic and specific, not vague or generic
+- End with the earned insight — 1 sentence`,
+    },
+    {
+      type: "twitter_paradox" as const,
+      name: "Future Vision",
+      description: "A forward-looking statement about where this is heading",
+      prompt: `Write a 𝕏 post that paints a near-future picture based on the core idea.
+- Must be ≤280 characters
+- Project 12–24 months out — confident, not speculative
+- Ground it in operator reality, not hype
+- No hashtags, emojis, or external links
+- Could open with: "In 18 months..." / "The founders who figure this out now..." / "This is what separates..."
+- Should feel inevitable in hindsight`,
+    },
+    {
+      type: "twitter_operator" as const,
+      name: "Mirror / Recognition",
+      description: "Makes the reader feel seen — describes their exact situation",
+      prompt: `Write a 𝕏 post that mirrors the reader's unspoken experience.
+- Must be ≤280 characters
+- Describes a feeling, struggle, or moment the reader hasn't articulated yet
+- Could open with: "You know that feeling when..." / "If your [problem] feels like..." / "The frustrating part is..."
+- No hashtags, emojis, or external links
+- Should prompt the reader to save it or send it to someone who needs to see it
+- Do not offer a solution — just make them feel understood`,
     },
   ];
 
