@@ -1275,3 +1275,168 @@ Return ONLY valid JSON, no markdown.`;
 
   return posts;
 }
+
+// Generate ONE Authority Article (800–1500 words, 8-part structure)
+export async function generateAuthorityArticle(
+  rawInput: string,
+  contexts: ContextItem[],
+  extractedSignals: ExtractedSignals,
+  angle?: string
+): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
+  const contextString = contexts
+    .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
+    .join("\n\n");
+
+  const icpContext = contexts
+    .filter((c) => c.type === "icp" || c.type === "positioning")
+    .map((c) => c.content)
+    .join("\n");
+
+  const signalsString = [
+    extractedSignals.expertise.length > 0
+      ? `EXPERTISE: ${extractedSignals.expertise.join(" | ")}`
+      : "",
+    extractedSignals.stories.length > 0
+      ? `STORIES: ${extractedSignals.stories.join(" | ")}`
+      : "",
+    extractedSignals.trends.length > 0
+      ? `TRENDS: ${extractedSignals.trends.join(" | ")}`
+      : "",
+    extractedSignals.opinions.length > 0
+      ? `OPINIONS: ${extractedSignals.opinions.join(" | ")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const prompt = `You are writing a long-form authority article for a founder. This article becomes the primary source for all downstream content — LinkedIn posts, carousels, X content, SEO, and LLM citation.
+
+=== CONTEXT ===
+${contextString || "No specific context provided."}
+
+=== EXTRACTED SIGNALS ===
+${signalsString}
+
+=== RAW MATERIALS ===
+${rawInput}
+
+${angle ? `=== ANGLE / FOCUS ===\n${angle}\n` : ""}
+=== TARGET ICP ===
+${icpContext || "Busy operators and founders running small-to-medium businesses who feel the friction of coordination, missed calls, and reactive management."}
+
+=== ARTICLE STRUCTURE (MANDATORY — follow in order) ===
+1. Hook (contrarian, 1–2 sentences max)
+   - Strong opinion. No questions. Should create tension.
+
+2. The Problem (operator pain)
+   - Grounded in real-world experience.
+   - Use ICP language: "busy all day, nothing moved."
+
+3. What People Think Is Happening
+   - Present common belief or narrative.
+
+4. What's Actually Happening
+   - Reframe with clear, grounded explanation.
+
+5. Core Insight / Framework
+   - Introduce a NAMED CONCEPT or model (e.g., "Coordination Debt", "Silent Revenue Loss").
+   - This is mandatory. The article must name something.
+
+6. Real Example or Scenario
+   - Concrete, believable scenario. Prefer SMB/operator context.
+
+7. Implication
+   - What this means for operators. Tie back to time, revenue, or stress.
+
+8. Closing Shift
+   - Clear mental reframe. Calm, authoritative tone.
+
+=== WRITING RULES (MANDATORY) ===
+- Conversational tone (5th–6th grade reading level)
+- Short sentences (under 20 words)
+- Use whitespace (1–2 sentence paragraphs only)
+- No emojis
+- No hype language ("game-changing", "revolutionary", "unlock")
+- No generic advice ("communicate better", "just focus")
+- No listicles or bullet points in the body
+- No "tips" or "strategies"
+- Total length: 800–1500 words
+
+=== CONTENT REQUIREMENTS ===
+- Must be opinionated (not neutral)
+- Must include at least ONE named concept (from section 5)
+- Must feel like lived experience, not theory
+- Key truths to reinforce:
+  * AI Employees execute work (not tools)
+  * Coordination is the real bottleneck
+  * Relief beats intelligence
+  * Work should continue while operator is offline
+
+=== OUTPUT FORMAT ===
+Return a JSON object with exactly these fields:
+{
+  "title": "SEO-ready but natural title (not clickbait, under 12 words)",
+  "namedConcept": "The named concept or framework introduced (e.g., 'Coordination Debt')",
+  "articleBody": "The full article body text. Use \\n\\n between paragraphs. No markdown headers — flowing prose only."
+}
+
+Return ONLY valid JSON, no markdown, no explanation.`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+  });
+
+  try {
+    const parsed = JSON.parse(
+      response.choices[0]?.message?.content || "{}"
+    );
+
+    const title = parsed.title || "Authority Article";
+    const articleBody = parsed.articleBody || "";
+    const namedConcept = parsed.namedConcept || "";
+
+    return [
+      {
+        postType: "authority_article",
+        contrarianAngle: null,
+        rawTweetType: null,
+        hook: title,
+        rehook: "",
+        body: articleBody,
+        coreInsight: namedConcept,
+        cta: null,
+        status: "draft",
+        postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
+        carouselSlides: null,
+        carouselTheme: null,
+      },
+    ];
+  } catch {
+    return [
+      {
+        postType: "authority_article",
+        contrarianAngle: null,
+        rawTweetType: null,
+        hook: "Authority Article",
+        rehook: "",
+        body: "Generation failed. Please try again.",
+        coreInsight: "",
+        cta: null,
+        status: "draft",
+        postUrl: null,
+        replyLikelihood: null,
+        dwellLikelihood: null,
+        fatigueRisk: null,
+        authorEngagementReminder: null,
+        carouselSlides: null,
+        carouselTheme: null,
+      },
+    ];
+  }
+}

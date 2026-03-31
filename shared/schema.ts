@@ -52,6 +52,8 @@ export type PostType =
   | "system_principle" 
   | "contrarian_pov"
   | "linkedin_carousel"
+  // Authority Article mode
+  | "authority_article"
   // 𝕏 (Twitter) post types
   | "newsletter_section"
   | "twitter_pov"
@@ -165,6 +167,8 @@ export const weeklyRuns = pgTable("weekly_runs", {
   gateSilentSalesMap: boolean("gate_silent_sales_map").default(false).notNull(),
   gateWeeklyOperatorFocus: boolean("gate_weekly_operator_focus").default(false).notNull(),
   gateOutputs: jsonb("gate_outputs"), // ThinkingGatesOutput
+  isAuthorityArticleMode: boolean("is_authority_article_mode").default(false).notNull(),
+  articleAngle: text("article_angle"), // Optional angle/focus for authority article
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

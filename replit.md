@@ -62,6 +62,22 @@ Preferred communication style: Simple, everyday language.
 3. Each carousel has 7 slides: hook slide, 5 content slides, CTA slide
 4. Each slide contains headline (4-10 words) + body text (1-3 sentences)
 
+**Authority Article Mode (LinkedIn):**
+1. Raw input + optional angle + selected context items → Signal extraction (OpenAI)
+2. Generate ONE long-form article (800–1500 words) with 8-part structure:
+   - Hook (contrarian, 1–2 sentences)
+   - The Problem (operator pain)
+   - What People Think Is Happening
+   - What's Actually Happening
+   - Core Insight / Framework (mandatory named concept e.g. "Coordination Debt")
+   - Real Example or Scenario
+   - Implication
+   - Closing Shift
+3. Article stored as a single draft with: title (in hook field), full article body, named concept (coreInsight)
+4. Intended as the primary source for all downstream content (LinkedIn posts, carousels, X content, SEO)
+5. Optional "Article Angle" input to focus the direction/framing
+6. Mutually exclusive with "Be Contrary" mode
+
 **LinkedIn "Be Contrary" Mode:**
 1. External signal (viral post, article, narrative) + optional framing note
 2. Generate 4 contrarian posts with distinct angles:

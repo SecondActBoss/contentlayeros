@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap, Newspaper, MessageCircle, ChevronDown, Brain, Target, Search, Database, ShoppingCart, Focus } from "lucide-react";
+import { Loader2, Play, FileText, Lightbulb, TrendingUp, Quote, Zap, Newspaper, MessageCircle, ChevronDown, Brain, Target, Search, Database, ShoppingCart, Focus, BookOpen } from "lucide-react";
 import { SiX, SiLinkedin } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,7 @@ const POST_TYPE_ICONS: Record<string, any> = {
   trend_translation: TrendingUp,
   system_principle: Lightbulb,
   contrarian_pov: Zap,
+  authority_article: BookOpen,
   newsletter_section: Newspaper,
   twitter_pov: MessageCircle,
   twitter_paradox: Zap,
@@ -36,6 +37,7 @@ const POST_TYPE_LABELS: Record<string, string> = {
   trend_translation: "Trend Translation",
   system_principle: "System Principle",
   contrarian_pov: "Contrarian POV",
+  authority_article: "Authority Article",
   newsletter_section: "Newsletter Section",
   twitter_pov: "𝕏 POV Compression",
   twitter_paradox: "𝕏 Paradox / Reframe",
@@ -67,6 +69,8 @@ export default function Dashboard() {
   const [distributionMode, setDistributionMode] = useState<DistributionMode>("linkedin");
   const [isContrarianMode, setIsContrarianMode] = useState(false);
   const [isRawTweetMode, setIsRawTweetMode] = useState(false);
+  const [isAuthorityArticleMode, setIsAuthorityArticleMode] = useState(false);
+  const [articleAngle, setArticleAngle] = useState("");
   const [externalSignal, setExternalSignal] = useState("");
   const [framingNote, setFramingNote] = useState("");
   const [gatesOpen, setGatesOpen] = useState(false);
@@ -89,6 +93,8 @@ export default function Dashboard() {
       distributionMode?: DistributionMode;
       isContrarianMode?: boolean;
       isRawTweetMode?: boolean;
+      isAuthorityArticleMode?: boolean;
+      articleAngle?: string;
       externalSignal?: string;
       framingNote?: string;
       gateBeliefStressTest?: boolean;
@@ -113,6 +119,8 @@ export default function Dashboard() {
         } else {
           modeDesc = `1 newsletter section + 3 𝕏 posts have been created.`;
         }
+      } else if (isAuthorityArticleMode) {
+        modeDesc = `Authority article has been created. Use it as the source for all downstream content.`;
       } else if (isContrarianMode) {
         modeDesc = `${postCount} contrarian LinkedIn post drafts have been created.`;
       } else {
@@ -167,8 +175,10 @@ export default function Dashboard() {
       rawInput, 
       selectedContextIds,
       distributionMode,
-      isContrarianMode,
+      isContrarianMode: distributionMode === "linkedin" ? isContrarianMode : false,
       isRawTweetMode: distributionMode === "twitter" ? isRawTweetMode : false,
+      isAuthorityArticleMode: distributionMode === "linkedin" ? isAuthorityArticleMode : false,
+      articleAngle: isAuthorityArticleMode ? articleAngle : undefined,
       externalSignal: isContrarianMode ? externalSignal : undefined,
       framingNote: isContrarianMode ? framingNote : undefined,
       gateBeliefStressTest,
@@ -203,6 +213,7 @@ export default function Dashboard() {
     if (distributionMode === "twitter") {
       return isRawTweetMode ? "Raw Tweet Mode" : "𝕏 Mode";
     }
+    if (isAuthorityArticleMode) return "Authority Article";
     if (isContrarianMode) return "Be Contrary";
     return "Weekly Run";
   };
@@ -214,6 +225,9 @@ export default function Dashboard() {
       }
       return "Generate 1 newsletter section + 3 𝕏 posts from your weekly materials.";
     }
+    if (isAuthorityArticleMode) {
+      return "Generate one long-form authority article (800–1500 words). Use it as the source for all downstream content.";
+    }
     if (isContrarianMode) {
       return "Generate thoughtful contrarian takes in response to popular narratives.";
     }
@@ -224,6 +238,7 @@ export default function Dashboard() {
     if (distributionMode === "twitter") {
       return isRawTweetMode ? "Generate Raw Tweets" : "Generate 𝕏 Content";
     }
+    if (isAuthorityArticleMode) return "Generate Authority Article";
     if (isContrarianMode) return "Generate 4 Contrarian Posts";
     return "Generate 4 Posts";
   };
@@ -268,16 +283,35 @@ export default function Dashboard() {
           )}
         </div>
         {distributionMode === "linkedin" && (
-          <div className="flex items-center gap-2 shrink-0">
-            <Label htmlFor="contrarian-toggle" className="text-sm font-medium">
-              Be Contrary
-            </Label>
-            <Switch
-              id="contrarian-toggle"
-              checked={isContrarianMode}
-              onCheckedChange={setIsContrarianMode}
-              data-testid="toggle-contrarian-mode"
-            />
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="authority-article-toggle" className="text-sm font-medium">
+                Authority Article
+              </Label>
+              <Switch
+                id="authority-article-toggle"
+                checked={isAuthorityArticleMode}
+                onCheckedChange={(checked) => {
+                  setIsAuthorityArticleMode(checked);
+                  if (checked) setIsContrarianMode(false);
+                }}
+                data-testid="toggle-authority-article-mode"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="contrarian-toggle" className="text-sm font-medium">
+                Be Contrary
+              </Label>
+              <Switch
+                id="contrarian-toggle"
+                checked={isContrarianMode}
+                onCheckedChange={(checked) => {
+                  setIsContrarianMode(checked);
+                  if (checked) setIsAuthorityArticleMode(false);
+                }}
+                data-testid="toggle-contrarian-mode"
+              />
+            </div>
           </div>
         )}
         {distributionMode === "twitter" && (
@@ -363,6 +397,31 @@ Examples:
                   value={rawInput}
                   onChange={(e) => setRawInput(e.target.value)}
                   data-testid="input-raw-materials"
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Authority Article Angle - optional field when article mode is on */}
+          {distributionMode === "linkedin" && isAuthorityArticleMode && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  Article Angle
+                  <Badge variant="secondary" className="text-xs font-normal">optional</Badge>
+                </CardTitle>
+                <CardDescription>
+                  Focus the article on a specific angle, tension, or framing
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  placeholder="e.g., 'missed calls and silent revenue loss' or 'AI Employees vs AI tools — why the distinction matters'"
+                  className="min-h-[80px] resize-none text-sm"
+                  value={articleAngle}
+                  onChange={(e) => setArticleAngle(e.target.value)}
+                  data-testid="input-article-angle"
                 />
               </CardContent>
             </Card>

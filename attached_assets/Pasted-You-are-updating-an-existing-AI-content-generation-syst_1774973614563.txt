@@ -1,0 +1,143 @@
+You are updating an existing AI content generation system called ContentLayerOS.
+
+Your task is to ADD a new generation mode called:
+
+"Authority Article Mode"
+
+Do NOT modify or break any existing modes.
+
+---
+
+## GOAL
+
+Create a long-form, opinionated, insight-driven article that becomes the "source of truth" for all downstream content.
+
+This article will later be:
+
+* Repurposed into LinkedIn posts, carousels, and X content
+* Published natively on X Articles and LinkedIn Pulse
+* Used for SEO and LLM citation
+
+---
+
+## INPUTS
+
+The mode should accept:
+
+1. Extracted signals (already produced by Step 1 system):
+
+   * Expertise
+   * Stories
+   * Trends
+   * Opinions
+
+2. Optional:
+
+   * "Angle" (string) → e.g. "missed calls", "AI Employees vs tools"
+   * "Target ICP" (default to stored ICP)
+   * "Tone rules" (use existing system tone constraints)
+
+---
+
+## OUTPUT
+
+Generate ONE article between 800–1500 words.
+
+---
+
+## ARTICLE STRUCTURE (MANDATORY)
+
+Follow this exact structure:
+
+1. Hook (contrarian, 1–2 sentences max)
+
+   * Strong opinion
+   * No questions
+   * Should create tension
+
+2. The Problem (operator pain)
+
+   * Grounded in real-world experience
+   * Use ICP language: “busy all day, nothing moved”
+
+3. What People Think Is Happening
+
+   * Present common belief or narrative
+
+4. What’s Actually Happening
+
+   * Reframe with clear, grounded explanation
+
+5. Core Insight / Framework
+
+   * Introduce a named concept or model
+   * Example: "Coordination Debt", "Silent Revenue Loss"
+
+6. Real Example or Scenario
+
+   * Concrete, believable scenario
+   * Prefer SMB/operator context
+
+7. Implication
+
+   * What this means for operators
+   * Tie back to time, revenue, or stress
+
+8. Closing Shift
+
+   * Clear mental reframe
+   * Calm, authoritative tone
+
+---
+
+## WRITING RULES
+
+* Conversational tone (5th–6th grade reading level)
+* Short sentences (<20 words)
+* Use whitespace (1–2 sentence paragraphs)
+* No emojis
+* No hype language
+* No generic advice
+* No listicles
+* No “tips”
+
+---
+
+## CONTENT REQUIREMENTS
+
+* Must be opinionated (not neutral)
+* Must include at least ONE named concept
+* Must feel like lived experience, not theory
+* Must align with AgentLayerOS positioning:
+
+Key truths to reinforce:
+
+* AI Employees execute work (not tools)
+* Coordination is the real bottleneck
+* Relief > intelligence
+* Work should continue while operator is offline
+
+---
+
+## OUTPUT FORMAT
+
+Return:
+
+* Title (SEO-ready but natural)
+* Article body (clean formatting, spaced paragraphs)
+
+Do NOT include explanations. Only output the article.
+
+---
+
+## IMPORTANT
+
+This article becomes the PRIMARY SOURCE for all other content.
+
+It must be:
+
+* Strong enough to stand alone
+* Clear enough to be cited
+* Opinionated enough to spark discussion
+
+Do not produce safe or generic content.

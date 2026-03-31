@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { extractSignals, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
+import { extractSignals, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, generateAuthorityArticle, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
 import { runThinkingGates } from "./lib/thinkingGates";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -23,6 +23,8 @@ const weeklyRunInputSchema = z.object({
   gateContentInfrastructure: z.boolean().optional().default(false),
   gateSilentSalesMap: z.boolean().optional().default(false),
   gateWeeklyOperatorFocus: z.boolean().optional().default(false),
+  isAuthorityArticleMode: z.boolean().optional().default(false),
+  articleAngle: z.string().optional(),
 });
 
 const updateContextItemSchema = insertContextItemSchema.partial();
@@ -173,6 +175,8 @@ export async function registerRoutes(
         gateContentInfrastructure,
         gateSilentSalesMap,
         gateWeeklyOperatorFocus,
+        isAuthorityArticleMode,
+        articleAngle,
       } = parsed.data;
 
       // Validate based on mode
@@ -221,6 +225,9 @@ export async function registerRoutes(
             framingNote
           );
         }
+      } else if (isAuthorityArticleMode) {
+        // Generate 1 authority article
+        postData = await generateAuthorityArticle(rawInput, selectedContexts, extractedSignals, articleAngle);
       } else if (isContrarianMode) {
         // Generate 4 contrarian LinkedIn posts
         postData = await generateContrarianPosts(externalSignal!, framingNote, selectedContexts, strongExamples);
@@ -247,6 +254,8 @@ export async function registerRoutes(
         gateContentInfrastructure: gateContentInfrastructure || false,
         gateSilentSalesMap: gateSilentSalesMap || false,
         gateWeeklyOperatorFocus: gateWeeklyOperatorFocus || false,
+        isAuthorityArticleMode: isAuthorityArticleMode || false,
+        articleAngle: articleAngle || null,
       });
 
       // Update with extracted signals

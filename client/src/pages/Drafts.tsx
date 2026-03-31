@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers } from "lucide-react";
+import { Loader2, FileText, Quote, TrendingUp, Lightbulb, Copy, ExternalLink, Check, Sheet, Zap, Newspaper, MessageCircle, Trash2, Layers, BookOpen } from "lucide-react";
 import { SiX } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -82,6 +82,12 @@ const POST_TYPE_CONFIG = {
     icon: Layers,
     label: "LinkedIn Carousel",
     description: "Multi-slide visual content for high engagement",
+    platform: "linkedin",
+  },
+  authority_article: {
+    icon: BookOpen,
+    label: "Authority Article",
+    description: "Long-form source article (800–1500 words) for all downstream content",
     platform: "linkedin",
   },
 };
@@ -179,7 +185,9 @@ export default function Drafts() {
   const handleCopyDraft = async (draft: PostDraft) => {
     let fullPost: string;
     
-    if (draft.postType === "linkedin_carousel" && draft.carouselSlides) {
+    if (draft.postType === "authority_article") {
+      fullPost = `${draft.hook}\n\n${draft.body}${draft.coreInsight ? `\n\n[Named Concept: ${draft.coreInsight}]` : ""}`;
+    } else if (draft.postType === "linkedin_carousel" && draft.carouselSlides) {
       const slides = draft.carouselSlides as CarouselSlide[];
       const slidesText = slides.map(slide => 
         `[Slide ${slide.slideNumber} - ${slide.slideType}]\n${slide.headline}\n${slide.body}`
@@ -326,7 +334,7 @@ export default function Drafts() {
                     ? RAW_TWEET_TYPE_LABELS[draft.rawTweetType]
                     : null;
                   return (
-                    <Card key={draft.id} className="flex flex-col">
+                    <Card key={draft.id} className={`flex flex-col ${draft.postType === "authority_article" ? "md:col-span-2" : ""}`}>
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -355,8 +363,26 @@ export default function Drafts() {
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col">
                         <div className="flex-1 space-y-2">
-                          {/* Carousel slides display */}
-                          {draft.postType === "linkedin_carousel" && draft.carouselSlides ? (
+                          {/* Authority Article display */}
+                          {draft.postType === "authority_article" ? (
+                            <>
+                              <p className="font-semibold text-base leading-tight">{draft.hook}</p>
+                              {draft.coreInsight && (
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary" className="text-xs">
+                                    Named concept: {draft.coreInsight}
+                                  </Badge>
+                                </div>
+                              )}
+                              <Separator className="my-2" />
+                              <ScrollArea className="h-[300px]">
+                                <p className="text-sm whitespace-pre-wrap leading-relaxed" data-testid={`article-body-${draft.id}`}>
+                                  {draft.body}
+                                </p>
+                              </ScrollArea>
+                            </>
+                          ) : draft.postType === "linkedin_carousel" && draft.carouselSlides ? (
+                            /* Carousel slides display */
                             <>
                               <p className="font-medium text-sm">{draft.hook}</p>
                               {draft.carouselTheme && (
