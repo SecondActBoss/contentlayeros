@@ -302,29 +302,34 @@ export async function registerRoutes(
         framingNote
       );
 
-      // ── Step 3: Generate source article (primary input for all downstream) ─
-      let sourceArticleText = await generateSourceArticle(
-        rawInput,
-        selectedContexts,
-        extractedSignals,
-        sharedCoreIdea,
-        articleAngle
-      );
+      // ── Step 3: Generate source article (LinkedIn modes only) ───────────────
+      // 𝕏 modes use rawInput directly — source article would inject AgentLayerOS
+      // positioning context and override whatever the user actually typed in.
+      let sourceArticleText: string | undefined;
+      if (distributionMode !== "twitter") {
+        sourceArticleText = await generateSourceArticle(
+          rawInput,
+          selectedContexts,
+          extractedSignals,
+          sharedCoreIdea,
+          articleAngle
+        );
+      }
 
       // ── Step 4: Route to mode-specific generators ─────────────────────────
       if (distributionMode === "twitter") {
         if (isRawTweetMode) {
-          // Generate 5-7 raw tweets (single tweets, ≤280 chars each)
+          // Generate 5-7 raw tweets — rawInput is the primary source
           postData = await generateRawTweets(
             rawInput,
             selectedContexts,
             extractedSignals,
             externalSignal,
             framingNote,
-            sourceArticleText
+            undefined
           );
         } else {
-          // Generate 𝕏 content: 1 X Article + 9 posts
+          // Generate 𝕏 content: 1 X Article + 9 posts — rawInput is primary source
           postData = await generateTwitterContent(
             rawInput,
             selectedContexts,
@@ -334,7 +339,7 @@ export async function registerRoutes(
             externalSignal,
             framingNote,
             sharedCoreIdea,
-            sourceArticleText
+            undefined
           );
         }
       } else if (isAuthorityArticleMode) {
