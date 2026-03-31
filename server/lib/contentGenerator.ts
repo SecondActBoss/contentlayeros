@@ -104,12 +104,162 @@ Return ONLY valid JSON, no markdown.`;
   }
 }
 
+// ─── SHARED PIPELINE STEPS ────────────────────────────────────────────────────
+
+// Step 2: Extract a single core idea from signals (shared across all modes)
+export async function extractCoreIdea(
+  rawInput: string,
+  contexts: ContextItem[],
+  signals: ExtractedSignals,
+  isContrarianMode: boolean = false,
+  externalSignal?: string,
+  framingNote?: string
+): Promise<{ coreIdea: string; paradox: string; implication: string }> {
+  const contextString = contexts
+    .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
+    .join("\n\n");
+
+  const signalsString = `
+EXPERTISE SIGNALS: ${signals.expertise.join(", ")}
+STORY SIGNALS: ${signals.stories.join(", ")}
+TREND SIGNALS: ${signals.trends.join(", ")}
+OPINION SIGNALS: ${signals.opinions.join(", ")}`;
+
+  const contraryContext = isContrarianMode && externalSignal
+    ? `\n=== CONTRARIAN MODE ===\nResponding to: ${externalSignal}\n${framingNote ? `Framing: ${framingNote}` : ""}\n`
+    : "";
+
+  const prompt = `You are a content strategist for a thoughtful founder building authority on their platforms.
+
+Based on the raw input and signals below, identify ONE powerful core insight that would resonate with operators and founders.
+${contraryContext}
+=== RAW INPUT ===
+${rawInput}
+
+=== EXTRACTED SIGNALS ===
+${signalsString}
+
+=== CONTEXT ===
+${contextString || "Write for a professional, operator-focused audience."}
+
+Return a JSON object with:
+- coreIdea: A single sentence capturing the core insight (this will drive all content)
+- paradox: The tension or counterintuitive element in this idea
+- implication: What this means for the reader's work
+
+Return ONLY valid JSON, no markdown.`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+  });
+
+  try {
+    return JSON.parse(response.choices[0]?.message?.content || "{}");
+  } catch {
+    return { coreIdea: "Generation failed", paradox: "", implication: "" };
+  }
+}
+
+// Step 3: Generate source article — the primary input for all downstream content
+export async function generateSourceArticle(
+  rawInput: string,
+  contexts: ContextItem[],
+  signals: ExtractedSignals,
+  coreIdea: { coreIdea: string; paradox: string; implication: string },
+  angle?: string
+): Promise<string> {
+  const contextString = contexts
+    .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
+    .join("\n\n");
+
+  const icpContext = contexts
+    .filter((c) => c.type === "icp" || c.type === "positioning")
+    .map((c) => c.content)
+    .join("\n");
+
+  const signalsString = [
+    signals.expertise.length > 0 ? `EXPERTISE: ${signals.expertise.join(" | ")}` : "",
+    signals.stories.length > 0 ? `STORIES: ${signals.stories.join(" | ")}` : "",
+    signals.trends.length > 0 ? `TRENDS: ${signals.trends.join(" | ")}` : "",
+    signals.opinions.length > 0 ? `OPINIONS: ${signals.opinions.join(" | ")}` : "",
+  ].filter(Boolean).join("\n");
+
+  const prompt = `You are writing a source authority article for a founder. This document becomes the primary source of truth for all downstream content — posts, carousels, tweets, newsletters.
+
+=== CORE IDEA (drive everything from this) ===
+Core Insight: ${coreIdea.coreIdea}
+Tension: ${coreIdea.paradox}
+Implication: ${coreIdea.implication}
+
+=== CONTEXT ===
+${contextString || "Operator-focused audience."}
+
+=== SIGNALS ===
+${signalsString}
+
+=== RAW MATERIALS ===
+${rawInput}
+
+${angle ? `=== ANGLE ===\n${angle}\n` : ""}
+=== TARGET READER ===
+${icpContext || "Founders and operators at 5–100 person businesses feeling coordination pressure."}
+
+=== ARTICLE STRUCTURE (follow in order) ===
+1. Hook — contrarian, 1–2 sentences, creates tension
+2. The Problem — real operator pain, ICP language
+3. What People Think Is Happening — common belief
+4. What's Actually Happening — grounded reframe
+5. Core Insight / Framework — introduce the NAMED CONCEPT from the core idea
+6. Real Example — concrete SMB/operator scenario
+7. Implication — what this means for operators (time, revenue, stress)
+8. Closing Shift — clear mental reframe, calm authority
+
+=== WRITING RULES ===
+- Conversational, 5th–6th grade reading level
+- Short sentences (under 20 words)
+- 1–2 sentence paragraphs, use whitespace
+- No emojis, no hype, no generic advice, no listicles
+- 400–700 words total
+
+=== OUTPUT FORMAT ===
+Return a JSON object with:
+{
+  "title": "SEO-ready title, under 12 words",
+  "namedConcept": "The named concept introduced in section 5",
+  "articleBody": "Full article body. Use \\n\\n between paragraphs. No markdown headers."
+}
+
+Return ONLY valid JSON, no markdown.`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+  });
+
+  try {
+    const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+    const title = parsed.title || "Source Article";
+    const namedConcept = parsed.namedConcept || "";
+    const body = parsed.articleBody || "";
+
+    return `TITLE: ${title}\n\n${body}${namedConcept ? `\n\nNAMED CONCEPT: ${namedConcept}` : ""}`;
+  } catch {
+    return "";
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Generate 4 LinkedIn post drafts
 export async function generatePosts(
   rawInput: string,
   contexts: ContextItem[],
   signals: ExtractedSignals,
-  strongExamples: FeedbackEntry[] = []
+  strongExamples: FeedbackEntry[] = [],
+  sourceArticle?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -127,6 +277,10 @@ ${signals.trends.map((t) => `- ${t}`).join("\n")}
 
 STRONG OPINIONS:
 ${signals.opinions.map((o) => `- ${o}`).join("\n")}`;
+
+  const sourceArticleContext = sourceArticle
+    ? `\n=== SOURCE ARTICLE (PRIMARY INPUT — all posts must derive ideas from this, maintain thematic consistency, and avoid conflicting with its thesis) ===\n${sourceArticle}\n`
+    : "";
 
   const examplesString = strongExamples.length > 0
     ? `\nSTRONG-PERFORMING EXAMPLES (learn from tone and structure, do not copy):
@@ -175,8 +329,8 @@ DO NOT weaken clarity to avoid repetition. Find a different angle, not a weaker 
 
 CONTEXT:
 ${contextString || "Write for a professional audience."}
-
-EXTRACTED SIGNALS:
+${sourceArticleContext}
+EXTRACTED SIGNALS (secondary input — use to support and enrich ideas from source article):
 ${signalsString}
 ${examplesString}
 ${antiRepetitionContext}
@@ -348,11 +502,16 @@ export async function generateContrarianPosts(
   externalSignal: string,
   framingNote: string | undefined,
   contexts: ContextItem[],
-  strongExamples: FeedbackEntry[] = []
+  strongExamples: FeedbackEntry[] = [],
+  sourceArticle?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
     .join("\n\n");
+
+  const sourceArticleContext = sourceArticle
+    ? `\n=== SOURCE ARTICLE (YOUR PERSPECTIVE — use this to ground your contrarian response in your own operator experience and thesis) ===\n${sourceArticle}\n`
+    : "";
 
   const examplesString = strongExamples.length > 0
     ? `\nSTRONG-PERFORMING EXAMPLES (learn from tone and structure, do not copy):
@@ -418,6 +577,7 @@ ${externalSignal}
 ${framingNote ? `FRAMING GUIDANCE FROM USER:\n${framingNote}\n` : ""}
 === YOUR CONTEXT ===
 ${contextString || "Write for a professional, operator-focused audience."}
+${sourceArticleContext}
 ${examplesString}
 ${antiRepetitionContext}
 
@@ -540,7 +700,8 @@ export async function generateCarousels(
   rawInput: string,
   contexts: ContextItem[],
   signals: ExtractedSignals,
-  strongExamples: FeedbackEntry[] = []
+  strongExamples: FeedbackEntry[] = [],
+  sourceArticle?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -559,6 +720,10 @@ ${signals.trends.map((t) => `- ${t}`).join("\n")}
 STRONG OPINIONS:
 ${signals.opinions.map((o) => `- ${o}`).join("\n")}`;
 
+  const sourceArticleContext = sourceArticle
+    ? `\n=== SOURCE ARTICLE (PRIMARY INPUT — carousel ideas must derive from this and maintain thematic consistency) ===\n${sourceArticle}\n`
+    : "";
+
   const carousels: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
 
   for (const themeConfig of CAROUSEL_THEMES) {
@@ -566,8 +731,8 @@ ${signals.opinions.map((o) => `- ${o}`).join("\n")}`;
 
 CONTEXT:
 ${contextString || "Write for a professional, operator-focused audience."}
-
-EXTRACTED SIGNALS:
+${sourceArticleContext}
+EXTRACTED SIGNALS (secondary input — use to enrich ideas from source article):
 ${signalsString}
 
 === CAROUSEL TYPE: ${themeConfig.name} ===
@@ -666,7 +831,9 @@ export async function generateTwitterContent(
   strongExamples: FeedbackEntry[] = [],
   isContrarianMode: boolean = false,
   externalSignal?: string,
-  framingNote?: string
+  framingNote?: string,
+  sharedCoreIdea?: { coreIdea: string; paradox: string; implication: string },
+  sourceArticle?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -689,10 +856,17 @@ Be calm (not combative), express thoughtful disagreement, never name the origina
 `
     : "";
 
+  const sourceArticleContext = sourceArticle
+    ? `\n=== SOURCE ARTICLE (PRIMARY INPUT — all 𝕏 content must derive from and be consistent with this) ===\n${sourceArticle}\n`
+    : "";
+
   const posts: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
 
-  // First, generate the core insight that all outputs will be derived from
-  const coreIdeaPrompt = `You are a content strategist for a thoughtful founder building authority on 𝕏 (Twitter).
+  // Use shared coreIdea if provided (avoids duplicate API call), otherwise generate
+  let coreIdea = sharedCoreIdea || { coreIdea: "", paradox: "", implication: "" };
+
+  if (!sharedCoreIdea) {
+    const coreIdeaPrompt = `You are a content strategist for a thoughtful founder building authority on 𝕏 (Twitter).
 
 Based on the raw input and signals below, identify ONE powerful core insight that would resonate with operators and founders.
 ${contraryContext}
@@ -712,17 +886,17 @@ Return a JSON object with:
 
 Return ONLY valid JSON, no markdown.`;
 
-  const coreResponse = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: coreIdeaPrompt }],
-    response_format: { type: "json_object" },
-  });
+    const coreResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: coreIdeaPrompt }],
+      response_format: { type: "json_object" },
+    });
 
-  let coreIdea = { coreIdea: "", paradox: "", implication: "" };
-  try {
-    coreIdea = JSON.parse(coreResponse.choices[0]?.message?.content || "{}");
-  } catch {
-    coreIdea = { coreIdea: "Generation failed", paradox: "", implication: "" };
+    try {
+      coreIdea = JSON.parse(coreResponse.choices[0]?.message?.content || "{}");
+    } catch {
+      coreIdea = { coreIdea: "Generation failed", paradox: "", implication: "" };
+    }
   }
 
   // 1. Generate Newsletter Section (300-500 words)
@@ -735,7 +909,7 @@ Implication: ${coreIdea.implication}
 ${contraryContext}
 === CONTEXT ===
 ${contextString || "Write for a professional, operator-focused audience."}
-
+${sourceArticleContext}
 === NEWSLETTER SECTION REQUIREMENTS ===
 Write a 300-500 word newsletter section structured as:
 1. Open with the paradox or tension
@@ -865,7 +1039,7 @@ Implication: ${coreIdea.implication}
 ${contraryContext}
 === CONTEXT ===
 ${contextString || "Write for a professional, operator-focused audience."}
-
+${sourceArticleContext}
 === POST TYPE: ${postConfig.name} ===
 ${postConfig.description}
 
@@ -1121,7 +1295,8 @@ export async function generateRawTweets(
   contexts: ContextItem[],
   extractedSignals: ExtractedSignals,
   externalSignal?: string,
-  framingNote?: string
+  framingNote?: string,
+  sourceArticle?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -1141,6 +1316,10 @@ ${framingNote ? `FRAMING: ${framingNote}` : ""}
 `
     : "";
 
+  const sourceArticleContext = sourceArticle
+    ? `\n=== SOURCE ARTICLE (PRIMARY INPUT — tweets must be thematically consistent with this article's ideas) ===\n${sourceArticle}\n`
+    : "";
+
   const tweetTypeDescriptions = RAW_TWEET_TYPES.map(
     (t) => `- ${t.name}: ${t.description}\n  Examples: ${t.examples.map((e) => `"${e}"`).join(", ")}`
   ).join("\n\n");
@@ -1150,9 +1329,9 @@ ${framingNote ? `FRAMING: ${framingNote}` : ""}
 === RAW MATERIALS ===
 ${rawInput}
 
-=== EXTRACTED SIGNALS ===
+=== EXTRACTED SIGNALS (secondary input) ===
 ${signalsString}
-${externalContext}
+${externalContext}${sourceArticleContext}
 === CONTEXT ===
 ${contextString || "Write for a professional, operator-focused audience."}
 

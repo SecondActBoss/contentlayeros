@@ -48,13 +48,22 @@ Preferred communication style: Simple, everyday language.
 
 ### Content Generation Pipeline
 
+**Universal Source Article Pipeline (All Modes):**
+All content generation now routes through a shared 3-step pipeline before mode-specific generation:
+1. **Signal Extraction**: Raw input + context items → structured signals (expertise, stories, trends, opinions)
+2. **Core Idea Extraction**: Signals → single core insight with paradox and implication
+3. **Source Article Generation**: Signals + core idea → 400-700 word authority article (stored in `weeklyRuns.sourceArticle`)
+4. **Mode-Specific Generation**: Source article passed as PRIMARY INPUT to all downstream generators
+
+The source article ensures thematic cohesion across all content types. Each downstream generator also receives raw signals as secondary input for enrichment.
+
 **LinkedIn Regular Mode:**
-1. Raw input + selected context items → Signal extraction (OpenAI)
-2. Extracted signals → 4 post drafts (one per post type) + 3 carousel drafts
+1. Universal pipeline (steps 1-3)
+2. Source article → 4 post drafts (one per post type) + 3 carousel drafts
 3. Pattern extraction from feedback for future improvements
 
 **LinkedIn Carousel Generation:**
-1. Uses same extracted signals as regular posts
+1. Universal pipeline (steps 1-3) — source article used as primary carousel content source
 2. Generates 3 carousels with distinct themes:
    - **Step-by-Step Framework**: Practical numbered guide walking through a process
    - **Myth vs Reality**: Challenges misconceptions with operator-grounded truth

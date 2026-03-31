@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { extractSignals, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, generateAuthorityArticle, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
+import { extractSignals, extractCoreIdea, generateSourceArticle, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, generateAuthorityArticle, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
 import { runThinkingGates } from "./lib/thinkingGates";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -202,16 +202,39 @@ export async function registerRoutes(
       let postData;
       let extractedSignals = null;
 
-      // Extract signals from raw input (used by all modes except pure contrarian)
+      // ── Step 1: Extract signals ────────────────────────────────────────────
       extractedSignals = await extractSignals(rawInput, selectedContexts);
 
+      // ── Step 2: Extract core idea (shared across all modes) ───────────────
+      const sharedCoreIdea = await extractCoreIdea(
+        rawInput,
+        selectedContexts,
+        extractedSignals,
+        isContrarianMode || false,
+        externalSignal,
+        framingNote
+      );
+
+      // ── Step 3: Generate source article (primary input for all downstream) ─
+      const sourceArticleText = await generateSourceArticle(
+        rawInput,
+        selectedContexts,
+        extractedSignals,
+        sharedCoreIdea,
+        articleAngle
+      );
+
+      // ── Step 4: Route to mode-specific generators ─────────────────────────
       if (distributionMode === "twitter") {
         if (isRawTweetMode) {
           // Generate 5-7 raw tweets (single tweets, ≤280 chars each)
           postData = await generateRawTweets(
             rawInput,
             selectedContexts,
-            extractedSignals
+            extractedSignals,
+            externalSignal,
+            framingNote,
+            sourceArticleText
           );
         } else {
           // Generate 𝕏 content: 1 newsletter section + 3 posts
@@ -222,19 +245,39 @@ export async function registerRoutes(
             strongExamples,
             isContrarianMode,
             externalSignal,
-            framingNote
+            framingNote,
+            sharedCoreIdea,
+            sourceArticleText
           );
         }
       } else if (isAuthorityArticleMode) {
-        // Generate 1 authority article
+        // Generate 1 authority article (full 800-1500 word version)
         postData = await generateAuthorityArticle(rawInput, selectedContexts, extractedSignals, articleAngle);
       } else if (isContrarianMode) {
         // Generate 4 contrarian LinkedIn posts
-        postData = await generateContrarianPosts(externalSignal!, framingNote, selectedContexts, strongExamples);
+        postData = await generateContrarianPosts(
+          externalSignal!,
+          framingNote,
+          selectedContexts,
+          strongExamples,
+          sourceArticleText
+        );
       } else {
         // Generate 4 regular LinkedIn posts + 3 carousels
-        const regularPosts = await generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples);
-        const carouselPosts = await generateCarousels(rawInput, selectedContexts, extractedSignals, strongExamples);
+        const regularPosts = await generatePosts(
+          rawInput,
+          selectedContexts,
+          extractedSignals,
+          strongExamples,
+          sourceArticleText
+        );
+        const carouselPosts = await generateCarousels(
+          rawInput,
+          selectedContexts,
+          extractedSignals,
+          strongExamples,
+          sourceArticleText
+        );
         postData = [...regularPosts, ...carouselPosts];
       }
 
@@ -256,6 +299,8 @@ export async function registerRoutes(
         gateWeeklyOperatorFocus: gateWeeklyOperatorFocus || false,
         isAuthorityArticleMode: isAuthorityArticleMode || false,
         articleAngle: articleAngle || null,
+        sourceArticle: sourceArticleText || null,
+        coreIdea: sharedCoreIdea?.coreIdea || null,
       });
 
       // Update with extracted signals

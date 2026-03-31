@@ -169,6 +169,8 @@ export const weeklyRuns = pgTable("weekly_runs", {
   gateOutputs: jsonb("gate_outputs"), // ThinkingGatesOutput
   isAuthorityArticleMode: boolean("is_authority_article_mode").default(false).notNull(),
   articleAngle: text("article_angle"), // Optional angle/focus for authority article
+  sourceArticle: text("source_article"), // Auto-generated source article used as primary input for all downstream content
+  coreIdea: text("core_idea"), // Core idea extracted before source article generation
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
