@@ -93,6 +93,14 @@ export default function Dashboard() {
   const [articleAnalysis, setArticleAnalysis] = useState<ArticleAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [copiedAnalysisItem, setCopiedAnalysisItem] = useState<string | null>(null);
+  // Distribution Pack
+  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
+  const [distributionPack, setDistributionPack] = useState<{ xArticle: PostDraft; linkedinPulse: PostDraft; website: PostDraft } | null>(null);
+  const [distributionQuoteReposts, setDistributionQuoteReposts] = useState<PostDraft[]>([]);
+  const [isGeneratingPack, setIsGeneratingPack] = useState(false);
+  const [includeQuoteReposts, setIncludeQuoteReposts] = useState(false);
+  const [includeLlmOptimization, setIncludeLlmOptimization] = useState(false);
+  const [copiedPackItem, setCopiedPackItem] = useState<string | null>(null);
 
   const { data: contextItems = [], isLoading: loadingContext } = useQuery<ContextItem[]>({
     queryKey: ["/api/context-items"],
@@ -108,6 +116,32 @@ export default function Dashboard() {
       // silently fail — analysis is non-critical
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const generateDistributionPack = async () => {
+    if (!currentRunId) return;
+    setIsGeneratingPack(true);
+    try {
+      const triRes = await apiRequest("POST", `/api/weekly-runs/${currentRunId}/tri-publish`, { includeLlmOptimization });
+      const triData: PostDraft[] = await triRes.json();
+      const xArticle = triData.find((p) => p.postType === "tripack_x_article");
+      const linkedinPulse = triData.find((p) => p.postType === "tripack_linkedin_pulse");
+      const website = triData.find((p) => p.postType === "tripack_website");
+      if (xArticle && linkedinPulse && website) {
+        setDistributionPack({ xArticle, linkedinPulse, website });
+      }
+      if (includeQuoteReposts) {
+        const qrRes = await apiRequest("POST", `/api/weekly-runs/${currentRunId}/quote-reposts`);
+        const qrData: PostDraft[] = await qrRes.json();
+        setDistributionQuoteReposts(qrData);
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/post-drafts"] });
+      toast({ title: "Distribution Pack ready", description: "3 platform-adapted versions generated." });
+    } catch {
+      toast({ title: "Failed to generate Distribution Pack", variant: "destructive" });
+    } finally {
+      setIsGeneratingPack(false);
     }
   };
 
@@ -137,6 +171,9 @@ export default function Dashboard() {
       setExtractedSignals(data.extractedSignals || null);
       setGateOutputs(data.gateOutputs || null);
       setArticleAnalysis(null);
+      setCurrentRunId(data.id || null);
+      setDistributionPack(null);
+      setDistributionQuoteReposts([]);
       const postCount = data.posts?.length || 0;
       let modeDesc: string;
       if (distributionMode === "twitter") {
@@ -805,6 +842,203 @@ Examples:
                           );
                         })}
                       </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* ── Distribution Pack ─────────────────────────────────── */}
+                {!distributionPack ? (
+                  <Card data-testid="card-distribution-pack-trigger">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Distribution Pack</CardTitle>
+                      <CardDescription>
+                        Turn this article into reach (𝕏), authority (LinkedIn), and ownership (your site)
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-3" data-testid="toggle-quote-reposts">
+                          <Checkbox
+                            id="include-quote-reposts"
+                            checked={includeQuoteReposts}
+                            onCheckedChange={(v) => setIncludeQuoteReposts(!!v)}
+                          />
+                          <div>
+                            <Label htmlFor="include-quote-reposts" className="text-sm font-medium cursor-pointer">
+                              Include Quote Repost Prompts
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-0.5">5 typed repost lines for 𝕏</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3" data-testid="toggle-llm-optimization">
+                          <Checkbox
+                            id="include-llm-opt"
+                            checked={includeLlmOptimization}
+                            onCheckedChange={(v) => setIncludeLlmOptimization(!!v)}
+                          />
+                          <div>
+                            <Label htmlFor="include-llm-opt" className="text-sm font-medium cursor-pointer">
+                              Include LLM Optimization
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-0.5">Explicit definitions, named concepts, structured clarity</p>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={generateDistributionPack}
+                        disabled={isGeneratingPack}
+                        className="w-full sm:w-auto"
+                        data-testid="button-generate-distribution-pack"
+                      >
+                        {isGeneratingPack ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4 mr-2" />
+                            Generate Distribution Pack
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card data-testid="card-distribution-pack-results">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Distribution Pack</CardTitle>
+                      <CardDescription>3 platform-adapted versions — same thesis, different format</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Tabs defaultValue="x-article">
+                        <TabsList className="mb-4 flex-wrap h-auto gap-1">
+                          <TabsTrigger value="x-article" data-testid="tab-pack-x">
+                            <SiX className="h-3 w-3 mr-1.5" /> X Article
+                          </TabsTrigger>
+                          <TabsTrigger value="linkedin-pulse" data-testid="tab-pack-linkedin">
+                            <SiLinkedin className="h-3 w-3 mr-1.5" /> LinkedIn Pulse
+                          </TabsTrigger>
+                          <TabsTrigger value="website" data-testid="tab-pack-website">
+                            Website Version
+                          </TabsTrigger>
+                        </TabsList>
+
+                        {/* X Article Tab */}
+                        <TabsContent value="x-article" className="space-y-4">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Built for reach and virality</p>
+                          <p className="text-sm font-semibold">{distributionPack.xArticle.hook}</p>
+                          <ScrollArea className="h-[320px] pr-2">
+                            <div className="text-sm leading-relaxed whitespace-pre-line" data-testid="pack-x-body">
+                              {distributionPack.xArticle.body}
+                            </div>
+                          </ScrollArea>
+                          <Button
+                            variant="outline" size="sm"
+                            onClick={async () => {
+                              await navigator.clipboard.writeText(`${distributionPack.xArticle.hook}\n\n${distributionPack.xArticle.body}`);
+                              setCopiedPackItem("x"); setTimeout(() => setCopiedPackItem(null), 2000);
+                            }}
+                            data-testid="button-copy-pack-x"
+                          >
+                            {copiedPackItem === "x" ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+                            {copiedPackItem === "x" ? "Copied" : "Copy"}
+                          </Button>
+                          {distributionQuoteReposts.length > 0 && (
+                            <div className="space-y-2 pt-2">
+                              <Separator />
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pt-2">Quote Repost Prompts</p>
+                              {distributionQuoteReposts.map((qr, i) => (
+                                <div key={qr.id} className="flex items-start gap-2 p-2 rounded border" data-testid={`quote-repost-${i}`}>
+                                  <div className="flex-1">
+                                    <p className="text-xs text-muted-foreground mb-0.5">{qr.rehook}</p>
+                                    <p className="text-sm">{qr.hook}</p>
+                                  </div>
+                                  <Button variant="ghost" size="sm" className="h-6 px-2 shrink-0"
+                                    onClick={async () => {
+                                      await navigator.clipboard.writeText(qr.hook);
+                                      setCopiedPackItem(`qr-${i}`); setTimeout(() => setCopiedPackItem(null), 2000);
+                                    }}>
+                                    {copiedPackItem === `qr-${i}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </TabsContent>
+
+                        {/* LinkedIn Pulse Tab */}
+                        <TabsContent value="linkedin-pulse" className="space-y-4">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Built for SEO and AI citations</p>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {distributionPack.linkedinPulse.rehook && (
+                              <div className="p-3 rounded-md border bg-muted/40" data-testid="pack-linkedin-seo-title">
+                                <p className="text-xs font-semibold text-muted-foreground mb-1">SEO Title</p>
+                                <p className="text-sm font-medium">{distributionPack.linkedinPulse.rehook}</p>
+                                <Button variant="ghost" size="sm" className="h-6 px-2 mt-1"
+                                  onClick={async () => {
+                                    await navigator.clipboard.writeText(distributionPack.linkedinPulse.rehook!);
+                                    setCopiedPackItem("li-seo"); setTimeout(() => setCopiedPackItem(null), 2000);
+                                  }}>
+                                  {copiedPackItem === "li-seo" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                </Button>
+                              </div>
+                            )}
+                            {distributionPack.linkedinPulse.coreInsight && (
+                              <div className="p-3 rounded-md border bg-muted/40" data-testid="pack-linkedin-meta-desc">
+                                <p className="text-xs font-semibold text-muted-foreground mb-1">Meta Description</p>
+                                <p className="text-sm">{distributionPack.linkedinPulse.coreInsight}</p>
+                                <Button variant="ghost" size="sm" className="h-6 px-2 mt-1"
+                                  onClick={async () => {
+                                    await navigator.clipboard.writeText(distributionPack.linkedinPulse.coreInsight!);
+                                    setCopiedPackItem("li-meta"); setTimeout(() => setCopiedPackItem(null), 2000);
+                                  }}>
+                                  {copiedPackItem === "li-meta" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm font-semibold">{distributionPack.linkedinPulse.hook}</p>
+                          <ScrollArea className="h-[280px] pr-2">
+                            <div className="text-sm leading-relaxed whitespace-pre-line" data-testid="pack-linkedin-body">
+                              {distributionPack.linkedinPulse.body}
+                            </div>
+                          </ScrollArea>
+                          <Button
+                            variant="outline" size="sm"
+                            onClick={async () => {
+                              await navigator.clipboard.writeText(`${distributionPack.linkedinPulse.hook}\n\n${distributionPack.linkedinPulse.body}`);
+                              setCopiedPackItem("li"); setTimeout(() => setCopiedPackItem(null), 2000);
+                            }}
+                            data-testid="button-copy-pack-linkedin"
+                          >
+                            {copiedPackItem === "li" ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+                            {copiedPackItem === "li" ? "Copied" : "Copy Article"}
+                          </Button>
+                        </TabsContent>
+
+                        {/* Website Version Tab */}
+                        <TabsContent value="website" className="space-y-4">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Built for depth and ownership</p>
+                          <p className="text-sm font-semibold">{distributionPack.website.hook}</p>
+                          <ScrollArea className="h-[320px] pr-2">
+                            <div className="text-sm leading-relaxed whitespace-pre-line" data-testid="pack-website-body">
+                              {distributionPack.website.body}
+                            </div>
+                          </ScrollArea>
+                          <Button
+                            variant="outline" size="sm"
+                            onClick={async () => {
+                              await navigator.clipboard.writeText(`${distributionPack.website.hook}\n\n${distributionPack.website.body}`);
+                              setCopiedPackItem("web"); setTimeout(() => setCopiedPackItem(null), 2000);
+                            }}
+                            data-testid="button-copy-pack-website"
+                          >
+                            {copiedPackItem === "web" ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+                            {copiedPackItem === "web" ? "Copied" : "Copy Article"}
+                          </Button>
+                        </TabsContent>
+                      </Tabs>
                     </CardContent>
                   </Card>
                 )}

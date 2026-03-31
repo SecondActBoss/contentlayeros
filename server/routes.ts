@@ -171,7 +171,8 @@ export async function registerRoutes(
         run.selectedContextIds.includes(c.id)
       );
 
-      const packDrafts = await generateTriPublishPack(run.sourceArticle, selectedContexts);
+      const { includeLlmOptimization } = req.body as { includeLlmOptimization?: boolean };
+      const packDrafts = await generateTriPublishPack(run.sourceArticle, selectedContexts, includeLlmOptimization);
 
       const savedDrafts = await Promise.all(
         packDrafts.map((draft) =>

@@ -1460,11 +1460,16 @@ Return ONLY valid JSON, no markdown.`;
 // Generate 3 platform-adapted versions of the source article
 export async function generateTriPublishPack(
   sourceArticle: string,
-  contexts: ContextItem[]
+  contexts: ContextItem[],
+  includeLlmOptimization?: boolean
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
     .join("\n\n");
+
+  const llmOptBlock = includeLlmOptimization
+    ? `\n=== LLM CITATION REINFORCEMENT ===\n- Define each named concept explicitly: "[Concept] is when [plain-English explanation]."\n- Replace abstract phrases with concrete equivalents.\n- Each paragraph has one job — no orphaned thoughts.\n- Tone: authoritative and natural, not robotic.\n`
+    : "";
 
   const [xResult, linkedinResult, websiteResult] = await Promise.all([
     // ── 1. X Article (virality + engagement) ─────────────────────────────────
@@ -1489,7 +1494,7 @@ ${contextString || "Operator-focused founders and builders."}
 - Tension: Dial up contrast throughout. Show what breaks, what's hard.
 - Ending: Invite a quiet reply (not "thoughts?"). Something that makes operators reflect.
 - No emojis, no hashtags, no external links.
-
+${llmOptBlock}
 === SAME THESIS ===
 The core idea must remain identical — this is adaptation, not reinvention.
 
@@ -1526,7 +1531,7 @@ ${contextString || "Operator-focused founders and builders."}
 - Keywords: Naturally include 1–2 keyword phrases that operators would search for.
 - Explanations: Slightly more explicit than the original — help new readers follow.
 - Tone: Professional but still conversational. No jargon without definition.
-
+${llmOptBlock}
 === SEO REQUIREMENTS ===
 - SEO title: Different from the main title. Optimized for search queries (under 60 chars).
 - Meta description: 1–2 sentence summary including the keyword phrase (under 155 chars).
@@ -1572,7 +1577,7 @@ ${contextString || "Operator-focused founders and builders."}
 - Broader keyword coverage throughout.
 - Headings: Use clear section headings (write them in plain text like "The Problem With Coordination" not markdown — just label them clearly in the text).
 - Tone: Authoritative, permanent. Written to last.
-
+${llmOptBlock}
 === SAME THESIS ===
 The core idea must remain identical — this is the deepest expression of the same truth.
 
