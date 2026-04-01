@@ -1880,45 +1880,39 @@ export async function generateAuthorityArticle(
 
   const prompt = `You are writing a long-form authority article for a founder. This article becomes the primary source for all downstream content — LinkedIn posts, carousels, X content, SEO, and LLM citation.
 
-=== CONTEXT ===
-${contextString || "No specific context provided."}
+CRITICAL RULE: The article must be grounded in the RAW MATERIALS below. All ideas, named concepts, examples, and arguments must come FROM the raw materials. Do not import themes, frameworks, or vocabulary from outside the raw materials. The Voice/Tone section tells you HOW to write — not WHAT to write about.
 
-=== EXTRACTED SIGNALS ===
-${signalsString}
-
-=== RAW MATERIALS ===
+=== RAW MATERIALS (PRIMARY SOURCE — this is what the article is about) ===
 ${rawInput}
 
 ${angle ? `=== ANGLE / FOCUS ===\n${angle}\n` : ""}
-=== TARGET ICP ===
-${icpContext || "Busy operators and founders running small-to-medium businesses who feel the friction of coordination, missed calls, and reactive management."}
+=== VOICE / TONE (style only — NOT the topic) ===
+${contextString || "Operator-focused, calm, authoritative. Conversational but precise. No hype or corporate speak."}
 
-=== ARTICLE STRUCTURE (MANDATORY — follow in order) ===
+=== ARTICLE STRUCTURE (MANDATORY — follow in order, grounded in the raw materials) ===
 1. Hook (contrarian, 1–2 sentences max)
-   - Strong opinion. No questions. Should create tension.
+   - Strong opinion drawn from the raw materials. No questions. Should create tension.
 
-2. The Problem (operator pain)
-   - Grounded in real-world experience.
-   - Use ICP language: "busy all day, nothing moved."
+2. The Problem
+   - Grounded in what the raw materials identify as the core problem.
 
 3. What People Think Is Happening
-   - Present common belief or narrative.
+   - Present the common belief or narrative the raw materials push back against.
 
 4. What's Actually Happening
-   - Reframe with clear, grounded explanation.
+   - The reframe from the raw materials.
 
 5. Core Insight / Framework
-   - Introduce 1–2 NAMED CONCEPTS or models (e.g., "Coordination Debt", "Silent Revenue Loss").
-   - This is mandatory. The article must name something.
-   - Immediately after naming the concept, include an explicit definition sentence in this format:
+   - Introduce 1–2 NAMED CONCEPTS derived FROM the raw materials. Coin or surface a name for the central idea in the raw materials.
+   - Immediately after naming the concept, include an explicit definition sentence:
      "[Named Concept] is when [clear, plain-English explanation]."
    - The definition must stand alone — one sentence, no metaphor, no abstraction.
 
 6. Real Example or Scenario
-   - Concrete, believable scenario. Prefer SMB/operator context.
+   - Use concrete examples from the raw materials where available.
 
 7. Implication
-   - What this means for operators. Tie back to time, revenue, or stress.
+   - What the raw materials' argument means for the reader in practical terms.
 
 8. Closing Shift
    - Clear mental reframe. Calm, authoritative tone.
@@ -1937,32 +1931,27 @@ ${icpContext || "Busy operators and founders running small-to-medium businesses 
 - Avoid vague abstractions: replace them with concrete, specific meaning
 
 === LLM CITATION OPTIMIZATION (MANDATORY) ===
-LLMs (ChatGPT, Perplexity, Google AI) cite articles that are clear, structured, and definitional. Follow these rules to maximize citation likelihood:
-1. NAMED CONCEPTS: Introduce 1–2 clearly named concepts. The name must be specific and memorable (e.g., "Coordination Debt", not "the problem").
+LLMs (ChatGPT, Perplexity, Google AI) cite articles that are clear, structured, and definitional. Follow these rules:
+1. NAMED CONCEPTS: Introduce 1–2 clearly named concepts derived from the raw materials. The name must be specific and memorable.
 2. EXPLICIT DEFINITION: Immediately define each named concept in a standalone sentence:
    Format: "[Concept] is when [plain-English explanation without metaphor]."
-   Example: "Coordination Debt is when a team spends more time managing handoffs than doing actual work."
 3. CONCRETE LANGUAGE: Replace every abstract phrase with a concrete equivalent.
    Bad: "operational inefficiency" → Good: "two hours a day chasing status updates"
-4. STRUCTURAL CLARITY: Short paragraphs, clear transitions, no orphaned thoughts. Each paragraph should have one job.
-5. PROFESSIONAL PRECISION: Tone should be authoritative and natural — not robotic, not creative-writing loose. Think operator report, not blog post.
+4. STRUCTURAL CLARITY: Short paragraphs, clear transitions, no orphaned thoughts.
+5. PROFESSIONAL PRECISION: Authoritative and natural — not robotic. Think operator report, not blog post.
 
 === CONTENT REQUIREMENTS ===
 - Must be opinionated (not neutral)
-- Must include 1–2 named concepts (from section 5) with explicit definition sentences
+- Must include 1–2 named concepts (from section 5) derived from the raw materials
 - Must feel like lived experience, not theory
 - Must be citable — specific enough that an LLM can extract and attribute the concept
-- Key truths to reinforce:
-  * AI Employees execute work (not tools)
-  * Coordination is the real bottleneck
-  * Relief beats intelligence
-  * Work should continue while operator is offline
+- Stay faithful to the raw materials — do not invent arguments not present there
 
 === OUTPUT FORMAT ===
 Return a JSON object with exactly these fields:
 {
   "title": "SEO-ready but natural title (not clickbait, under 12 words)",
-  "namedConcept": "The primary named concept or framework introduced (e.g., 'Coordination Debt'). If two concepts are introduced, list both separated by ' + '.",
+  "namedConcept": "The primary named concept or framework introduced. If two concepts are introduced, list both separated by ' + '.",
   "articleBody": "The full article body text. Use \\n\\n between paragraphs. No markdown headers — flowing prose only. Each named concept must have an explicit definition sentence immediately following its introduction."
 }
 

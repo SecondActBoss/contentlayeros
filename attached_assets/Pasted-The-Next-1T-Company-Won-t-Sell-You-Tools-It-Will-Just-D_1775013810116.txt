@@ -1,0 +1,27 @@
+The Next $1T Company Won’t Sell You Tools — It Will Just Do the WorkYou’re an SMB founder closing out another 80-hour week.Invoices are paid. Clients are (mostly) happy. But your accountant is retiring next year, your legal bills keep climbing, and that stack of NDAs on your desk hasn’t moved in two weeks.You know AI is supposed to fix this.
+Yet every “AI tool” demo leaves you with the same sinking feeling: another thing to learn, another subscription, another set of data you’re scared to hand over.Sequoia just dropped the memo the entire industry has been whispering about: Services are the new software.And the next trillion-dollar company won’t be selling you the AI.
+It will sell you the outcome — quietly, reliably, and at a flat monthly rate.The Brutal Shift No One Wants to AdmitEvery founder building an AI product is asking the same question right now:
+What happens when the next version of the model turns my entire tool into a feature?They’re right to worry.If you sell the tool, you’re in a race you can’t win.
+If you sell the work, every leap in the model makes your service faster, cheaper, and almost impossible to copy.Think about it. A company might drop $10K a year on QuickBooks… and $120K on the accountant who actually closes the books.
+The legendary company of the next decade? It just closes the books.Intelligence Is Now Cheap. Judgement Is Not.Most of what we call “work” in knowledge jobs is actually intelligence work — rules-based, repeatable, pattern-heavy.Writing code. Drafting contracts. Coding medical bills. Shopping insurance quotes. Triaging IT tickets.That stuff? AI has already crossed the threshold. It can do the heavy lifting autonomously and leave the final judgement calls to humans.A year ago Cursor users treated AI like fancy autocomplete.
+Today more software engineering tasks are started by agents than by people.Software engineering got there first because it’s mostly intelligence.
+Every other profession is next.Copilots vs. Autopilots — The Real DivideCopilots sell you the tool.
+Autopilots sell you the outcome.Copilots hand the professional a smarter hammer and say “good luck.”
+Autopilots say: “Here’s your NDA. Here’s your closed books. Here’s your insurance quote. Done.”The work budget in any industry dwarfs the tool budget by 6:1.
+Autopilots capture the real money from day one.Why SMBs Keep Getting Left BehindBig companies can afford to experiment.
+They build internal agents, hire AI teams, run pilots for months.SMBs? You don’t have that luxury.You don’t want to learn prompt engineering.
+You don’t want to babysit agents.
+You sure as hell don’t want to risk your private data on another platform.You just want the work done.The Autopilot Playbook — Built for YouHere’s the cheat code Sequoia laid out:Start where outsourcing already exists.If a task is already being sent outside your company, three things are true:You’ve accepted it can be done externally.
+There’s already a budget line item.
+The buyer is paying for an outcome, not headcount.
+
+That’s the perfect wedge for an AI-native service.No reorg. No learning curve. Just swap the vendor.Insurance brokerage. Accounting. Legal contracts. Claims adjusting. Tax filings. IT management. Procurement. Recruiting.The markets are massive — $140–200B for insurance brokerage alone.
+And the pain points are identical for every SMB: too much intelligence work, not enough time or experts.The Simple Answer SMBs Have Been Waiting ForThis is exactly why outcome-based AI employees are about to explode.Flat monthly rate.
+Dead-simple setup.
+Your data stays private and never trains anyone else’s models.
+One broker-style partner that quietly owns the entire workflow.You don’t manage agents.
+You don’t chase handoffs.
+You don’t wonder if the work got done.You just get the outcome.The books close.
+The contracts are signed.
+The insurance is placed.
+The IT runs.All while you focus on the one thing that still requires your judgement: growing the business.The Moment of TruthPause for a second.How many hours this month did you spend chasing work that should already be done?What would change if those tasks simply… disappeared?The future isn’t more tools fighting for your attention.It’s quieter operations where critical work moves forward even when you step away.The next $1T company already knows this.The only question left is whether your SMB is ready to let it do the work for you.Drop a  in the comments if you’re tired of buying tools and ready to buy outcomes instead.What’s the first outsourced task in your business you’d hand off tomorrow if it just… worked? "
