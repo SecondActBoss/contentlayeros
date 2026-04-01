@@ -944,42 +944,35 @@ Return ONLY valid JSON, no markdown.`;
   // 1. Generate 𝕏 Article (600-950 words)
   const newsletterPrompt = `You are the world's best writer of viral 𝕏 Articles. You have helped multiple 7- and 8-figure operators and founders turn rough ideas into high-engagement Articles that get tens of thousands of views, saves, and comments.
 
-Your style is:
+CRITICAL RULE: The article must be grounded in the RAW MATERIALS below. Use the specific ideas, examples, companies, statistics, and language from the raw materials. Do not import themes from outside the raw materials. The voice/tone context at the bottom tells you HOW to write — not WHAT to write about.
+${contraryContext}
+=== RAW MATERIALS (PRIMARY SOURCE — this is what the article is about) ===
+${rawInput}
+
+=== WRITING STYLE ===
 - Direct, authoritative, and conversational (never corporate)
 - Short paragraphs (1–3 sentences max)
 - Bold subheads for scannability
 - Heavy use of line breaks and white space
 - Occasional **bold** for emphasis inside paragraphs
 - One relatable opening scene that makes the reader feel seen
-- Data or credible stats to back up claims (use real numbers where possible)
+- Use specific data, names, and examples from the Raw Materials to back up claims
 - Clear story arc: Hook → Pain → Why it's worse than you think → Failed old solutions → Breakthrough new solution → Moment of reflection → Inspiring future vision → Strong CTA
 
-=== CORE IDEA ===
-${coreIdea.coreIdea}
-Paradox: ${coreIdea.paradox}
-Implication: ${coreIdea.implication}
-${contraryContext}
-=== RAW MATERIALS ===
-${rawInput}
+=== VOICE / TONE (style only — NOT the topic) ===
+${contextString || "Operator-focused, calm, authoritative. No hype or corporate speak."}
 
-=== EXTRACTED SIGNALS ===
-${signalsString}
-
-=== CONTEXT ===
-${contextString || "Write for a professional, operator-focused audience."}
-${sourceArticleContext}
 TASK:
-Take the Raw Materials above and transform them into a complete, publication-ready 𝕏 Article at the highest level.
+Transform the Raw Materials into a complete, publication-ready 𝕏 Article. The article should feel like it came from someone who just read something important and wants to share what they took from it — grounded in the specific details, not abstracted into generalities.
 
 Rules:
-- Give it a punchy, curiosity-driven title that includes the core paradox or insight
+- Give it a punchy, curiosity-driven title drawn from the specific ideas in the Raw Materials
 - Keep the total length roughly 600–950 words (ideal for 𝕏 Articles)
-- End with an engagement question or call-to-action that invites comments (e.g., "Drop a 🔥 if this hit home" or "What's your biggest challenge right now?")
-- Never mention tools, AI, or the writing process in the final Article
-- Make it feel like it came straight from a battle-tested operator who just figured something out
+- End with an engagement question or call-to-action that invites comments
+- Stay faithful to what's actually in the Raw Materials — do not invent themes not present there
 
 Return a JSON object with:
-- title: A punchy, curiosity-driven title that includes the core paradox or insight (≤12 words)
+- title: A punchy, curiosity-driven title (≤12 words)
 - body: The full 𝕏 Article (600–950 words, publication-ready)
 - coreInsight: The core idea in one sentence
 
