@@ -1108,27 +1108,24 @@ Return ONLY valid JSON, no markdown.`;
   for (const postConfig of twitterPostTypes) {
     const prompt = `You are a founder writing a single 𝕏 (Twitter) post.
 
-CRITICAL RULE: Write ONLY about the topic in RAW MATERIALS below. The Voice/Tone Context section defines HOW to write — not WHAT to write about. Do not introduce topics, companies, products, or themes from the context section unless they appear directly in the Raw Materials.
+STEP 1 — ANCHOR IN SPECIFICS: Before writing, find ONE concrete, specific detail from the Raw Materials below. This must be something NAMED and REAL: a specific company, a quoted phrase, a precise statistic, a named concept, a specific market, or a direct quote. Generic themes ("coordination pain", "smarter tools", "AI employees") are NOT specific. If the raw input is an article or external piece, use ITS specific language.
 
-=== RAW MATERIALS (YOUR TOPIC — stick to this) ===
+STEP 2 — WRITE THE POST: Build the post around that specific anchor. The post must contain at least one concrete, traceable detail from the Raw Materials. A reader who hasn't seen the raw materials should be able to tell what the post is actually about.
+
+=== RAW MATERIALS (primary source — mine for SPECIFIC details) ===
 ${rawInput}
-
-=== CORE IDEA (derived from the raw materials above) ===
-${coreIdea.coreIdea}
-Paradox: ${coreIdea.paradox}
-Implication: ${coreIdea.implication}
-${contraryContext}
-=== VOICE / TONE CONTEXT (style and audience only — NOT the topic) ===
-${contextString || "Operator-focused, calm, authoritative tone."}
 
 === POST TYPE: ${postConfig.name} ===
 ${postConfig.description}
 
 ${postConfig.prompt}
 
+=== VOICE / TONE (how to write — NOT what to write about) ===
+${contextString || "Operator-focused, calm, authoritative tone. No hype."}
+
 CRITICAL CONSTRAINTS:
 - ≤280 characters (STRICT LIMIT)
-- Must be about the Raw Materials topic above — not about the context documents
+- Must reference something SPECIFIC from the Raw Materials — not abstract themes
 - No hashtags
 - No emojis
 - No engagement bait
@@ -1136,11 +1133,8 @@ CRITICAL CONSTRAINTS:
 - No hype or outrage framing
 - Clarity > cleverness
 
-SUCCESS CRITERIA:
-A reader should think: "This is a clear idea worth following."
-NOT: "This is trying to go viral."
-
 Return a JSON object with:
+- specificAnchor: The exact specific detail, quote, or example you chose from the raw materials (1 sentence)
 - post: The complete 𝕏 post (≤280 characters)
 - coreInsight: The key insight in one sentence
 - characterCount: Number of characters in the post
