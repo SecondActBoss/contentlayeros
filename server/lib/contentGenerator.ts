@@ -862,6 +862,48 @@ Be calm (not combative), express thoughtful disagreement, never name the origina
 
   const posts: Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[] = [];
 
+  // ── Pre-step: Extract 9 distinct, specific angles from raw input ───────────
+  // Each angle must be grounded in a named/concrete detail — a specific company,
+  // statistic, quote, or named concept — so the 9 posts all cover different ground.
+  let twitterAngles: string[] = [];
+  try {
+    const anglesPrompt = `You are a content strategist reading this raw material to plan 9 distinct 𝕏 (Twitter) posts.
+
+Your job: Extract exactly 9 DIFFERENT, SPECIFIC angles from the raw material below. Each angle must:
+- Reference a NAMED, CONCRETE detail: a specific company, person, quoted phrase, precise statistic, market size, named concept, or counterintuitive fact
+- Be UNIQUE — no two angles should overlap or cover the same idea
+- Be written as a 1-sentence "post seed" that gives the writer something specific to work with
+- NOT be a generic theme ("AI is changing work", "coordination pain", "smarter tools") — if a detail isn't named or concrete, it doesn't count
+
+EXAMPLES of good angles:
+- "Crosby started with NDAs — one well-defined, already-outsourced task — not the hardest problem but the clearest one"
+- "For every dollar spent on software, six dollars go to services — that ratio is the real TAM"
+- "More Cursor tasks are now started by agents than by humans — software engineering crossed the threshold first"
+
+EXAMPLES of bad angles (too generic — reject these):
+- "AI is moving from tools to outcomes"
+- "Coordination pain is the signal"
+- "Relief beats intelligence"
+
+=== RAW MATERIAL ===
+${rawInput}
+
+Return a JSON object with:
+- angles: An array of exactly 9 strings, each a 1-sentence specific post seed
+
+Return ONLY valid JSON, no markdown.`;
+
+    const anglesResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: anglesPrompt }],
+      response_format: { type: "json_object" },
+    });
+    const anglesParsed = JSON.parse(anglesResponse.choices[0]?.message?.content || "{}");
+    twitterAngles = Array.isArray(anglesParsed.angles) ? anglesParsed.angles : [];
+  } catch {
+    twitterAngles = [];
+  }
+
   // Use shared coreIdea if provided (avoids duplicate API call), otherwise generate
   let coreIdea = sharedCoreIdea || { coreIdea: "", paradox: "", implication: "" };
 
@@ -1105,27 +1147,35 @@ Return ONLY valid JSON, no markdown.`;
     },
   ];
 
-  for (const postConfig of twitterPostTypes) {
+  for (let i = 0; i < twitterPostTypes.length; i++) {
+    const postConfig = twitterPostTypes[i];
+    const assignedAngle = twitterAngles[i] || "";
+    const angleInstruction = assignedAngle
+      ? `=== YOUR ASSIGNED ANGLE (write THIS post about THIS specific detail) ===
+${assignedAngle}
+
+You MUST write about this specific angle. Do not substitute a different angle or generalize it into a broader theme.`
+      : `=== FIND YOUR OWN SPECIFIC ANGLE ===
+Pick ONE concrete, named detail from the Raw Materials (a specific company, stat, quote, or named concept). Do NOT write about generic themes like "coordination pain" or "smarter tools".`;
+
     const prompt = `You are a founder writing a single 𝕏 (Twitter) post.
 
-STEP 1 — ANCHOR IN SPECIFICS: Before writing, find ONE concrete, specific detail from the Raw Materials below. This must be something NAMED and REAL: a specific company, a quoted phrase, a precise statistic, a named concept, a specific market, or a direct quote. Generic themes ("coordination pain", "smarter tools", "AI employees") are NOT specific. If the raw input is an article or external piece, use ITS specific language.
-
-STEP 2 — WRITE THE POST: Build the post around that specific anchor. The post must contain at least one concrete, traceable detail from the Raw Materials. A reader who hasn't seen the raw materials should be able to tell what the post is actually about.
-
-=== RAW MATERIALS (primary source — mine for SPECIFIC details) ===
-${rawInput}
+${angleInstruction}
 
 === POST TYPE: ${postConfig.name} ===
 ${postConfig.description}
 
 ${postConfig.prompt}
 
+=== RAW MATERIALS (for reference and context) ===
+${rawInput}
+
 === VOICE / TONE (how to write — NOT what to write about) ===
 ${contextString || "Operator-focused, calm, authoritative tone. No hype."}
 
 CRITICAL CONSTRAINTS:
 - ≤280 characters (STRICT LIMIT)
-- Must reference something SPECIFIC from the Raw Materials — not abstract themes
+- Must be grounded in the specific assigned angle above
 - No hashtags
 - No emojis
 - No engagement bait
@@ -1134,7 +1184,6 @@ CRITICAL CONSTRAINTS:
 - Clarity > cleverness
 
 Return a JSON object with:
-- specificAnchor: The exact specific detail, quote, or example you chose from the raw materials (1 sentence)
 - post: The complete 𝕏 post (≤280 characters)
 - coreInsight: The key insight in one sentence
 - characterCount: Number of characters in the post
