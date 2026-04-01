@@ -1108,14 +1108,19 @@ Return ONLY valid JSON, no markdown.`;
   for (const postConfig of twitterPostTypes) {
     const prompt = `You are a founder writing a single 𝕏 (Twitter) post.
 
-=== CORE IDEA ===
+CRITICAL RULE: Write ONLY about the topic in RAW MATERIALS below. The Voice/Tone Context section defines HOW to write — not WHAT to write about. Do not introduce topics, companies, products, or themes from the context section unless they appear directly in the Raw Materials.
+
+=== RAW MATERIALS (YOUR TOPIC — stick to this) ===
+${rawInput}
+
+=== CORE IDEA (derived from the raw materials above) ===
 ${coreIdea.coreIdea}
 Paradox: ${coreIdea.paradox}
 Implication: ${coreIdea.implication}
 ${contraryContext}
-=== CONTEXT ===
-${contextString || "Write for a professional, operator-focused audience."}
-${sourceArticleContext}
+=== VOICE / TONE CONTEXT (style and audience only — NOT the topic) ===
+${contextString || "Operator-focused, calm, authoritative tone."}
+
 === POST TYPE: ${postConfig.name} ===
 ${postConfig.description}
 
@@ -1123,6 +1128,7 @@ ${postConfig.prompt}
 
 CRITICAL CONSTRAINTS:
 - ≤280 characters (STRICT LIMIT)
+- Must be about the Raw Materials topic above — not about the context documents
 - No hashtags
 - No emojis
 - No engagement bait
