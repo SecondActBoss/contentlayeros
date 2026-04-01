@@ -97,9 +97,12 @@ The source article ensures thematic cohesion across all content types. Each down
 3. Tone rules: calm (not combative), thoughtful disagreement, never name original author, no outrage language
 
 **𝕏 Standard Mode:**
-1. Raw input + selected context items → Signal extraction (OpenAI)
-2. Generate 1 𝕏 Article (600-950 words, viral story arc) + 9 Twitter posts (≤280 chars)
-3. Article follows Hook → Pain → Old solutions → Breakthrough → Vision → CTA arc; posts each have a distinct angle (POV, Paradox, Operator Reality, System Rule, Contrarian Truth, Quiet Insight, Story Moment, Future Vision, Mirror)
+1. Raw input + selected context items → Signal extraction (OpenAI) — note: X mode SKIPS source article generation (LinkedIn only)
+2. Pre-extraction step: One API call extracts 9 DISTINCT, specific angles from raw input (named companies, stats, quotes, concepts) — one assigned per post to prevent all 9 collapsing to the same theme
+3. Generate 1 𝕏 Article (600-950 words) + 9 Twitter posts (≤280 chars) in parallel
+4. X Article prompt: rawInput leads as PRIMARY SOURCE; context docs are VOICE/TONE only (not topic); no core idea or extracted signals injected
+5. Each of the 9 posts receives its own pre-assigned angle and must be grounded in a specific detail from raw input — not abstract themes
+6. Article follows Hook → Pain → Old solutions → Breakthrough → Vision → CTA arc; posts each have a distinct angle (POV, Paradox, Operator Reality, System Rule, Contrarian Truth, Quiet Insight, Story Moment, Future Vision, Mirror)
 
 **𝕏 Raw Tweet Mode:**
 1. Raw input + selected context items → Signal extraction (OpenAI)
