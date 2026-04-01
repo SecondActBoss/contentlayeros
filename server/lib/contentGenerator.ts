@@ -13,44 +13,44 @@ const POST_TYPES = [
     type: "educational_authority",
     name: "High-Level Educational Authority Post",
     description: "Clear stance, operator-safe, calm authority. Demonstrates monetizable expertise.",
-    hookBias: "Strong stance or reframing. Take a clear position that challenges conventional thinking.",
+    hookBias: "Strong stance or reframing. Take a clear position that challenges conventional thinking about the source article topic.",
     hookExamples: [
-      "AI agents won't replace departments.",
-      "Not smarter AI. Quieter execution.",
-      "Relief beats innovation.",
+      "Most [industry] decisions destroy margins.",
+      "Not more [resource]. Better [leverage].",
+      "Speed isn't the bottleneck.",
     ],
   },
   {
     type: "founder_story",
     name: "Founder Storytelling Post",
     description: "One moment → one lesson → why it matters to the reader. Personal and authentic.",
-    hookBias: "Emotional mirror or lived quote. Reflect a feeling or moment operators know well.",
+    hookBias: "Emotional mirror or lived quote grounded in the source article's ideas. Reflect a real feeling or moment.",
     hookExamples: [
-      "Busy all day. Nothing moved.",
-      "I used to think speed was the problem.",
-      "The team was stressed. The system was fine.",
+      "We almost missed it.",
+      "I used to think hiring solved everything.",
+      "The model was wrong. Not the team.",
     ],
   },
   {
     type: "trend_translation",
     name: "Trend Translation / Strategic Arbitrage Post",
     description: "Trend → operator lens → grounded POV. Reframes industry discourse.",
-    hookBias: "Disagreement with prevailing narrative. Challenge what everyone else is saying.",
+    hookBias: "Disagreement with a prevailing narrative in the source article's field. Challenge what everyone else is saying.",
     hookExamples: [
-      "Early AI adoption isn't about intelligence.",
-      "The AI hype cycle missed the point.",
-      "Everyone's building agents. Few are deploying them.",
+      "Most [field] signals are pointing the wrong way.",
+      "The real shift isn't what you think.",
+      "Everyone's optimizing. Few are rethinking.",
     ],
   },
   {
     type: "system_principle",
     name: "System Principle / Rule-Based Post",
     description: "A constraint, rule, or mental model that guides decisions.",
-    hookBias: "Clear rule, constraint, or belief. State a principle like it's obvious truth.",
+    hookBias: "A clear rule or principle derived from the source article. State it like obvious truth.",
     hookExamples: [
-      "Coordination pain is the real trigger.",
-      "AI only sticks when chaos disappears.",
-      "If it needs a meeting, it's not automated.",
+      "The bottleneck is always upstream.",
+      "Systems break at handoff points.",
+      "If it requires approval every time, it's not a system.",
     ],
   },
 ];
@@ -327,11 +327,11 @@ DO NOT weaken clarity to avoid repetition. Find a different angle, not a weaker 
 
     const prompt = `You are a LinkedIn ghostwriter for a founder. Generate a ${postType.name}.
 
-CONTEXT:
-${contextString || "Write for a professional audience."}
-${sourceArticleContext}
-EXTRACTED SIGNALS (secondary input — use to support and enrich ideas from source article):
-${signalsString}
+CRITICAL RULE: All ideas, examples, and arguments in this post must come from the SOURCE ARTICLE below. Do not import themes, phrases, or vocabulary from the Voice/Tone Context unless they also appear in the source article. The Voice/Tone Context tells you HOW to write — not WHAT to write about.
+${sourceArticleContext || `\n=== SOURCE ARTICLE (PRIMARY INPUT) ===\n${rawInput}\n`}
+=== VOICE / TONE (style only — NOT the topic) ===
+${contextString || "Operator-focused, calm, authoritative. Conversational but precise."}
+
 ${examplesString}
 ${antiRepetitionContext}
 POST TYPE: ${postType.name}
@@ -344,33 +344,33 @@ The hook (Line 1) and rehook (Line 2) are the most important parts. They determi
 HOOK BIAS FOR THIS POST TYPE:
 ${postType.hookBias}
 
-EXAMPLE HOOKS (for tone/structure, do not copy verbatim):
+EXAMPLE HOOKS (structural patterns only — fill in with ideas from the source article, do not copy these verbatim):
 ${postType.hookExamples.map((h: string) => `- "${h}"`).join("\n")}
 
 HOOK STRUCTURE REQUIREMENTS:
-- Line 1 (hook): 8 words or less, declarative statement
+- Line 1 (hook): 8 words or less, declarative statement drawn from the source article
 - Line 2 (rehook): Adds clarity, tension, or narrows audience
 - NO questions in Line 1
 - NO emojis
 - NO hype language ("game-changing", "revolutionary", "the future")
 - NO generic openings ("Here's why...", "Let's talk about...", "I've learned...")
 
-PREFERRED HOOK TYPES (use one):
-A. Strong Contrarian: "AI agents won't replace departments."
-B. Operator Pain Mirror: "Busy all day. Nothing moved."
-C. Rule or Principle: "Coordination pain is the real trigger."
-D. Reframe / Contrast: "Not smarter AI. Quieter execution."
+PREFERRED HOOK TYPES (use one, grounded in source article content):
+A. Strong Contrarian: A clear position that challenges conventional thinking about the source article's topic
+B. Pain Mirror: Reflect a real feeling or struggle that the source article addresses
+C. Rule or Principle: A rule or mental model derived from the source article
+D. Reframe / Contrast: A "not X, actually Y" framing grounded in the source article's argument
 
 REHOOK REQUIREMENTS:
 Line 2 should do ONE of these:
-- Add specificity: "That's why operators adopt AI first."
-- Create tension: "This is where most AI strategies break."
-- Narrow audience: "If you run ops, you've felt this."
-- Extend with consequence: "The cost shows up in meetings."
+- Add specificity tied to the source article's argument
+- Create tension around the source article's core idea
+- Narrow audience: "If you [do X from the article's domain], you've felt this."
+- Extend with consequence from the source article
 
 SUCCESS CRITERIA:
-A good hook makes operators think: "That's exactly what I'm dealing with — keep going."
-NOT: "That sounds smart."
+A good hook makes the reader think: "That's exactly the thing I've been wondering about — keep going."
+NOT: "That sounds smart but I'm not sure what it's about."
 
 === BODY WRITING CONSTRAINTS ===
 - Short lines (aim for 8 words or less per line)
@@ -729,11 +729,10 @@ ${signals.opinions.map((o) => `- ${o}`).join("\n")}`;
   for (const themeConfig of CAROUSEL_THEMES) {
     const prompt = `You are a LinkedIn carousel content creator for a founder. Generate a ${themeConfig.name} carousel.
 
-CONTEXT:
-${contextString || "Write for a professional, operator-focused audience."}
-${sourceArticleContext}
-EXTRACTED SIGNALS (secondary input — use to enrich ideas from source article):
-${signalsString}
+CRITICAL RULE: All slide ideas, examples, and arguments must come from the SOURCE ARTICLE below. Do not import themes or vocabulary from the Voice/Tone Context. The Voice/Tone Context tells you HOW to write — not WHAT to write about.
+${sourceArticleContext || `\n=== SOURCE ARTICLE (PRIMARY INPUT) ===\n${rawInput}\n`}
+=== VOICE / TONE (style only — NOT the topic) ===
+${contextString || "Operator-focused, calm, authoritative. Conversational but precise."}
 
 === CAROUSEL TYPE: ${themeConfig.name} ===
 ${themeConfig.description}
