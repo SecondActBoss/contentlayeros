@@ -978,6 +978,7 @@ Return ONLY valid JSON, no markdown.`;
     model: "gpt-4o",
     messages: [{ role: "user", content: newsletterPrompt }],
     response_format: { type: "json_object" },
+    max_tokens: 4000,
   });
 
   try {
