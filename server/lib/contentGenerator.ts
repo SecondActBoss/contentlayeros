@@ -940,39 +940,36 @@ Return ONLY valid JSON, no markdown.`;
     }
   }
 
-  // 1. Generate 𝕏 Article (600-950 words)
-  const newsletterPrompt = `You are the world's best writer of viral 𝕏 Articles. You have helped multiple 7- and 8-figure operators and founders turn rough ideas into high-engagement Articles that get tens of thousands of views, saves, and comments.
+  // 1. Generate 𝕏 Article (600-850 words) — Greg Isenberg style
+  const newsletterPrompt = `You are the world's best writer of viral 𝕏 Articles in the exact style of Greg Isenberg.
 
-CRITICAL RULE: The article must be grounded in the RAW MATERIALS below. Use the specific ideas, examples, companies, statistics, and language from the raw materials. Do not import themes from outside the raw materials. The voice/tone context at the bottom tells you HOW to write — not WHAT to write about.
+CRITICAL RULE: The article must be grounded in the RAW MATERIALS below. Use the specific ideas, examples, companies, statistics, and language from the raw materials. Do not import themes from outside the raw materials. The voice/tone context at the bottom tells you HOW to refine — not WHAT to write about.
 ${contraryContext}
 === RAW MATERIALS (PRIMARY SOURCE — this is what the article is about) ===
 ${rawInput}
 
-=== WRITING STYLE ===
-- Direct, authoritative, and conversational (never corporate)
-- Short paragraphs (1–3 sentences max)
-- Bold subheads for scannability
-- Heavy use of line breaks and white space
-- Occasional **bold** for emphasis inside paragraphs
-- One relatable opening scene that makes the reader feel seen
-- Use specific data, names, and examples from the Raw Materials to back up claims
-- Clear story arc: Hook → Pain → Why it's worse than you think → Failed old solutions → Breakthrough new solution → Moment of reflection → Inspiring future vision → Strong CTA
+Write every Article with this voice and structure:
 
-=== VOICE / TONE (style only — NOT the topic) ===
-${contextString || "Operator-focused, calm, authoritative. No hype or corporate speak."}
+- Calm, battle-tested operator / consultant tone. Direct, authoritative, and conversational — like a founder who has seen the same pattern 100 times and is quietly telling you the real reason it's happening.
+- Use soft authority phrases like "I see this in almost every..." or "Most founders I talk to..." or "Here's what actually changes the game."
+- Extremely short paragraphs: 1 sentence per paragraph most of the time. Never more than 2 sentences.
+- Heavy use of line breaks and white space for scannability.
+- One relatable opening scene or observation that makes the reader feel instantly seen.
+- Bold subheads only when they add clarity (use sparingly).
+- Occasional **bold** for emphasis inside paragraphs.
+- Clear story arc: Hook → Pain → Why it's worse than you think → Failed old solutions → Breakthrough new solution → Moment of reflection → Inspiring future vision → Strong CTA.
+- Make it feel like it came straight from a battle-tested operator who just figured something out.
+- Total length: 600–850 words.
+
+=== VOICE / TONE REFINEMENTS (style only — NOT the topic) ===
+${contextString || "Operator-focused. No hype, no corporate speak, no emojis."}
 
 TASK:
-Transform the Raw Materials into a complete, publication-ready 𝕏 Article. The article should feel like it came from someone who just read something important and wants to share what they took from it — grounded in the specific details, not abstracted into generalities.
-
-Rules:
-- Give it a punchy, curiosity-driven title drawn from the specific ideas in the Raw Materials
-- Keep the total length roughly 600–950 words (ideal for 𝕏 Articles)
-- End with an engagement question or call-to-action that invites comments
-- Stay faithful to what's actually in the Raw Materials — do not invent themes not present there
+Now take the rough idea in the Raw Materials above and turn it into a complete, publication-ready 𝕏 Article at the highest level. Stay faithful to the specific details, names, and examples in the Raw Materials — do not abstract them into generalities or invent themes not present there.
 
 Return a JSON object with:
 - title: A punchy, curiosity-driven title (≤12 words)
-- body: The full 𝕏 Article (600–950 words, publication-ready)
+- body: The full 𝕏 Article (600–850 words, publication-ready, in the Greg Isenberg style described above)
 - coreInsight: The core idea in one sentence
 
 Return ONLY valid JSON, no markdown.`;
