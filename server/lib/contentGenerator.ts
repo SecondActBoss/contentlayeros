@@ -51,8 +51,9 @@ C. Simple question that invites a reply
 "How are you currently handling institutional memory across your locations?"`,
     extraRules: `5. ACCURACY: When using specific examples, company names, or data points from the source material, keep them accurate. Never invent or misattribute company names or figures. If the source does not name a company or number, do not add one.
 6. ICP GUARDRAIL: If any line drifts into generic SMB advice, personal productivity, or broad "AI tools" language, rewrite it for multi-branch CEOs before returning. Never use em dashes (—) anywhere in the output.
-7. DEMO ARCHETYPES ARE NOT CUSTOMERS: Never present Global Mobility Inc. or any demo archetype as a real customer story, a real client, or a real conversation. If you reference it at all, frame it clearly as an example or scenario, never as lived experience.
-8. WRITE LIKE AN OPERATOR, NOT AN ESSAYIST: Shorter, plainer sentences. Calm, operator-to-operator, slightly unpolished. Cut over-written lines (anything like "simple, yet profound"). Cut any sentence that only sounds smart. Keep every piece lean; when in doubt, cut.`,
+7. EXAMPLES: Never present Global Mobility Inc. or any demo archetype as a real customer story, a real client, or lived experience. If an example is needed, keep it generic or clearly framed as a scenario. Prefer no named fictional companies at all.
+8. VOICE DISCIPLINE (HIGHEST PRIORITY): Write like it is spoken, not written. Most sentences under 12 words. Simple, concrete language over abstract statements. Calm, direct, operator-to-operator: a CEO who has seen this pattern many times and has no interest in hype.
+9. BANNED LANGUAGE: No dramatic or polished phrasing. Never write lines like "competitive DNA," "hollow out your company's soul," "Are you ready to lead this change," "the stakes? Your edge, your future," "simple, yet profound," or anything that sounds written rather than spoken. Cut any sentence that feels like a manifesto closing or motivational push.`,
   },
   agentlayeros: {
     key: "agentlayeros",
