@@ -16,7 +16,8 @@ import {
   FileText, 
   Settings2, 
   MessageSquarePlus,
-  Layers
+  Layers,
+  Radar
 } from "lucide-react";
 
 const navItems = [
@@ -25,6 +26,12 @@ const navItems = [
     url: "/",
     icon: PenLine,
     description: "Generate content",
+  },
+  {
+    title: "Daily Scan",
+    url: "/daily-scan",
+    icon: Radar,
+    description: "Daily X scan for Raw Materials",
   },
   {
     title: "Drafts",

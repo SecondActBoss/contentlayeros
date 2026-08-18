@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,20 @@ type ArticleAnalysis = {
 export default function Dashboard() {
   const { toast } = useToast();
   const [rawInput, setRawInput] = useState("");
+
+  // Pick up a Daily Scan report sent over as Raw Materials
+  useEffect(() => {
+    const pending = sessionStorage.getItem("pendingRawMaterials");
+    if (pending) {
+      sessionStorage.removeItem("pendingRawMaterials");
+      setRawInput(pending);
+      toast({
+        title: "Daily Scan loaded",
+        description: "The scan report is now in Raw Materials, ready to generate.",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [selectedContextIds, setSelectedContextIds] = useState<string[]>([]);
   const [generatedPosts, setGeneratedPosts] = useState<PostDraft[]>([]);
   const [extractedSignals, setExtractedSignals] = useState<ExtractedSignals | null>(null);

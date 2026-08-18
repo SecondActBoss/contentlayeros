@@ -241,6 +241,25 @@ export const insertFeedbackEntrySchema = createInsertSchema(feedbackEntries).omi
 export type InsertFeedbackEntry = z.infer<typeof insertFeedbackEntrySchema>;
 export type FeedbackEntry = typeof feedbackEntries.$inferSelect;
 
+// Daily scans - journalist-style X scan reports used as Raw Materials
+export const dailyScans = pgTable("daily_scans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scanDate: text("scan_date").notNull(), // YYYY-MM-DD (Eastern Time)
+  report: text("report").notNull(), // Full markdown report
+  postCount: integer("post_count").default(0).notNull(), // High-signal posts included
+  status: text("status").default("complete").notNull(), // complete, quiet, error
+  triggeredBy: text("triggered_by").default("manual").notNull(), // manual, scheduled
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertDailyScanSchema = createInsertSchema(dailyScans).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDailyScan = z.infer<typeof insertDailyScanSchema>;
+export type DailyScan = typeof dailyScans.$inferSelect;
+
 // Extracted signals type
 export interface ExtractedSignals {
   expertise: string[];

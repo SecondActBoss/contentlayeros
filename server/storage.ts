@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type ContextItem, type InsertContextItem, type WeeklyRun, type InsertWeeklyRun, type PostDraft, type InsertPostDraft, type FeedbackEntry, type InsertFeedbackEntry, type ExtractedSignals, type ExtractedPatterns } from "@shared/schema";
+import { type User, type InsertUser, type ContextItem, type InsertContextItem, type WeeklyRun, type InsertWeeklyRun, type PostDraft, type InsertPostDraft, type FeedbackEntry, type InsertFeedbackEntry, type DailyScan, type InsertDailyScan, type ExtractedSignals, type ExtractedPatterns } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 // Storage interface with all CRUD methods
@@ -38,6 +38,13 @@ export interface IStorage {
   createFeedbackEntry(entry: InsertFeedbackEntry): Promise<FeedbackEntry>;
   updateFeedbackEntry(id: string, data: Partial<FeedbackEntry>): Promise<FeedbackEntry | undefined>;
   getStrongFeedbackEntries(): Promise<FeedbackEntry[]>;
+
+  // Daily Scans
+  getAllDailyScans(): Promise<DailyScan[]>;
+  getDailyScan(id: string): Promise<DailyScan | undefined>;
+  getDailyScanByDate(scanDate: string): Promise<DailyScan | undefined>;
+  createDailyScan(scan: InsertDailyScan): Promise<DailyScan>;
+  deleteDailyScan(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -239,6 +246,41 @@ export class MemStorage implements IStorage {
     return Array.from(this.feedbackEntries.values()).filter(
       (entry) => entry.performanceLabel === "strong"
     );
+  }
+
+  // Daily Scans
+  private dailyScans: Map<string, DailyScan> = new Map();
+
+  async getAllDailyScans(): Promise<DailyScan[]> {
+    return Array.from(this.dailyScans.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getDailyScan(id: string): Promise<DailyScan | undefined> {
+    return this.dailyScans.get(id);
+  }
+
+  async getDailyScanByDate(scanDate: string): Promise<DailyScan | undefined> {
+    return Array.from(this.dailyScans.values()).find((s) => s.scanDate === scanDate);
+  }
+
+  async createDailyScan(scan: InsertDailyScan): Promise<DailyScan> {
+    const id = randomUUID();
+    const dailyScan: DailyScan = {
+      ...scan,
+      id,
+      postCount: scan.postCount ?? 0,
+      status: scan.status || "complete",
+      triggeredBy: scan.triggeredBy || "manual",
+      createdAt: new Date(),
+    };
+    this.dailyScans.set(id, dailyScan);
+    return dailyScan;
+  }
+
+  async deleteDailyScan(id: string): Promise<void> {
+    this.dailyScans.delete(id);
   }
 }
 

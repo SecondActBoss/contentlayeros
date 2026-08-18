@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { extractSignals, extractCoreIdea, generateSourceArticle, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, generateAuthorityArticle, generateTriPublishPack, generateQuoteReposts, generateArticleAnalysis, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
 import { runThinkingGates } from "./lib/thinkingGates";
+import { runDailyScan } from "./lib/dailyScan";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { insertContextItemSchema, insertPostDraftSchema, insertFeedbackEntrySchema, type PostDraft } from "@shared/schema";
@@ -49,6 +50,37 @@ export async function registerRoutes(
 ): Promise<Server> {
   // Register object storage routes for file uploads
   registerObjectStorageRoutes(app);
+
+  // Daily Scans (Journalist-Style Daily Scan System)
+  app.get("/api/daily-scans", async (_req, res) => {
+    try {
+      const scans = await storage.getAllDailyScans();
+      res.json(scans);
+    } catch (error) {
+      console.error("Error fetching daily scans:", error);
+      res.status(500).json({ error: "Failed to fetch daily scans" });
+    }
+  });
+
+  app.post("/api/daily-scans/run", async (_req, res) => {
+    try {
+      const scan = await runDailyScan("manual");
+      res.json(scan);
+    } catch (error: any) {
+      console.error("Error running daily scan:", error);
+      res.status(500).json({ error: error?.message || "Failed to run daily scan" });
+    }
+  });
+
+  app.delete("/api/daily-scans/:id", async (req, res) => {
+    try {
+      await storage.deleteDailyScan(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting daily scan:", error);
+      res.status(500).json({ error: "Failed to delete daily scan" });
+    }
+  });
 
   // Context Items CRUD
   app.get("/api/context-items", async (req, res) => {

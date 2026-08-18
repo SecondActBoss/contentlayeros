@@ -12,6 +12,7 @@ import Dashboard from "@/pages/Dashboard";
 import Context from "@/pages/Context";
 import Drafts from "@/pages/Drafts";
 import Feedback from "@/pages/Feedback";
+import DailyScanPage from "@/pages/DailyScan";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/context" component={Context} />
       <Route path="/drafts" component={Drafts} />
       <Route path="/feedback" component={Feedback} />
+      <Route path="/daily-scan" component={DailyScanPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -62,6 +62,10 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
+  // Daily Company Brain Scan — 6:00 AM Eastern
+  const { startDailyScanScheduler } = await import("./lib/dailyScan");
+  startDailyScanScheduler();
+
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

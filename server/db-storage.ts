@@ -6,6 +6,9 @@ import {
   weeklyRuns,
   postDrafts,
   feedbackEntries,
+  dailyScans,
+  type DailyScan,
+  type InsertDailyScan,
   type User,
   type InsertUser,
   type ContextItem,
@@ -142,5 +145,29 @@ export class DatabaseStorage implements IStorage {
 
   async getStrongFeedbackEntries(): Promise<FeedbackEntry[]> {
     return db.select().from(feedbackEntries).where(eq(feedbackEntries.performanceLabel, "strong"));
+  }
+
+  // Daily Scans
+  async getAllDailyScans(): Promise<DailyScan[]> {
+    return db.select().from(dailyScans).orderBy(desc(dailyScans.createdAt));
+  }
+
+  async getDailyScan(id: string): Promise<DailyScan | undefined> {
+    const [scan] = await db.select().from(dailyScans).where(eq(dailyScans.id, id));
+    return scan;
+  }
+
+  async getDailyScanByDate(scanDate: string): Promise<DailyScan | undefined> {
+    const [scan] = await db.select().from(dailyScans).where(eq(dailyScans.scanDate, scanDate)).orderBy(desc(dailyScans.createdAt)).limit(1);
+    return scan;
+  }
+
+  async createDailyScan(scan: InsertDailyScan): Promise<DailyScan> {
+    const [created] = await db.insert(dailyScans).values(scan).returning();
+    return created;
+  }
+
+  async deleteDailyScan(id: string): Promise<void> {
+    await db.delete(dailyScans).where(eq(dailyScans.id, id));
   }
 }
