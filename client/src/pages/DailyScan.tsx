@@ -29,7 +29,15 @@ export default function DailyScanPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<ScanBrand>("mondayceobrief");
-  const [filterBrand, setFilterBrand] = useState<FilterBrand>("all");
+  const [filterBrand, setFilterBrand] = useState<FilterBrand>(() => {
+    const stored = localStorage.getItem("dailyScan.filterBrand");
+    return (stored as FilterBrand) || "all";
+  });
+
+  const handleSetFilterBrand = (f: FilterBrand) => {
+    localStorage.setItem("dailyScan.filterBrand", f);
+    setFilterBrand(f);
+  };
 
   const { data: scans = [], isLoading } = useQuery<DailyScan[]>({
     queryKey: ["/api/daily-scans"],
@@ -165,7 +173,7 @@ export default function DailyScanPage() {
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted text-muted-foreground"
                 }`}
-                onClick={() => setFilterBrand(f)}
+                onClick={() => handleSetFilterBrand(f)}
                 data-testid={`filter-${f}`}
               >
                 {FILTER_LABELS[f]}
