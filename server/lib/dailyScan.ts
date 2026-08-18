@@ -11,26 +11,23 @@ import path from "path";
 const XAI_API_KEY = process.env.CONTENTLAYEROS_XAI;
 const XAI_MODEL = "grok-4.6";
 
-// Search beats from the Daily Company Brain Scanner spec
-const SEARCH_BEATS = `
+// ── MondayCEOBrief lens ──────────────────────────────────────────────────────
+
+const MCB_SEARCH_BEATS = `
 1. "company brain" / "enterprise brain" / "organizational memory" / "AI memory layer" — combined with CEO, multi-branch, multi-location, franchise, distribution, or multi-unit angles
 2. "AI sovereignty" / "own the memory" / "rent the intelligence" / "data alpha" / "operational alpha" — combined with CEO, enterprise, multi-branch, or multi-location angles
 3. "institutional memory" / "operational intelligence" / "event extraction" / "company memory" — in an AI / agent / brain context
 4. "token cost" / "token tax" / "surprise bill" / "tokenmaxxing" — in an AI/LLM context relevant to CEOs or enterprises`;
 
-const MONITORED_ACCOUNTS = `@palantirtech (and Alex Karp related accounts), @levie (Aaron Levie, Box), @ashwingop (Ashwin Gopinath, Sentra), plus any other relevant enterprise AI / memory / sovereignty voices that surface in the searches`;
+const MCB_MONITORED_ACCOUNTS = `@palantirtech (and Alex Karp related accounts), @levie (Aaron Levie, Box), @ashwingop (Ashwin Gopinath, Sentra), plus any other relevant enterprise AI / memory / sovereignty voices that surface in the searches`;
 
-function easternDate(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
-}
-
-function buildPrompt(date: string): string {
+function buildMondayCEOBriefPrompt(date: string): string {
   return `You are a sharp journalist covering the "AI Company Brain" beat for multi-branch CEOs (3–15+ branches) who care about operational intelligence, AI sovereignty, institutional memory, and not leaking their competitive edge.
 
 Use X search to run today's scan. Search X for recent posts (last 24–48 hours, prefer the most recent) across these beats:
-${SEARCH_BEATS}
+${MCB_SEARCH_BEATS}
 
-Also check recent posts and high-engagement replies from these monitored accounts: ${MONITORED_ACCOUNTS}
+Also check recent posts and high-engagement replies from these monitored accounts: ${MCB_MONITORED_ACCOUNTS}
 
 FILTERING RULES (STRICT) — only keep posts relevant to at least one of:
 - Multi-branch / multi-location / franchise / distribution operations
@@ -75,7 +72,86 @@ Produce the report in EXACTLY this markdown structure:
 After the search, respond with ONLY the markdown report — no preamble, no closing remarks. On the very last line, after the report, append exactly: POST_COUNT: <number of posts included in High-Signal Conversations, 0 if quiet day>`;
 }
 
-async function runGrokScan(date: string): Promise<{ report: string; postCount: number }> {
+// ── AgentLayerOS lens ────────────────────────────────────────────────────────
+
+const ALO_SEARCH_BEATS = `
+1. "missed calls" / "speed to lead" / "lead response time" / "inbound revenue" / "unanswered leads" — combined with SMB, small business, owner, operator angles
+2. "AI employee" / "AI agent for business" / "AI that works for you" / "AI for small business" — from an execution or delegation angle (not general AI news)
+3. "coordination debt" / "human glue" / "dropped balls" / "follow-up" / "no-show" / "forgotten tasks" — in a business operations context
+4. "headcount" / "flat team" / "lean team" / "no budget to hire" / "revenue without hiring" — combined with operations, business owner, or SMB angles
+5. "automation for small business" / "workflow automation" / "no-code AI" — when tied to SMB revenue or reducing owner involvement in routine work`;
+
+const ALO_MONITORED_ACCOUNTS = `prominent SMB operators, founders of AI-for-business tools, and voices in the SMB/operations/revenue execution space that surface in searches — prioritize posts where a business owner describes operational pain (missed work, slow follow-up, coordination overload) or relief from delegating routine work`;
+
+function buildAgentLayerOSPrompt(date: string): string {
+  return `You are a sharp journalist covering the "AI Employees for SMB" beat — focused on 5–100 employee businesses (roughly $3M–$30M revenue) where owners and operators are personally absorbing missed calls, slow lead response, forgotten follow-ups, and coordination debt from lean teams.
+
+Use X search to run today's scan. Search X for recent posts (last 24–48 hours, prefer the most recent) across these beats:
+${ALO_SEARCH_BEATS}
+
+Also check recent posts and high-engagement replies from these monitored accounts: ${ALO_MONITORED_ACCOUNTS}
+
+FILTERING RULES (STRICT) — only keep posts relevant to at least one of:
+- Revenue execution gaps: missed calls, slow speed-to-lead, dropped inbound opportunities, lost follow-ups
+- Coordination relief: reducing human-glue work, delegation to AI, fewer dropped balls
+- AI that owns defined work end-to-end (not just tools or copilots requiring a human to watch)
+- SMB operators describing the personal cost of being the one who keeps things running
+- Headcount / hiring constraints that create execution bottlenecks
+
+Discard: AI model benchmarks, general AI news, prompt engineering, enterprise AI transformation, developer tooling, RAG/vector databases, AGI narratives, consumer AI productivity, or any post aimed at AI hobbyists or engineers rather than business operators. Always ask: "Would an SMB owner running a 10–50 person business care about this because it describes their work or their pain?"
+
+CRITICAL RULES:
+- NEVER invent posts. Only report posts you actually found via X search, with the real handle and the real post URL.
+- Write plain URLs only (https://x.com/...). Do NOT include citation markers, citation IDs, or rendering instructions of any kind.
+- Be concise, high-signal, and practical.
+- If the day is quiet, still produce the full report and write "Quiet day – limited high-signal activity." under High-Signal Conversations.
+
+Produce the report in EXACTLY this markdown structure:
+
+## AgentLayerOS Daily Scan – ${date}
+
+### High-Signal Conversations
+- [1–2 sentence summary of the post]
+  Why it matters for SMB operators: [1 short sentence]
+  Source: [@handle + URL]
+
+(Typically 3–8 posts that survive the filter.)
+
+### Emerging Themes
+- Theme 1: [Name of theme]
+- Theme 2: [Name of theme]
+- Theme 3: [Name of theme] (only if strong)
+
+### Positioning Opportunities for AgentLayerOS
+- Opportunity 1: [How this can be used in a post or article]
+- Opportunity 2: [Another angle]
+
+### Suggested Angles for Today's Content
+- Short post idea: [1–2 sentence idea]
+- Possible authority article angle: [1–2 sentence idea]
+
+After the search, respond with ONLY the markdown report — no preamble, no closing remarks. On the very last line, after the report, append exactly: POST_COUNT: <number of posts included in High-Signal Conversations, 0 if quiet day>`;
+}
+
+// ── Shared helpers ───────────────────────────────────────────────────────────
+
+export type ScanBrand = "mondayceobrief" | "agentlayeros";
+
+function easternDate(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+}
+
+function buildPrompt(date: string, brand: ScanBrand): string {
+  return brand === "agentlayeros"
+    ? buildAgentLayerOSPrompt(date)
+    : buildMondayCEOBriefPrompt(date);
+}
+
+function reportHeading(brand: ScanBrand): string {
+  return brand === "agentlayeros" ? "AgentLayerOS Daily Scan" : "Daily Company Brain Scan";
+}
+
+async function runGrokScan(date: string, brand: ScanBrand): Promise<{ report: string; postCount: number }> {
   if (!XAI_API_KEY) {
     throw new Error("CONTENTLAYEROS_XAI secret is not set — cannot run the X scan.");
   }
@@ -88,7 +164,7 @@ async function runGrokScan(date: string): Promise<{ report: string; postCount: n
     },
     body: JSON.stringify({
       model: XAI_MODEL,
-      input: [{ role: "user", content: buildPrompt(date) }],
+      input: [{ role: "user", content: buildPrompt(date, brand) }],
       tools: [{ type: "x_search" }],
       max_output_tokens: 12000,
     }),
@@ -114,7 +190,8 @@ async function runGrokScan(date: string): Promise<{ report: string; postCount: n
     }
   }
 
-  if (!text.trim() || !text.includes("Daily Company Brain Scan")) {
+  const heading = reportHeading(brand);
+  if (!text.trim() || !text.includes(heading)) {
     throw new Error(`Scan produced no valid report (status: ${json.status}, output length: ${text.length})`);
   }
 
@@ -127,61 +204,69 @@ async function runGrokScan(date: string): Promise<{ report: string; postCount: n
   return { report, postCount };
 }
 
-export async function runDailyScan(triggeredBy: "manual" | "scheduled") {
-  if (scanInProgress) {
-    throw new Error("A scan is already running. Wait for it to finish.");
+// ── Public API ────────────────────────────────────────────────────────────────
+
+let scanInProgress: Partial<Record<ScanBrand, boolean>> = {};
+
+export async function runDailyScan(triggeredBy: "manual" | "scheduled", brand: ScanBrand = "mondayceobrief") {
+  if (scanInProgress[brand]) {
+    throw new Error(`A ${brand} scan is already running. Wait for it to finish.`);
   }
-  scanInProgress = true;
+  scanInProgress[brand] = true;
   try {
-    return await executeScan(triggeredBy);
+    return await executeScan(triggeredBy, brand);
   } finally {
-    scanInProgress = false;
+    scanInProgress[brand] = false;
   }
 }
 
-let scanInProgress = false;
-
-async function executeScan(triggeredBy: "manual" | "scheduled") {
+async function executeScan(triggeredBy: "manual" | "scheduled", brand: ScanBrand) {
   const date = easternDate();
-  const { report, postCount } = await runGrokScan(date);
+  const { report, postCount } = await runGrokScan(date, brand);
 
   // Save markdown file per spec
   try {
     const dir = path.join(process.cwd(), "daily_scans");
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, `Daily_Company_Brain_Scan_${date}.md`), report, "utf-8");
+    const brandSlug = brand === "agentlayeros" ? "AgentLayerOS" : "Daily_Company_Brain";
+    fs.writeFileSync(path.join(dir, `${brandSlug}_Scan_${date}.md`), report, "utf-8");
   } catch (e) {
     console.warn("[daily-scan] Failed to write markdown file:", e);
   }
 
   const scan = await storage.createDailyScan({
     scanDate: date,
+    brand,
     report,
     postCount,
     status: postCount === 0 ? "quiet" : "complete",
     triggeredBy,
   });
 
-  console.log(`[daily-scan] Completed ${triggeredBy} scan for ${date}: ${postCount} high-signal posts`);
+  console.log(`[daily-scan] Completed ${triggeredBy} ${brand} scan for ${date}: ${postCount} high-signal posts`);
   return scan;
 }
 
-// 6:00 AM Eastern daily schedule
+// ── Scheduler ─────────────────────────────────────────────────────────────────
+// 6:00 AM Eastern daily schedule — runs both brand lenses
 export function startDailyScanScheduler() {
   import("node-cron").then(({ default: cron }) => {
     cron.schedule(
       "0 6 * * *",
       async () => {
-        try {
-          const existing = await storage.getDailyScanByDate(easternDate());
-          if (existing?.triggeredBy === "scheduled") return; // already ran today
-          await runDailyScan("scheduled");
-        } catch (e) {
-          console.error("[daily-scan] Scheduled scan failed:", e);
+        const brands: ScanBrand[] = ["mondayceobrief", "agentlayeros"];
+        for (const brand of brands) {
+          try {
+            const existing = await storage.getDailyScanByDateAndBrand(easternDate(), brand);
+            if (existing?.triggeredBy === "scheduled") continue; // already ran today for this brand
+            await runDailyScan("scheduled", brand);
+          } catch (e) {
+            console.error(`[daily-scan] Scheduled scan failed for ${brand}:`, e);
+          }
         }
       },
       { timezone: "America/New_York" }
     );
-    console.log("[daily-scan] Scheduler active: daily at 6:00 AM Eastern");
+    console.log("[daily-scan] Scheduler active: daily at 6:00 AM Eastern (both brands)");
   });
 }

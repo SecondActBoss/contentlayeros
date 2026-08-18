@@ -9,30 +9,39 @@ import { Badge } from "@/components/ui/badge";
 import { Radar, Loader2, Copy, Check, Send, Trash2, Download } from "lucide-react";
 import type { DailyScan } from "@shared/schema";
 
+type ScanBrand = "mondayceobrief" | "agentlayeros";
+
+const BRAND_LABELS: Record<ScanBrand, string> = {
+  mondayceobrief: "MondayCEOBrief",
+  agentlayeros: "AgentLayerOS",
+};
+
 export default function DailyScanPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedBrand, setSelectedBrand] = useState<ScanBrand>("mondayceobrief");
 
   const { data: scans = [], isLoading } = useQuery<DailyScan[]>({
     queryKey: ["/api/daily-scans"],
   });
 
   const runScan = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/daily-scans/run");
+    mutationFn: async (brand: ScanBrand) => {
+      const res = await apiRequest("POST", "/api/daily-scans/run", { brand });
       return res.json();
     },
     onSuccess: (scan: DailyScan) => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-scans"] });
       setExpandedId(scan.id);
+      const brandLabel = BRAND_LABELS[(scan.brand as ScanBrand) ?? "mondayceobrief"] ?? scan.brand;
       toast({
         title: scan.status === "quiet" ? "Quiet day" : "Scan complete",
         description:
           scan.status === "quiet"
-            ? "Limited high-signal activity today. A report was still produced."
-            : `${scan.postCount} high-signal posts found for ${scan.scanDate}.`,
+            ? `Limited high-signal activity today (${brandLabel}). A report was still produced.`
+            : `${scan.postCount} high-signal posts found for ${brandLabel} — ${scan.scanDate}.`,
       });
     },
     onError: (error: any) => {
@@ -61,6 +70,10 @@ export default function DailyScanPage() {
 
   const sendToRawMaterials = (scan: DailyScan) => {
     sessionStorage.setItem("pendingRawMaterials", scan.report);
+    // Carry the brand forward so the run page can pre-select the right brand
+    if (scan.brand) {
+      sessionStorage.setItem("pendingRawMaterialsBrand", scan.brand);
+    }
     navigate("/");
   };
 
@@ -69,10 +82,14 @@ export default function DailyScanPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Daily_Company_Brain_Scan_${scan.scanDate}.md`;
+    const brandSlug = scan.brand === "agentlayeros" ? "AgentLayerOS" : "Daily_Company_Brain";
+    a.download = `${brandSlug}_Scan_${scan.scanDate}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const brandBadgeVariant = (brand?: string | null) =>
+    brand === "agentlayeros" ? "secondary" : "outline";
 
   return (
     <div className="container max-w-4xl mx-auto p-6 space-y-6">
@@ -84,26 +101,48 @@ export default function DailyScanPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Journalist-style X scan for the AI Company Brain beat. Runs automatically at 6:00 AM
-            Eastern; you can also run it on demand.
+            Eastern for both brands; you can also run either lens on demand.
           </p>
         </div>
-        <Button
-          onClick={() => runScan.mutate()}
-          disabled={runScan.isPending}
-          data-testid="button-run-scan"
-        >
-          {runScan.isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Scanning X...
-            </>
-          ) : (
-            <>
-              <Radar className="h-4 w-4 mr-2" />
-              Run Scan Now
-            </>
-          )}
-        </Button>
+
+        {/* Brand selector + run button */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Brand toggle */}
+          <div className="flex items-center rounded-md border overflow-hidden text-sm">
+            {(["mondayceobrief", "agentlayeros"] as ScanBrand[]).map((brand) => (
+              <button
+                key={brand}
+                className={`px-3 py-1.5 transition-colors ${
+                  selectedBrand === brand
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted text-muted-foreground"
+                }`}
+                onClick={() => setSelectedBrand(brand)}
+                data-testid={`button-brand-${brand}`}
+              >
+                {BRAND_LABELS[brand]}
+              </button>
+            ))}
+          </div>
+
+          <Button
+            onClick={() => runScan.mutate(selectedBrand)}
+            disabled={runScan.isPending}
+            data-testid="button-run-scan"
+          >
+            {runScan.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Scanning X...
+              </>
+            ) : (
+              <>
+                <Radar className="h-4 w-4 mr-2" />
+                Run Scan Now
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -121,6 +160,7 @@ export default function DailyScanPage() {
         <div className="space-y-4">
           {scans.map((scan) => {
             const isExpanded = expandedId === scan.id;
+            const brandLabel = BRAND_LABELS[(scan.brand as ScanBrand) ?? "mondayceobrief"] ?? scan.brand ?? "MondayCEOBrief";
             return (
               <Card key={scan.id} data-testid={`card-scan-${scan.id}`}>
                 <CardHeader className="pb-2">
@@ -131,9 +171,14 @@ export default function DailyScanPage() {
                       data-testid={`button-expand-${scan.id}`}
                     >
                       <CardTitle className="text-base">
-                        Daily Company Brain Scan – {scan.scanDate}
+                        {scan.brand === "agentlayeros"
+                          ? `AgentLayerOS Daily Scan – ${scan.scanDate}`
+                          : `Daily Company Brain Scan – ${scan.scanDate}`}
                       </CardTitle>
                       <div className="flex items-center gap-2 mt-1">
+                        <Badge variant={brandBadgeVariant(scan.brand)}>
+                          {brandLabel}
+                        </Badge>
                         <Badge variant={scan.status === "quiet" ? "secondary" : "default"}>
                           {scan.status === "quiet"
                             ? "Quiet day"

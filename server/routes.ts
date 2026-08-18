@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { extractSignals, extractCoreIdea, generateSourceArticle, generatePosts, generateContrarianPosts, generateCarousels, generateTwitterContent, generateRawTweets, generateAuthorityArticle, generateTriPublishPack, generateQuoteReposts, generateArticleAnalysis, extractPatterns, detectContentFatigue } from "./lib/contentGenerator";
 import { runThinkingGates } from "./lib/thinkingGates";
-import { runDailyScan } from "./lib/dailyScan";
+import { runDailyScan, type ScanBrand } from "./lib/dailyScan";
 import { appendPostsToSheet } from "./lib/googleSheets";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { insertContextItemSchema, insertPostDraftSchema, insertFeedbackEntrySchema, type PostDraft } from "@shared/schema";
@@ -63,9 +63,10 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/daily-scans/run", async (_req, res) => {
+  app.post("/api/daily-scans/run", async (req, res) => {
     try {
-      const scan = await runDailyScan("manual");
+      const brand = (req.body?.brand === "agentlayeros" ? "agentlayeros" : "mondayceobrief") as ScanBrand;
+      const scan = await runDailyScan("manual", brand);
       res.json(scan);
     } catch (error: any) {
       console.error("Error running daily scan:", error);

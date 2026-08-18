@@ -246,6 +246,7 @@ export type FeedbackEntry = typeof feedbackEntries.$inferSelect;
 export const dailyScans = pgTable("daily_scans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   scanDate: text("scan_date").notNull(), // YYYY-MM-DD (Eastern Time)
+  brand: text("brand").default("mondayceobrief").notNull(), // mondayceobrief or agentlayeros
   report: text("report").notNull(), // Full markdown report
   postCount: integer("post_count").default(0).notNull(), // High-signal posts included
   status: text("status").default("complete").notNull(), // complete, quiet, error

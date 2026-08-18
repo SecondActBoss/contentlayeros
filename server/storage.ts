@@ -43,6 +43,7 @@ export interface IStorage {
   getAllDailyScans(): Promise<DailyScan[]>;
   getDailyScan(id: string): Promise<DailyScan | undefined>;
   getDailyScanByDate(scanDate: string): Promise<DailyScan | undefined>;
+  getDailyScanByDateAndBrand(scanDate: string, brand: string): Promise<DailyScan | undefined>;
   createDailyScan(scan: InsertDailyScan): Promise<DailyScan>;
   deleteDailyScan(id: string): Promise<void>;
 }
@@ -264,6 +265,10 @@ export class MemStorage implements IStorage {
 
   async getDailyScanByDate(scanDate: string): Promise<DailyScan | undefined> {
     return Array.from(this.dailyScans.values()).find((s) => s.scanDate === scanDate);
+  }
+
+  async getDailyScanByDateAndBrand(scanDate: string, brand: string): Promise<DailyScan | undefined> {
+    return Array.from(this.dailyScans.values()).find((s) => s.scanDate === scanDate && s.brand === brand);
   }
 
   async createDailyScan(scan: InsertDailyScan): Promise<DailyScan> {

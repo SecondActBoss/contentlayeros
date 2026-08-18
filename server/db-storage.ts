@@ -1,4 +1,4 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { db } from "./db";
 import {
   users,
@@ -159,6 +159,14 @@ export class DatabaseStorage implements IStorage {
 
   async getDailyScanByDate(scanDate: string): Promise<DailyScan | undefined> {
     const [scan] = await db.select().from(dailyScans).where(eq(dailyScans.scanDate, scanDate)).orderBy(desc(dailyScans.createdAt)).limit(1);
+    return scan;
+  }
+
+  async getDailyScanByDateAndBrand(scanDate: string, brand: string): Promise<DailyScan | undefined> {
+    const [scan] = await db.select().from(dailyScans)
+      .where(and(eq(dailyScans.scanDate, scanDate), eq(dailyScans.brand, brand)))
+      .orderBy(desc(dailyScans.createdAt))
+      .limit(1);
     return scan;
   }
 
