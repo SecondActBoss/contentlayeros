@@ -10,8 +10,15 @@ import { Radar, Loader2, Copy, Check, Send, Trash2, Download } from "lucide-reac
 import type { DailyScan } from "@shared/schema";
 
 type ScanBrand = "mondayceobrief" | "agentlayeros";
+type FilterBrand = "all" | ScanBrand;
 
 const BRAND_LABELS: Record<ScanBrand, string> = {
+  mondayceobrief: "MondayCEOBrief",
+  agentlayeros: "AgentLayerOS",
+};
+
+const FILTER_LABELS: Record<FilterBrand, string> = {
+  all: "All",
   mondayceobrief: "MondayCEOBrief",
   agentlayeros: "AgentLayerOS",
 };
@@ -22,6 +29,7 @@ export default function DailyScanPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<ScanBrand>("mondayceobrief");
+  const [filterBrand, setFilterBrand] = useState<FilterBrand>("all");
 
   const { data: scans = [], isLoading } = useQuery<DailyScan[]>({
     queryKey: ["/api/daily-scans"],
@@ -145,6 +153,28 @@ export default function DailyScanPage() {
         </div>
       </div>
 
+      {!isLoading && scans.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Filter:</span>
+          <div className="flex items-center rounded-md border overflow-hidden text-sm">
+            {(["all", "mondayceobrief", "agentlayeros"] as FilterBrand[]).map((f) => (
+              <button
+                key={f}
+                className={`px-3 py-1.5 transition-colors ${
+                  filterBrand === f
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted text-muted-foreground"
+                }`}
+                onClick={() => setFilterBrand(f)}
+                data-testid={`filter-${f}`}
+              >
+                {FILTER_LABELS[f]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -156,9 +186,23 @@ export default function DailyScanPage() {
             <p>No scans yet. Run your first scan to generate today's Raw Materials.</p>
           </CardContent>
         </Card>
-      ) : (
+      ) : (() => {
+        const filteredScans = scans.filter(
+          (scan) => filterBrand === "all" || scan.brand === filterBrand,
+        );
+        if (filteredScans.length === 0) {
+          return (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <Radar className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p>No {FILTER_LABELS[filterBrand]} scans yet.</p>
+              </CardContent>
+            </Card>
+          );
+        }
+        return (
         <div className="space-y-4">
-          {scans.map((scan) => {
+          {filteredScans.map((scan) => {
             const isExpanded = expandedId === scan.id;
             const brandLabel = BRAND_LABELS[(scan.brand as ScanBrand) ?? "mondayceobrief"] ?? scan.brand ?? "MondayCEOBrief";
             return (
@@ -231,7 +275,8 @@ export default function DailyScanPage() {
             );
           })}
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
