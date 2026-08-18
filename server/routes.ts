@@ -199,10 +199,10 @@ export async function registerRoutes(
         return res.status(400).json({ error: "This run does not have a source article. Please re-generate to create one." });
       }
 
-      // Get context items used in this run
+      // Get context items used in this run — filter by brand (run's brand or shared)
       const allContexts = await storage.getActiveContextItems();
       const selectedContexts = allContexts.filter((c) =>
-        run.selectedContextIds.includes(c.id)
+        run.selectedContextIds.includes(c.id) && (!c.brand || c.brand === run.brand)
       );
 
       const { includeLlmOptimization } = req.body as { includeLlmOptimization?: boolean };
@@ -238,7 +238,7 @@ export async function registerRoutes(
 
       const allContexts = await storage.getActiveContextItems();
       const selectedContexts = allContexts.filter((c) =>
-        run.selectedContextIds.includes(c.id)
+        run.selectedContextIds.includes(c.id) && (!c.brand || c.brand === run.brand)
       );
 
       const reposts = await generateQuoteReposts(run.sourceArticle, selectedContexts, run.brand);
@@ -309,11 +309,12 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Raw input is required" });
       }
 
-      // Get selected contexts
+      // Get selected contexts — only include items matching this run's brand or shared (null brand)
       const allContexts = await storage.getAllContextItems();
+      const brandMatch = (c: typeof allContexts[0]) => !c.brand || c.brand === brand;
       const selectedContexts = selectedContextIds?.length > 0
-        ? allContexts.filter((c) => selectedContextIds.includes(c.id))
-        : allContexts.filter((c) => c.isActive);
+        ? allContexts.filter((c) => selectedContextIds.includes(c.id) && brandMatch(c))
+        : allContexts.filter((c) => c.isActive && brandMatch(c));
 
       // Get next week number
       const weekNumber = await storage.getNextWeekNumber();

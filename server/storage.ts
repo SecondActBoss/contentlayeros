@@ -102,6 +102,8 @@ export class MemStorage implements IStorage {
       ...item,
       id,
       isActive: item.isActive ?? true,
+      brand: item.brand ?? null,
+      imageUrl: item.imageUrl ?? null,
       createdAt: new Date(),
     };
     this.contextItems.set(id, contextItem);

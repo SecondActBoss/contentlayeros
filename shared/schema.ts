@@ -29,6 +29,7 @@ export const contextItems = pgTable("context_items", {
   content: text("content").notNull(),
   imageUrl: text("image_url"), // Optional image URL for visual type
   isActive: boolean("is_active").default(true).notNull(),
+  brand: text("brand"), // null = shared across all brands; "mondayceobrief" | "agentlayeros"
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

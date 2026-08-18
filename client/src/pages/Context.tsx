@@ -33,6 +33,7 @@ export default function Context() {
     content: "",
     imageUrl: null as string | null,
     isActive: true,
+    brand: null as string | null,
   });
   
   const { uploadFile, isUploading } = useUpload({
@@ -93,7 +94,7 @@ export default function Context() {
   });
 
   const resetForm = () => {
-    setFormData({ type: "icp", title: "", content: "", imageUrl: null, isActive: true });
+    setFormData({ type: "icp", title: "", content: "", imageUrl: null, isActive: true, brand: null });
     setEditingItem(null);
   };
 
@@ -105,6 +106,7 @@ export default function Context() {
       content: item.content,
       imageUrl: item.imageUrl || null,
       isActive: item.isActive,
+      brand: item.brand || null,
     });
     setDialogOpen(true);
   };
@@ -275,6 +277,27 @@ export default function Context() {
                   />
                 </div>
               )}
+              <div className="space-y-2">
+                <Label htmlFor="brand">Brand</Label>
+                <Select
+                  value={formData.brand ?? "shared"}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, brand: value === "shared" ? null : value }))
+                  }
+                >
+                  <SelectTrigger data-testid="select-context-brand">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="shared">Shared (all brands)</SelectItem>
+                    <SelectItem value="mondayceobrief">MondayCEOBrief</SelectItem>
+                    <SelectItem value="agentlayeros">AgentLayerOS</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Shared items appear for every brand. Brand-specific items are only used for that brand's runs.
+                </p>
+              </div>
               <div className="flex items-center gap-2">
                 <Switch
                   id="active"
@@ -365,8 +388,17 @@ export default function Context() {
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <CardTitle className="text-base">{item.title}</CardTitle>
+                              {item.brand ? (
+                                <Badge variant="secondary" className="text-xs">
+                                  {item.brand === "mondayceobrief" ? "MondayCEOBrief" : "AgentLayerOS"}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs text-muted-foreground">
+                                  Shared
+                                </Badge>
+                              )}
                               {!item.isActive && (
                                 <Badge variant="outline" className="text-xs">
                                   Inactive

@@ -60,6 +60,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  const { runMigrations } = await import("./migrate");
+  await runMigrations();
+
   await registerRoutes(httpServer, app);
 
   // Daily Company Brain Scan — 6:00 AM Eastern
