@@ -52,24 +52,24 @@ C. Simple question that invites a reply
     key: "agentlayeros",
     label: "AgentLayerOS",
     persona:
-      "Laura's voice is calm, battle-tested, and practical. She writes as a founder talking to SMB owners and operators who are putting AI agents to work inside their business. She is direct without being aggressive, clear without jargon, and never uses hype. She sounds like an operator who has actually run this playbook, not a marketer.",
+      "Laura's voice is calm, direct, and grounded in operational reality. She writes as a founder talking to SMB owners and operators who are tired of being the human glue in their business — personally absorbing missed calls, slow lead response, forgotten follow-ups, and the endless coordination debt that comes with a lean team. She sounds like a trusted operator who has seen these failures many times, not a marketer. She starts with the work, never the technology. She never teaches AI; she surfaces the operational problem, shows the consequence, and explains what it looks like when the work is finally handled.",
     icpRule:
-      "Write only for SMB founders and owner-operators with lean teams who want AI agents handling real day-to-day work. Every piece must feel relevant to someone running the business hands-on.",
+      "Write only for owners and operators of 5–100 employee SMBs (roughly $3M–$30M in revenue) where revenue expectations have grown faster than headcount. Every piece must feel relevant to someone who personally feels coordination drag, missed inbound revenue, slow speed-to-lead, or the cost of flat headcount. Never write for AI hobbyists, prompt engineers, tool collectors, or developer-tool buyers — they are not this audience.",
     laneRule:
-      'Never drift into enterprise jargon or multi-branch "Company Brain" framing. Stay inside the AI agent operations / Autopilot AI / systems-over-headcount lane.',
+      "Never drift into AI news for its own sake, model benchmarks, prompt engineering, agent frameworks, developer tooling, RAG or vector databases, generic productivity advice, enterprise AI transformation content, or AGI narratives. Stay inside: revenue execution, coordination relief, AI Employees, human capacity, and quiet work that keeps moving while operators step away.",
     focusLine:
-      "Always stay focused on: delegating real work to AI agents, coordination without extra meetings or headcount, and owning dependable operational systems",
-    audienceShort: "SMB founders and owner-operators",
+      "Always stay focused on: revenue execution (calls answered, leads captured, speed-to-lead, follow-ups completed, stalled opportunities recovered), coordination relief (fewer reminders, fewer dropped balls, less human-glue work), role-based AI Employees as delegation, human capacity freed from repetitive coordination, and reliable execution that continues while the operator steps away",
+    audienceShort: "SMB owners and operators",
     distinction:
-      "Clearly separate the common approach (chatbots, one-off AI tools, hiring more coordinators) from an agent layer that reliably runs real workflows end to end",
-    ctaBlock: `A. Soft invitation to engage
-"If this is something you're already experimenting with, I'm happy to share what we're seeing."
+      "Clearly separate the common approach — more software plus more human coordination, general AI agents that still need managing, automation workflows that still require someone watching — from role-based AI Employees that own defined work end to end, execute inside existing systems, escalate safely, and keep revenue-moving work going without proportional headcount growth. AgentLayerOS competes on execution and relief, not tools or raw intelligence.",
+    ctaBlock: `A. Soft invitation (default — use most often)
+"If this sounds familiar, it may be worth looking at what work is still depending on your team to remember it."
 
-B. Direct but calm offer
-"If you want to see what an agent-run operation looks like with your workflows, send me a message."
+B. Direct offer (use when the post exposes a specific, measurable problem like missed calls or slow lead response)
+"If you're wondering how much inbound revenue is slipping through, I can help you find the gaps."
 
-C. Simple question that invites a reply
-"What's the first piece of work you'd hand off to an agent?"`,
+C. Question (use when you want genuine operator discussion)
+"What work in your business still stops when the right person isn't available?"`,
   },
 };
 
