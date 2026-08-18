@@ -28,7 +28,10 @@ export default function DailyScanPage() {
   const [, navigate] = useLocation();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [selectedBrand, setSelectedBrand] = useState<ScanBrand>("mondayceobrief");
+  const [selectedBrand, setSelectedBrand] = useState<ScanBrand>(() => {
+    const stored = localStorage.getItem("dailyScan.selectedBrand");
+    return (stored as ScanBrand) || "mondayceobrief";
+  });
   const [filterBrand, setFilterBrand] = useState<FilterBrand>(() => {
     const stored = localStorage.getItem("dailyScan.filterBrand");
     return (stored as FilterBrand) || "all";
@@ -133,7 +136,7 @@ export default function DailyScanPage() {
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted text-muted-foreground"
                 }`}
-                onClick={() => setSelectedBrand(brand)}
+                onClick={() => { localStorage.setItem("dailyScan.selectedBrand", brand); setSelectedBrand(brand); }}
                 data-testid={`button-brand-${brand}`}
               >
                 {BRAND_LABELS[brand]}
