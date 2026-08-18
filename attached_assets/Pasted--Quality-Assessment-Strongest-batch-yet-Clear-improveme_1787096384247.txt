@@ -1,0 +1,41 @@
+**Quality Assessment: Strongest batch yet. Clear improvement.**
+
+### Overall Score: **8 / 10**
+
+This is the best output so far. The prompt changes are working. Brand focus is tighter, CTAs are more consistent, and the content stays inside the multi-branch + Company Brain + sovereignty lane.
+
+### What’s Working Well
+
+| Area | Assessment | Notes |
+|------|------------|-------|
+| **ICP Focus** | Strong | Almost everything is correctly aimed at multi-branch CEOs. |
+| **Core Messaging** | Strong | “Own Your Alpha,” private Company Brain, and institutional memory show up consistently. |
+| **CTA Consistency** | Good | Most pieces now use one of the approved low-friction CTAs. |
+| **Structure** | Improved | Hooks are clearer and more declarative than earlier batches. |
+| **Brand Separation** | Much better | No obvious AgentLayerOS or footwear drift in the visible pieces. |
+
+### What Still Needs Attention
+
+1. **Voice is close but not fully locked in**  
+   Several pieces still feel slightly formal or explanatory rather than calm and operator-to-operator. Your best writing is shorter, more direct, and less polished-sounding than what the model is producing.
+
+2. **Global Mobility Inc. is being overused as a real story**  
+   The model is treating Global Mobility Inc. as a customer you sat down with. It is a demo archetype, not a real client story. Presenting it as lived experience weakens credibility. This needs a hard rule in the prompt.
+
+3. **Some pieces still run long**  
+   A few of the longer drafts (especially the more manifesto-style ones) need tightening. Your strongest content stays lean.
+
+4. **Occasional over-writing**  
+   Lines like “The call to action is simple, yet profound” still slip in. These should be cut.
+
+### Bottom Line
+
+This batch is **good enough to use**.  
+You can now take the strongest 3–4 pieces, do a focused edit for voice and accuracy, and post them with confidence.
+
+The system has improved meaningfully. The two remaining levers that will push it from 8/10 to 9/10 are:
+
+- Adding a hard rule: “Never present Global Mobility Inc. or any demo archetype as a real customer story.”
+- Further tightening the voice instructions toward shorter, more natural sentences.
+
+Would you like me to rewrite the top 2 pieces from this batch in your voice so you have ready-to-post versions?

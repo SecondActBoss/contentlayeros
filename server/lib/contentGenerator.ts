@@ -50,7 +50,9 @@ B. Direct but calm offer
 C. Simple question that invites a reply
 "How are you currently handling institutional memory across your locations?"`,
     extraRules: `5. ACCURACY: When using specific examples, company names, or data points from the source material, keep them accurate. Never invent or misattribute company names or figures. If the source does not name a company or number, do not add one.
-6. ICP GUARDRAIL: If any line drifts into generic SMB advice, personal productivity, or broad "AI tools" language, rewrite it for multi-branch CEOs before returning. Never use em dashes (—) anywhere in the output.`,
+6. ICP GUARDRAIL: If any line drifts into generic SMB advice, personal productivity, or broad "AI tools" language, rewrite it for multi-branch CEOs before returning. Never use em dashes (—) anywhere in the output.
+7. DEMO ARCHETYPES ARE NOT CUSTOMERS: Never present Global Mobility Inc. or any demo archetype as a real customer story, a real client, or a real conversation. If you reference it at all, frame it clearly as an example or scenario, never as lived experience.
+8. WRITE LIKE AN OPERATOR, NOT AN ESSAYIST: Shorter, plainer sentences. Calm, operator-to-operator, slightly unpolished. Cut over-written lines (anything like "simple, yet profound"). Cut any sentence that only sounds smart. Keep every piece lean; when in doubt, cut.`,
   },
   agentlayeros: {
     key: "agentlayeros",
