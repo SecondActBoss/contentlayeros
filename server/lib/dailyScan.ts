@@ -1,172 +1,36 @@
 // Daily Company Brain Scanner — journalist-style X scan producing Raw Materials
 // for MondayCEOBrief / ContentLayerOS content generation.
-import OpenAI from "openai";
-import { ReplitConnectors } from "@replit/connectors-sdk";
+//
+// Powered by xAI (Grok) with the built-in x_search tool: Grok searches X live,
+// grounds the report in real posts with citations, and returns the report in
+// the exact required markdown structure.
 import { storage } from "../storage";
 import fs from "fs";
 import path from "path";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+const XAI_API_KEY = process.env.CONTENTLAYEROS_XAI;
+const XAI_MODEL = "grok-4.6";
 
-const connectors = new ReplitConnectors();
+// Search beats from the Daily Company Brain Scanner spec
+const SEARCH_BEATS = `
+1. "company brain" / "enterprise brain" / "organizational memory" / "AI memory layer" — combined with CEO, multi-branch, multi-location, franchise, distribution, or multi-unit angles
+2. "AI sovereignty" / "own the memory" / "rent the intelligence" / "data alpha" / "operational alpha" — combined with CEO, enterprise, multi-branch, or multi-location angles
+3. "institutional memory" / "operational intelligence" / "event extraction" / "company memory" — in an AI / agent / brain context
+4. "token cost" / "token tax" / "surprise bill" / "tokenmaxxing" — in an AI/LLM context relevant to CEOs or enterprises`;
 
-// Primary X searches (from the Daily Company Brain Scanner spec)
-const SEARCH_QUERIES = [
-  `("company brain" OR "enterprise brain" OR "organizational memory" OR "AI memory layer") (CEO OR "multi-branch" OR "multi-location" OR franchise OR distribution OR "multi unit") -is:retweet lang:en`,
-  `("AI sovereignty" OR "own the memory" OR "rent the intelligence" OR "data alpha" OR "operational alpha") (CEO OR enterprise OR "multi branch" OR "multi-location") -is:retweet lang:en`,
-  `("institutional memory" OR "operational intelligence" OR "event extraction" OR "company memory") (AI OR agent OR brain) -is:retweet lang:en`,
-  `("token cost" OR "token tax" OR "surprise bill" OR "tokenmaxxing") (AI OR LLM) (CEO OR enterprise) -is:retweet lang:en`,
-];
-
-// Company Brain Beat — accounts to always check
-const MONITORED_ACCOUNTS = ["palantirtech", "levie", "ashwingop"];
-
-interface ScannedPost {
-  id: string;
-  text: string;
-  author: string; // @handle
-  createdAt: string;
-  likes: number;
-  replies: number;
-  reposts: number;
-  impressions: number;
-  url: string;
-  source: string; // which search / account it came from
-}
-
-async function xGet(pathAndQuery: string): Promise<any> {
-  const res = await connectors.proxy("x", pathAndQuery, { method: "GET" });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    const err: any = new Error(`X API ${res.status} on ${pathAndQuery.split("?")[0]}: ${body.slice(0, 200)}`);
-    err.status = res.status;
-    throw err;
-  }
-  return res.json();
-}
-
-function mapPosts(json: any, source: string): ScannedPost[] {
-  const users = new Map<string, string>();
-  for (const u of json.includes?.users || []) users.set(u.id, u.username);
-  return (json.data || []).map((t: any) => {
-    const handle = users.get(t.author_id) || "unknown";
-    const m = t.public_metrics || {};
-    return {
-      id: t.id,
-      text: t.text,
-      author: `@${handle}`,
-      createdAt: t.created_at || "",
-      likes: m.like_count || 0,
-      replies: m.reply_count || 0,
-      reposts: m.retweet_count || 0,
-      impressions: m.impression_count || 0,
-      url: `https://x.com/${handle}/status/${t.id}`,
-      source,
-    };
-  });
-}
-
-const POST_FIELDS = "tweet.fields=created_at,public_metrics,author_id&expansions=author_id";
-
-async function collectPosts(): Promise<{ posts: ScannedPost[]; errors: string[] }> {
-  const posts: ScannedPost[] = [];
-  const errors: string[] = [];
-  let authFailure = 0;
-  let successfulCalls = 0;
-
-  // 1. Run the four searches
-  for (const query of SEARCH_QUERIES) {
-    try {
-      const json = await xGet(
-        `/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=25&sort_order=relevancy&${POST_FIELDS}`
-      );
-      successfulCalls++;
-      posts.push(...mapPosts(json, `search: ${query.slice(0, 60)}...`));
-    } catch (e: any) {
-      if (e.status === 401 || e.status === 403) authFailure++;
-      errors.push(e.message);
-    }
-  }
-
-  // 2. Check monitored accounts (last 24h of posts)
-  const startTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  for (const username of MONITORED_ACCOUNTS) {
-    try {
-      const userJson = await xGet(`/2/users/by/username/${username}`);
-      const userId = userJson.data?.id;
-      if (!userId) continue;
-      const json = await xGet(
-        `/2/users/${userId}/tweets?max_results=20&exclude=retweets,replies&start_time=${encodeURIComponent(startTime)}&${POST_FIELDS}`
-      );
-      successfulCalls++;
-      posts.push(...mapPosts(json, `monitored account: @${username}`));
-    } catch (e: any) {
-      if (e.status === 401 || e.status === 403) authFailure++;
-      errors.push(e.message);
-    }
-  }
-
-  // Never fake a "quiet day" when X was simply unreachable: if not a single
-  // API call succeeded, the scan must fail loudly instead of producing a report.
-  if (successfulCalls === 0) {
-    if (authFailure > 0) {
-      throw new Error(
-        `X API authentication failed on every request. The API key stored in the X connection is invalid or lacks access. First error: ${errors[0]}`
-      );
-    }
-    throw new Error(
-      `Every X API request failed (rate limit or outage) — no scan report was produced. First error: ${errors[0] || "unknown"}`
-    );
-  }
-
-  return { posts, errors };
-}
+const MONITORED_ACCOUNTS = `@palantirtech (and Alex Karp related accounts), @levie (Aaron Levie, Box), @ashwingop (Ashwin Gopinath, Sentra), plus any other relevant enterprise AI / memory / sovereignty voices that surface in the searches`;
 
 function easternDate(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
 }
 
-function quietDayReport(date: string): string {
-  return `## Daily Company Brain Scan – ${date}
+function buildPrompt(date: string): string {
+  return `You are a sharp journalist covering the "AI Company Brain" beat for multi-branch CEOs (3–15+ branches) who care about operational intelligence, AI sovereignty, institutional memory, and not leaking their competitive edge.
 
-Quiet day – limited high-signal activity.
+Use X search to run today's scan. Search X for recent posts (last 24–48 hours, prefer the most recent) across these beats:
+${SEARCH_BEATS}
 
-### High-Signal Conversations
-- No qualifying posts found in today's searches or from monitored accounts.
-
-### Emerging Themes
-- None strong enough to report today.
-
-### Positioning Opportunities for MondayCEOBrief
-- Quiet days are a chance to lead the conversation rather than react to it: publish an original point of view on Company Brain vs personal Second Brains.
-
-### Suggested Angles for Today's Content
-- Short post idea: When nobody is talking about organizational memory, that silence is the story — most multi-branch CEOs still don't know what they're losing daily.
-- Possible authority article angle: Why the "Company Brain" conversation hasn't reached multi-branch operators yet, and what the early movers are quietly doing about it.`;
-}
-
-async function synthesizeReport(date: string, posts: ScannedPost[]): Promise<{ report: string; postCount: number }> {
-  // Dedupe by id, sort by engagement, cap at 40 for the prompt
-  const seen = new Set<string>();
-  const unique = posts.filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true)));
-  unique.sort((a, b) => b.likes + b.replies * 2 + b.reposts * 2 - (a.likes + a.replies * 2 + a.reposts * 2));
-  const top = unique.slice(0, 40);
-
-  if (top.length === 0) return { report: quietDayReport(date), postCount: 0 };
-
-  const postsBlock = top
-    .map(
-      (p, i) =>
-        `[${i + 1}] ${p.author} (${p.createdAt}) — likes:${p.likes} replies:${p.replies} reposts:${p.reposts}\nURL: ${p.url}\nFound via: ${p.source}\nText: ${p.text}`
-    )
-    .join("\n\n");
-
-  const prompt = `You are a sharp journalist covering the "AI Company Brain" beat for multi-branch CEOs (3–15+ branches) who care about operational intelligence, AI sovereignty, institutional memory, and not leaking their competitive edge.
-
-Below are real posts pulled from X today. Your job: filter them STRICTLY, then write the daily scan report.
+Also check recent posts and high-engagement replies from these monitored accounts: ${MONITORED_ACCOUNTS}
 
 FILTERING RULES (STRICT) — only keep posts relevant to at least one of:
 - Multi-branch / multi-location / franchise / distribution operations
@@ -178,21 +42,22 @@ FILTERING RULES (STRICT) — only keep posts relevant to at least one of:
 
 Discard pure personal productivity, pure technical research, or consumer AI content unless it has a clear multi-branch or enterprise angle. Prefer high-engagement or high-signal posts over volume. Prioritize posts that create a clear contrast between personal Second Brains / general AI tools and a real private Company Brain. Always ask: "Would a multi-branch CEO care about this today?"
 
-NEVER invent posts. Only summarize posts that appear below, and always cite the real handle and URL given.
+CRITICAL RULES:
+- NEVER invent posts. Only report posts you actually found via X search, with the real handle and the real post URL.
+- Write plain URLs only (https://x.com/...). Do NOT include citation markers, citation IDs, or rendering instructions of any kind.
+- Be concise, high-signal, and practical.
+- If the day is quiet, still produce the full report and write "Quiet day – limited high-signal activity." under High-Signal Conversations.
 
-TODAY'S POSTS:
-${postsBlock}
-
-Produce the report in EXACTLY this markdown structure (be concise, high-signal, and practical):
+Produce the report in EXACTLY this markdown structure:
 
 ## Daily Company Brain Scan – ${date}
 
 ### High-Signal Conversations
 - [1–2 sentence summary of the post]
   Why it matters for multi-branch CEOs: [1 short sentence]
-  Source: [handle + link]
+  Source: [@handle + URL]
 
-(Include only posts that survive the filter — typically 3–8. If NONE survive, write "Quiet day – limited high-signal activity." here instead.)
+(Typically 3–8 posts that survive the filter.)
 
 ### Emerging Themes
 - Theme 1: [Name of theme]
@@ -207,21 +72,60 @@ Produce the report in EXACTLY this markdown structure (be concise, high-signal, 
 - Short post idea: [1–2 sentence idea]
 - Possible authority article angle: [1–2 sentence idea]
 
-Return ONLY valid JSON: {"report": "the full markdown report", "keptCount": number of posts included in High-Signal Conversations}`;
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: prompt }],
-    response_format: { type: "json_object" },
-    max_tokens: 4000,
-  });
-
-  const parsed = JSON.parse(response.choices[0].message.content || "{}");
-  if (!parsed.report) throw new Error("Scan synthesis returned no report");
-  return { report: parsed.report, postCount: parsed.keptCount ?? 0 };
+After the search, respond with ONLY the markdown report — no preamble, no closing remarks. On the very last line, after the report, append exactly: POST_COUNT: <number of posts included in High-Signal Conversations, 0 if quiet day>`;
 }
 
-let scanInProgress = false;
+async function runGrokScan(date: string): Promise<{ report: string; postCount: number }> {
+  if (!XAI_API_KEY) {
+    throw new Error("CONTENTLAYEROS_XAI secret is not set — cannot run the X scan.");
+  }
+
+  const res = await fetch("https://api.x.ai/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${XAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: XAI_MODEL,
+      input: [{ role: "user", content: buildPrompt(date) }],
+      tools: [{ type: "x_search" }],
+      max_output_tokens: 12000,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`xAI API ${res.status}: ${body.slice(0, 300)}`);
+  }
+
+  const json: any = await res.json();
+  if (json.error) {
+    throw new Error(`xAI API error: ${typeof json.error === "string" ? json.error : JSON.stringify(json.error).slice(0, 300)}`);
+  }
+
+  // Extract the final message text from the Responses API output
+  let text = "";
+  for (const item of json.output || []) {
+    if (item.type === "message") {
+      for (const c of item.content || []) {
+        if (c.type === "output_text" && c.text) text += c.text;
+      }
+    }
+  }
+
+  if (!text.trim() || !text.includes("Daily Company Brain Scan")) {
+    throw new Error(`Scan produced no valid report (status: ${json.status}, output length: ${text.length})`);
+  }
+
+  // Pull the post count off the last line, then strip it from the report
+  let postCount = 0;
+  const match = text.match(/POST_COUNT:\s*(\d+)/);
+  if (match) postCount = parseInt(match[1], 10);
+  const report = text.replace(/\n?POST_COUNT:\s*\d+\s*$/, "").trim();
+
+  return { report, postCount };
+}
 
 export async function runDailyScan(triggeredBy: "manual" | "scheduled") {
   if (scanInProgress) {
@@ -235,15 +139,11 @@ export async function runDailyScan(triggeredBy: "manual" | "scheduled") {
   }
 }
 
+let scanInProgress = false;
+
 async function executeScan(triggeredBy: "manual" | "scheduled") {
   const date = easternDate();
-
-  const { posts, errors } = await collectPosts();
-  if (errors.length > 0) {
-    console.warn(`[daily-scan] ${errors.length} X API errors during collection:`, errors.slice(0, 3));
-  }
-
-  const { report, postCount } = await synthesizeReport(date, posts);
+  const { report, postCount } = await runGrokScan(date);
 
   // Save markdown file per spec
   try {

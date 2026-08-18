@@ -13,7 +13,7 @@ Key capabilities:
 - Context management (ICP, positioning, language rules, visual references)
 - Feedback learning system for performance tracking
 - Google Sheets export integration
-- **Daily Scan** (Journalist-Style Daily Scan System): scans X daily at 6:00 AM ET (node-cron, plus manual "Run Scan Now") via the Replit X connector, filters posts through the MondayCEOBrief multi-branch CEO lens, and produces a "Daily Company Brain Scan" markdown report (stored in `daily_scans` table + `daily_scans/` files) that can be sent straight into Raw Materials
+- **Daily Scan** (Journalist-Style Daily Scan System): scans X daily at 6:00 AM ET (node-cron, plus manual "Run Scan Now") using xAI Grok's built-in `x_search` tool (key: `CONTENTLAYEROS_XAI` secret), filters posts through the MondayCEOBrief multi-branch CEO lens, and produces a "Daily Company Brain Scan" markdown report (stored in `daily_scans` table + `daily_scans/` files) that can be sent straight into Raw Materials
 
 ## User Preferences
 
