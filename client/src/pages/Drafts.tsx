@@ -190,6 +190,7 @@ export default function Drafts() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [weekToDelete, setWeekToDelete] = useState<{ id: string; weekNumber: number } | null>(null);
   const [spreadsheetId, setSpreadsheetId] = useState("");
+  const [exportScope, setExportScope] = useState<string>("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedTabId, setSelectedTabId] = useState<string | null>(null);
   const [triPublishingRunId, setTriPublishingRunId] = useState<string | null>(null);
@@ -223,8 +224,11 @@ export default function Drafts() {
   });
 
   const exportMutation = useMutation({
-    mutationFn: async (sheetId: string) => {
-      return apiRequest("POST", "/api/export-to-sheets", { spreadsheetId: sheetId });
+    mutationFn: async ({ sheetId, weeklyRunId }: { sheetId: string; weeklyRunId?: string }) => {
+      return apiRequest("POST", "/api/export-to-sheets", {
+        spreadsheetId: sheetId,
+        ...(weeklyRunId ? { weeklyRunId } : {}),
+      });
     },
     onSuccess: () => {
       toast({ title: "Exported", description: "Drafts have been exported to Google Sheets." });
@@ -776,7 +780,11 @@ export default function Drafts() {
           </div>
           <Button
             variant="outline"
-            onClick={() => setExportDialogOpen(true)}
+            onClick={() => {
+              const latest = [...weeklyRuns].sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0))[0];
+              setExportScope(latest ? latest.id : "__all__");
+              setExportDialogOpen(true);
+            }}
             disabled={drafts.length === 0}
             data-testid="button-export-sheets"
           >
@@ -1210,10 +1218,28 @@ export default function Drafts() {
           <DialogHeader>
             <DialogTitle>Export to Google Sheets</DialogTitle>
             <DialogDescription>
-              Enter the ID of your Google Sheet to export drafts.
+              Choose what to export and enter the ID of your Google Sheet.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="exportScope">What to export</Label>
+              <Select value={exportScope} onValueChange={setExportScope}>
+                <SelectTrigger id="exportScope" data-testid="select-export-scope">
+                  <SelectValue placeholder="Choose a week to export" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[...weeklyRuns]
+                    .sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0))
+                    .map((run) => (
+                      <SelectItem key={run.id} value={run.id}>
+                        Week {run.weekNumber} — {run.brand === "agentlayeros" ? "AgentLayerOS" : "MondayCEOBrief"}
+                      </SelectItem>
+                    ))}
+                  <SelectItem value="__all__">All weeks (both brands)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="sheetId">Spreadsheet ID</Label>
               <Input
@@ -1233,8 +1259,13 @@ export default function Drafts() {
               Cancel
             </Button>
             <Button
-              onClick={() => exportMutation.mutate(spreadsheetId)}
-              disabled={exportMutation.isPending || !spreadsheetId.trim()}
+              onClick={() =>
+                exportMutation.mutate({
+                  sheetId: spreadsheetId,
+                  weeklyRunId: exportScope && exportScope !== "__all__" ? exportScope : undefined,
+                })
+              }
+              disabled={exportMutation.isPending || !spreadsheetId.trim() || !exportScope}
               data-testid="button-confirm-export"
             >
               {exportMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

@@ -43,6 +43,8 @@ const updatePostDraftSchema = z.object({
 
 const exportToSheetsSchema = z.object({
   spreadsheetId: z.string().min(1, "Spreadsheet ID is required"),
+  weeklyRunId: z.string().optional(),
+  brand: z.enum(["mondayceobrief", "agentlayeros"]).optional(),
 });
 
 export async function registerRoutes(
@@ -560,10 +562,19 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ error: parsed.error.message });
       }
-      const { spreadsheetId } = parsed.data;
+      const { spreadsheetId, weeklyRunId, brand } = parsed.data;
 
-      const drafts = await storage.getAllPostDrafts();
+      const allDrafts = await storage.getAllPostDrafts();
       const runs = await storage.getAllWeeklyRuns();
+
+      const drafts = allDrafts.filter((draft) => {
+        if (weeklyRunId && draft.weeklyRunId !== weeklyRunId) return false;
+        if (brand) {
+          const run = runs.find((r) => r.id === draft.weeklyRunId);
+          if ((run?.brand || "mondayceobrief") !== brand) return false;
+        }
+        return true;
+      });
 
       const postsWithWeek = drafts.map((draft) => {
         const run = runs.find((r) => r.id === draft.weeklyRunId);
