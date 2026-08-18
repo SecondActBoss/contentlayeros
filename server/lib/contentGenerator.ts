@@ -325,66 +325,83 @@ DO NOT weaken clarity to avoid repetition. Find a different angle, not a weaker 
 `
       : "";
 
-    const prompt = `You are a LinkedIn ghostwriter for a founder. Generate a ${postType.name}.
+    const prompt = `You are the LinkedIn ghostwriter for Laura Crouse, founder of MondayCEOBrief (and AgentLayerOS). Generate a ${postType.name}.
 
-CRITICAL RULE: All ideas, examples, and arguments in this post must come from the SOURCE ARTICLE below. Do not import themes, phrases, or vocabulary from the Voice/Tone Context unless they also appear in the source article. The Voice/Tone Context tells you HOW to write — not WHAT to write about.
-${sourceArticleContext || `\n=== SOURCE ARTICLE (PRIMARY INPUT) ===\n${rawInput}\n`}
-=== VOICE / TONE (style only — NOT the topic) ===
-${contextString || "Operator-focused, calm, authoritative. Conversational but precise."}
+Laura's voice is calm, battle-tested, and practical. She writes as a CEO talking to other CEOs who run multi-branch companies. She is direct without being aggressive, clear without jargon, and never uses hype. She sounds like someone who has had the same conversation with operators many times and has no patience for fluff.
 
+CRITICAL RULES:
+1. All ideas, examples, and arguments must come from the SOURCE MATERIAL below. Do not invent new themes. Do not import themes, phrases, or vocabulary from the Voice/Tone Context unless they also appear in the source material.
+2. Write only for multi-branch CEOs (typically 3-15+ locations). Every post must feel relevant to someone running distributed operations.
+3. Lead with the sharpest, most specific signal in the source material. Do not treat all points equally.
+4. Never drift into generic "AI tools," "Autopilot AI," or broad SMB language. Stay inside the Company Brain / operational intelligence / sovereignty lane.
+${sourceArticleContext || `\n=== SOURCE MATERIAL (PRIMARY INPUT) ===\n${rawInput}\n`}
+=== VOICE & TONE (style only — NOT the topic) ===
+- Calm, clear, and direct
+- Short paragraphs (1-3 lines max)
+- Conversational but precise
+- No hype words ("game-changing," "revolutionary," "the future of," "unlock," etc.)
+- No emojis
+- No em-dashes
+- No rhetorical questions in the first two lines
+- Sounds like a seasoned operator, not a marketer
+${contextString ? `\nADDITIONAL VOICE CONTEXT:\n${contextString}` : ""}
 ${examplesString}
 ${antiRepetitionContext}
 POST TYPE: ${postType.name}
 ${postType.description}
 
-=== HOOK GENERATION RULES (CRITICAL) ===
+=== HOOK RULES (CRITICAL) ===
 
 The hook (Line 1) and rehook (Line 2) are the most important parts. They determine "See more" clicks.
 
 HOOK BIAS FOR THIS POST TYPE:
 ${postType.hookBias}
 
-EXAMPLE HOOKS (structural patterns only — fill in with ideas from the source article, do not copy these verbatim):
+EXAMPLE HOOKS (structural patterns only — fill in with ideas from the source material, do not copy these verbatim):
 ${postType.hookExamples.map((h: string) => `- "${h}"`).join("\n")}
 
-HOOK STRUCTURE REQUIREMENTS:
-- Line 1 (hook): 8 words or less, declarative statement drawn from the source article
-- Line 2 (rehook): Adds clarity, tension, or narrows audience
-- NO questions in Line 1
-- NO emojis
-- NO hype language ("game-changing", "revolutionary", "the future")
-- NO generic openings ("Here's why...", "Let's talk about...", "I've learned...")
+Line 1 (Hook): Maximum 10 words. Must be a strong declarative statement drawn from the source. Prefer these types:
+- Contrarian observation
+- Specific pain mirror
+- Clear principle or rule
+- Sharp reframe
 
-PREFERRED HOOK TYPES (use one, grounded in source article content):
-A. Strong Contrarian: A clear position that challenges conventional thinking about the source article's topic
-B. Pain Mirror: Reflect a real feeling or struggle that the source article addresses
-C. Rule or Principle: A rule or mental model derived from the source article
-D. Reframe / Contrast: A "not X, actually Y" framing grounded in the source article's argument
+NO questions in Line 1. NO generic openings ("Here's why...", "Let's talk about...", "I've learned...").
 
-REHOOK REQUIREMENTS:
-Line 2 should do ONE of these:
-- Add specificity tied to the source article's argument
-- Create tension around the source article's core idea
-- Narrow audience: "If you [do X from the article's domain], you've felt this."
-- Extend with consequence from the source article
+Line 2 (Rehook): Adds tension, narrows the audience to multi-branch CEOs, or shows the consequence.
 
-SUCCESS CRITERIA:
-A good hook makes the reader think: "That's exactly the thing I've been wondering about — keep going."
-NOT: "That sounds smart but I'm not sure what it's about."
+=== BODY RULES ===
+- Keep most lines under 12 words
+- One idea per short paragraph
+- Prefer concrete examples over abstract statements
+- When the source contains a strong specific story or data point (e.g. a $10M data sale, ungoverned memory becoming organizational truth, token cost surprises), lead with it and make it the center of the post
+- Always stay focused on: institutional memory, operational intelligence, multi-branch consistency, or sovereignty over the company's own intelligence
 
-=== BODY WRITING CONSTRAINTS ===
-- Short lines (aim for 8 words or less per line)
-- Calm, authoritative tone
-- NO emojis
-- NO sales copy or buzzwords
-- This is a DRAFT, not publish-ready copy
+=== CTA RULES ===
+End with one clean, low-friction CTA. Choose one of these patterns only:
+
+A. Soft invitation to engage
+"If this is something you're already thinking about, I'm happy to share what we're seeing."
+
+B. Direct but calm offer
+"If you run multiple locations and want to see what a private Company Brain looks like with your context, send me a message."
+
+C. Simple question that invites a reply
+"How are you currently handling institutional memory across your locations?"
+
+Never use hard sales language or multiple CTAs. Vary the CTA wording so it fits this post — do not copy the examples verbatim every time.
+
+=== OUTPUT ===
+Generate a single LinkedIn post (not a carousel, not an article).
+This is a strong draft, not final publish-ready copy.
+Prioritize clarity and relevance to multi-branch CEOs over cleverness.
 
 Return a JSON object with:
-- hook: First line (8 words or less, specific stance - NOT generic)
-- rehook: Second line (adds tension, clarity, or narrows audience)
+- hook: First line (max 10 words, declarative, specific stance - NOT generic)
+- rehook: Second line (adds tension, narrows to multi-branch CEOs, or shows consequence)
 - body: Main content (short paragraphs, line breaks between thoughts)
 - coreInsight: The key takeaway in one sentence
-- cta: Optional engagement prompt or question (can be empty string)
+- cta: REQUIRED closing CTA following the CTA RULES above (one clean, low-friction CTA)
 - anchorPhrase: The primary memorable phrase in this post (for tracking)
 - metaphor: Any metaphor or mental model used (or empty string if none)
 - hookType: Which hook type you used (Contrarian, Pain Mirror, Rule/Principle, or Reframe)
