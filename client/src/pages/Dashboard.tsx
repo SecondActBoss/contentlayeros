@@ -76,6 +76,7 @@ export default function Dashboard() {
   // Pick up a Daily Scan report sent over as Raw Materials
   useEffect(() => {
     const pending = sessionStorage.getItem("pendingRawMaterials");
+    const pendingBrand = sessionStorage.getItem("pendingRawMaterialsBrand");
     if (pending) {
       sessionStorage.removeItem("pendingRawMaterials");
       setRawInput(pending);
@@ -83,6 +84,12 @@ export default function Dashboard() {
         title: "Daily Scan loaded",
         description: "The scan report is now in Raw Materials, ready to generate.",
       });
+    }
+    if (pendingBrand) {
+      sessionStorage.removeItem("pendingRawMaterialsBrand");
+      if (pendingBrand === "mondayceobrief" || pendingBrand === "agentlayeros") {
+        setBrand(pendingBrand);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
