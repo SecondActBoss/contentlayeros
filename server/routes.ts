@@ -392,10 +392,15 @@ export async function registerRoutes(
         const authorityArticleBody = `${authorityDraft.hook}\n\n${authorityDraft.body}`;
         sourceArticleText = authorityArticleBody;
 
-        // Step 3: Generate posts + carousels from the authority article
+        // Step 3: Generate posts (+ carousels for non-MondayCEOBrief brands) from the authority article.
+        // MondayCEOBrief focuses on regular posts and authority articles only —
+        // carousels are not generated unless explicitly requested.
+        const skipCarousels = (brand || "mondayceobrief") === "mondayceobrief";
         const [regularPosts, carouselPosts] = await Promise.all([
           generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples, authorityArticleBody, brand),
-          generateCarousels(rawInput, selectedContexts, extractedSignals, strongExamples, authorityArticleBody, brand),
+          skipCarousels
+            ? Promise.resolve([])
+            : generateCarousels(rawInput, selectedContexts, extractedSignals, strongExamples, authorityArticleBody, brand),
         ]);
 
         postData = [authorityDraft, ...regularPosts, ...carouselPosts];
@@ -410,7 +415,8 @@ export async function registerRoutes(
           brand
         );
       } else {
-        // Generate 4 regular LinkedIn posts + 3 carousels
+        // Generate 4 regular LinkedIn posts (+ 3 carousels for non-MondayCEOBrief brands).
+        // MondayCEOBrief focuses on regular posts and authority articles only.
         const regularPosts = await generatePosts(
           rawInput,
           selectedContexts,
@@ -419,14 +425,17 @@ export async function registerRoutes(
           sourceArticleText,
           brand
         );
-        const carouselPosts = await generateCarousels(
-          rawInput,
-          selectedContexts,
-          extractedSignals,
-          strongExamples,
-          sourceArticleText,
-          brand
-        );
+        const carouselPosts =
+          (brand || "mondayceobrief") === "mondayceobrief"
+            ? []
+            : await generateCarousels(
+                rawInput,
+                selectedContexts,
+                extractedSignals,
+                strongExamples,
+                sourceArticleText,
+                brand
+              );
         postData = [...regularPosts, ...carouselPosts];
       }
 

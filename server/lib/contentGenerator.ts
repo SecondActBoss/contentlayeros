@@ -22,6 +22,8 @@ export interface BrandProfile {
   audienceShort: string;
   distinction: string;
   ctaBlock: string;
+  /** Optional brand-specific extra critical rules appended to the numbered CRITICAL RULES list. */
+  extraRules?: string;
 }
 
 export const BRAND_PROFILES: Record<Brand, BrandProfile> = {
@@ -47,6 +49,8 @@ B. Direct but calm offer
 
 C. Simple question that invites a reply
 "How are you currently handling institutional memory across your locations?"`,
+    extraRules: `5. ACCURACY: When using specific examples, company names, or data points from the source material, keep them accurate. Never invent or misattribute company names or figures. If the source does not name a company or number, do not add one.
+6. ICP GUARDRAIL: If any line drifts into generic SMB advice, personal productivity, or broad "AI tools" language, rewrite it for multi-branch CEOs before returning. Never use em dashes (—) anywhere in the output.`,
   },
   agentlayeros: {
     key: "agentlayeros",
@@ -418,7 +422,7 @@ CRITICAL RULES:
 2. ${bp.icpRule}
 3. Lead with the sharpest, most specific signal in the source material. Do not treat all points equally.
 4. ${bp.laneRule}
-${sourceArticleContext || `\n=== SOURCE MATERIAL (PRIMARY INPUT) ===\n${rawInput}\n`}
+${bp.extraRules ? `${bp.extraRules}\n` : ""}${sourceArticleContext || `\n=== SOURCE MATERIAL (PRIMARY INPUT) ===\n${rawInput}\n`}
 === VOICE & TONE (style only — NOT the topic) ===
 - Calm, clear, and direct
 - Short paragraphs (1-3 lines max)
@@ -2019,6 +2023,7 @@ CRITICAL RULES:
 2. ${bp.icpRule}
 3. Lead with the sharpest, most specific signal in the source material. Do not treat all points equally. If there is a concrete story, data point, or warning, make that the center of the article.
 4. ${bp.laneRule}
+${bp.extraRules || ""}
 
 === SOURCE MATERIAL (PRIMARY INPUT — this is what the article is about) ===
 ${rawInput}
