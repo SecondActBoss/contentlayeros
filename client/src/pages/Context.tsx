@@ -23,10 +23,39 @@ const CONTEXT_TYPES = [
   { value: "visual", label: "Visual Reference", icon: Image, description: "Screenshots, images for grounding" },
 ] as const;
 
+const BRAND_FILTERS = [
+  { value: "all", label: "All" },
+  { value: "mondayceobrief", label: "MondayCEOBrief" },
+  { value: "agentlayeros", label: "AgentLayerOS" },
+  { value: "shared", label: "Shared" },
+] as const;
+
+type BrandFilter = (typeof BRAND_FILTERS)[number]["value"];
+
+function usePersistentBrandFilter() {
+  const [brandFilter, setBrandFilterState] = useState<BrandFilter>(() => {
+    try {
+      const stored = localStorage.getItem("contextLibraryBrandFilter");
+      if (stored && BRAND_FILTERS.some((f) => f.value === stored)) return stored as BrandFilter;
+    } catch {}
+    return "all";
+  });
+
+  const setBrandFilter = (value: BrandFilter) => {
+    setBrandFilterState(value);
+    try {
+      localStorage.setItem("contextLibraryBrandFilter", value);
+    } catch {}
+  };
+
+  return [brandFilter, setBrandFilter] as const;
+}
+
 export default function Context() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ContextItem | null>(null);
+  const [brandFilter, setBrandFilter] = usePersistentBrandFilter();
   const [formData, setFormData] = useState({
     type: "icp" as ContextType,
     title: "",
@@ -138,7 +167,14 @@ export default function Context() {
     updateMutation.mutate({ id: item.id, data: { isActive: !item.isActive } });
   };
 
-  const groupedItems = contextItems.reduce(
+  const filteredItems = contextItems.filter((item) => {
+    if (brandFilter === "all") return true;
+    if (brandFilter === "shared") return !item.brand;
+    // specific brand: show that brand's items + shared items
+    return item.brand === brandFilter || !item.brand;
+  });
+
+  const groupedItems = filteredItems.reduce(
     (acc, item) => {
       if (!acc[item.type]) acc[item.type] = [];
       acc[item.type].push(item);
@@ -349,6 +385,35 @@ export default function Context() {
           </CardContent>
         </Card>
       ) : (
+        <>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground font-medium">Brand:</span>
+          {BRAND_FILTERS.map((f) => (
+            <Button
+              key={f.value}
+              variant={brandFilter === f.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setBrandFilter(f.value)}
+              data-testid={`brand-filter-${f.value}`}
+            >
+              {f.label}
+              {f.value !== "all" && (
+                <Badge
+                  variant={brandFilter === f.value ? "secondary" : "outline"}
+                  className="ml-1.5 text-xs"
+                >
+                  {f.value === "shared"
+                    ? contextItems.filter((i) => !i.brand).length
+                    : contextItems.filter((i) =>
+                        f.value === "mondayceobrief" || f.value === "agentlayeros"
+                          ? i.brand === f.value
+                          : false
+                      ).length}
+                </Badge>
+              )}
+            </Button>
+          ))}
+        </div>
         <Tabs defaultValue="icp" className="w-full">
           <TabsList className="mb-4">
             {CONTEXT_TYPES.map((type) => {
@@ -456,6 +521,7 @@ export default function Context() {
             </TabsContent>
           ))}
         </Tabs>
+        </>
       )}
     </div>
   );
