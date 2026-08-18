@@ -13,6 +13,7 @@ import { z } from "zod";
 const weeklyRunInputSchema = z.object({
   rawInput: z.string(),
   selectedContextIds: z.array(z.string()).optional().default([]),
+  brand: z.enum(["mondayceobrief", "agentlayeros"]).optional().default("mondayceobrief"),
   distributionMode: z.enum(["linkedin", "twitter"]).optional().default("linkedin"),
   isContrarianMode: z.boolean().optional().default(false),
   isRawTweetMode: z.boolean().optional().default(false),
@@ -204,7 +205,7 @@ export async function registerRoutes(
       );
 
       const { includeLlmOptimization } = req.body as { includeLlmOptimization?: boolean };
-      const packDrafts = await generateTriPublishPack(run.sourceArticle, selectedContexts, includeLlmOptimization);
+      const packDrafts = await generateTriPublishPack(run.sourceArticle, selectedContexts, includeLlmOptimization, run.brand);
 
       const savedDrafts = await Promise.all(
         packDrafts.map((draft) =>
@@ -239,7 +240,7 @@ export async function registerRoutes(
         run.selectedContextIds.includes(c.id)
       );
 
-      const reposts = await generateQuoteReposts(run.sourceArticle, selectedContexts);
+      const reposts = await generateQuoteReposts(run.sourceArticle, selectedContexts, run.brand);
 
       const savedDrafts = await Promise.all(
         reposts.map((draft) =>
@@ -283,6 +284,7 @@ export async function registerRoutes(
       const { 
         rawInput, 
         selectedContextIds, 
+        brand,
         distributionMode, 
         isContrarianMode, 
         isRawTweetMode, 
@@ -344,7 +346,8 @@ export async function registerRoutes(
           selectedContexts,
           extractedSignals,
           sharedCoreIdea,
-          articleAngle
+          articleAngle,
+          brand
         );
       }
 
@@ -358,7 +361,8 @@ export async function registerRoutes(
             extractedSignals,
             externalSignal,
             framingNote,
-            undefined
+            undefined,
+            brand
           );
         } else {
           // Generate 𝕏 content: 1 X Article + 9 posts — rawInput is primary source
@@ -371,12 +375,13 @@ export async function registerRoutes(
             externalSignal,
             framingNote,
             sharedCoreIdea,
-            undefined
+            undefined,
+            brand
           );
         }
       } else if (isAuthorityArticleMode) {
         // Step 1: Generate the authority article (800-1500 words)
-        const authorityDrafts = await generateAuthorityArticle(rawInput, selectedContexts, extractedSignals, articleAngle);
+        const authorityDrafts = await generateAuthorityArticle(rawInput, selectedContexts, extractedSignals, articleAngle, brand);
         const authorityDraft = authorityDrafts[0];
 
         // Step 2: Use authority article body as the source for all downstream generators
@@ -385,8 +390,8 @@ export async function registerRoutes(
 
         // Step 3: Generate posts + carousels from the authority article
         const [regularPosts, carouselPosts] = await Promise.all([
-          generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples, authorityArticleBody),
-          generateCarousels(rawInput, selectedContexts, extractedSignals, strongExamples, authorityArticleBody),
+          generatePosts(rawInput, selectedContexts, extractedSignals, strongExamples, authorityArticleBody, brand),
+          generateCarousels(rawInput, selectedContexts, extractedSignals, strongExamples, authorityArticleBody, brand),
         ]);
 
         postData = [authorityDraft, ...regularPosts, ...carouselPosts];
@@ -397,7 +402,8 @@ export async function registerRoutes(
           framingNote,
           selectedContexts,
           strongExamples,
-          sourceArticleText
+          sourceArticleText,
+          brand
         );
       } else {
         // Generate 4 regular LinkedIn posts + 3 carousels
@@ -406,14 +412,16 @@ export async function registerRoutes(
           selectedContexts,
           extractedSignals,
           strongExamples,
-          sourceArticleText
+          sourceArticleText,
+          brand
         );
         const carouselPosts = await generateCarousels(
           rawInput,
           selectedContexts,
           extractedSignals,
           strongExamples,
-          sourceArticleText
+          sourceArticleText,
+          brand
         );
         postData = [...regularPosts, ...carouselPosts];
       }
@@ -423,6 +431,7 @@ export async function registerRoutes(
         weekNumber,
         rawInput: rawInput || "",
         selectedContextIds: selectedContextIds || [],
+        brand: brand || "mondayceobrief",
         distributionMode: distributionMode || "linkedin",
         isContrarianMode: isContrarianMode || false,
         isRawTweetMode: isRawTweetMode || false,

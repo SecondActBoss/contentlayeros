@@ -15,6 +15,8 @@ Key capabilities:
 - Google Sheets export integration
 - **Daily Scan** (Journalist-Style Daily Scan System): scans X daily at 6:00 AM ET (node-cron, plus manual "Run Scan Now") using xAI Grok's built-in `x_search` tool (key: `CONTENTLAYEROS_XAI` secret), filters posts through the MondayCEOBrief multi-branch CEO lens, and produces a "Daily Company Brain Scan" markdown report (stored in `daily_scans` table + `daily_scans/` files) that can be sent straight into Raw Materials
 
+- **Brand selector**: each weekly run targets one of two brands — MondayCEOBrief (multi-branch CEOs, Company Brain/sovereignty lane) or AgentLayerOS (SMB founders, AI agent operations lane). Profiles live in `BRAND_PROFILES` in `server/lib/contentGenerator.ts`; brand is chosen on the Dashboard, stored on `weekly_runs.brand`, and injected into all generator prompts (posts, authority article, carousels, contrarian, X content, raw tweets, tri-publish pack).
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

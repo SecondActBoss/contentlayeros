@@ -8,6 +8,86 @@ const openai = new OpenAI({
 });
 
 // Post types as defined in the spec with hook biases
+// ── Brand profiles ─────────────────────────────────────────────────────────
+// Each brand has its own ICP, lane, and CTA patterns. Selected per weekly run.
+export type Brand = "mondayceobrief" | "agentlayeros";
+
+export interface BrandProfile {
+  key: Brand;
+  label: string;
+  persona: string;
+  icpRule: string;
+  laneRule: string;
+  focusLine: string;
+  audienceShort: string;
+  distinction: string;
+  ctaBlock: string;
+}
+
+export const BRAND_PROFILES: Record<Brand, BrandProfile> = {
+  mondayceobrief: {
+    key: "mondayceobrief",
+    label: "MondayCEOBrief",
+    persona:
+      "Laura's voice is calm, battle-tested, and practical. She writes as a CEO talking to other CEOs who run multi-branch companies. She is direct without being aggressive, clear without jargon, and never uses hype. She sounds like someone who has had the same conversation with operators many times and has no patience for fluff.",
+    icpRule:
+      "Write only for multi-branch CEOs (typically 3-15+ locations). Every piece must feel relevant to someone running distributed operations.",
+    laneRule:
+      'Never drift into generic "AI tools," "Autopilot AI," or broad SMB language. Stay inside the Company Brain / operational intelligence / institutional memory / sovereignty lane.',
+    focusLine:
+      "Always stay focused on: institutional memory, operational intelligence, multi-branch consistency, or sovereignty over the company's own intelligence",
+    audienceShort: "multi-branch CEOs",
+    distinction:
+      "Clearly separate the common approach (general AI tools, personal second brains, or renting intelligence) from a private Company Brain that maintains controlled, structured memory",
+    ctaBlock: `A. Soft invitation to engage
+"If this is something you're already thinking about, I'm happy to share what we're seeing."
+
+B. Direct but calm offer
+"If you run multiple locations and want to see what a private Company Brain looks like with your context, send me a message."
+
+C. Simple question that invites a reply
+"How are you currently handling institutional memory across your locations?"`,
+  },
+  agentlayeros: {
+    key: "agentlayeros",
+    label: "AgentLayerOS",
+    persona:
+      "Laura's voice is calm, battle-tested, and practical. She writes as a founder talking to SMB owners and operators who are putting AI agents to work inside their business. She is direct without being aggressive, clear without jargon, and never uses hype. She sounds like an operator who has actually run this playbook, not a marketer.",
+    icpRule:
+      "Write only for SMB founders and owner-operators with lean teams who want AI agents handling real day-to-day work. Every piece must feel relevant to someone running the business hands-on.",
+    laneRule:
+      'Never drift into enterprise jargon or multi-branch "Company Brain" framing. Stay inside the AI agent operations / Autopilot AI / systems-over-headcount lane.',
+    focusLine:
+      "Always stay focused on: delegating real work to AI agents, coordination without extra meetings or headcount, and owning dependable operational systems",
+    audienceShort: "SMB founders and owner-operators",
+    distinction:
+      "Clearly separate the common approach (chatbots, one-off AI tools, hiring more coordinators) from an agent layer that reliably runs real workflows end to end",
+    ctaBlock: `A. Soft invitation to engage
+"If this is something you're already experimenting with, I'm happy to share what we're seeing."
+
+B. Direct but calm offer
+"If you want to see what an agent-run operation looks like with your workflows, send me a message."
+
+C. Simple question that invites a reply
+"What's the first piece of work you'd hand off to an agent?"`,
+  },
+};
+
+export function getBrandProfile(brand?: string): BrandProfile {
+  return BRAND_PROFILES[(brand as Brand) || "mondayceobrief"] || BRAND_PROFILES.mondayceobrief;
+}
+
+// Short block injected into secondary generators (carousels, X, contrarian, etc.)
+function brandBlock(brand?: string): string {
+  const p = getBrandProfile(brand);
+  return `=== BRAND & AUDIENCE (CRITICAL) ===
+This content is for the ${p.label} brand.
+${p.persona}
+ICP: ${p.icpRule}
+LANE: ${p.laneRule}
+`;
+}
+
 const POST_TYPES = [
   {
     type: "educational_authority",
@@ -168,7 +248,8 @@ export async function generateSourceArticle(
   contexts: ContextItem[],
   signals: ExtractedSignals,
   coreIdea: { coreIdea: string; paradox: string; implication: string },
-  angle?: string
+  angle?: string,
+  brand?: string
 ): Promise<string> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -188,6 +269,7 @@ export async function generateSourceArticle(
 
   const prompt = `You are writing a source authority article for a founder. This document becomes the primary source of truth for all downstream content — posts, carousels, tweets, newsletters.
 
+${brandBlock(brand)}
 === CORE IDEA (drive everything from this) ===
 Core Insight: ${coreIdea.coreIdea}
 Tension: ${coreIdea.paradox}
@@ -259,8 +341,10 @@ export async function generatePosts(
   contexts: ContextItem[],
   signals: ExtractedSignals,
   strongExamples: FeedbackEntry[] = [],
-  sourceArticle?: string
+  sourceArticle?: string,
+  brand?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
+  const bp = getBrandProfile(brand);
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
     .join("\n\n");
@@ -325,15 +409,15 @@ DO NOT weaken clarity to avoid repetition. Find a different angle, not a weaker 
 `
       : "";
 
-    const prompt = `You are the LinkedIn ghostwriter for Laura Crouse, founder of MondayCEOBrief (and AgentLayerOS). Generate a ${postType.name}.
+    const prompt = `You are the LinkedIn ghostwriter for Laura Crouse, founder of ${bp.label}. Generate a ${postType.name}.
 
-Laura's voice is calm, battle-tested, and practical. She writes as a CEO talking to other CEOs who run multi-branch companies. She is direct without being aggressive, clear without jargon, and never uses hype. She sounds like someone who has had the same conversation with operators many times and has no patience for fluff.
+${bp.persona}
 
 CRITICAL RULES:
 1. All ideas, examples, and arguments must come from the SOURCE MATERIAL below. Do not invent new themes. Do not import themes, phrases, or vocabulary from the Voice/Tone Context unless they also appear in the source material.
-2. Write only for multi-branch CEOs (typically 3-15+ locations). Every post must feel relevant to someone running distributed operations.
+2. ${bp.icpRule}
 3. Lead with the sharpest, most specific signal in the source material. Do not treat all points equally.
-4. Never drift into generic "AI tools," "Autopilot AI," or broad SMB language. Stay inside the Company Brain / operational intelligence / sovereignty lane.
+4. ${bp.laneRule}
 ${sourceArticleContext || `\n=== SOURCE MATERIAL (PRIMARY INPUT) ===\n${rawInput}\n`}
 === VOICE & TONE (style only — NOT the topic) ===
 - Calm, clear, and direct
@@ -368,37 +452,30 @@ Line 1 (Hook): Maximum 10 words. Must be a strong declarative statement drawn fr
 
 NO questions in Line 1. NO generic openings ("Here's why...", "Let's talk about...", "I've learned...").
 
-Line 2 (Rehook): Adds tension, narrows the audience to multi-branch CEOs, or shows the consequence.
+Line 2 (Rehook): Adds tension, narrows the audience to ${bp.audienceShort}, or shows the consequence.
 
 === BODY RULES ===
 - Keep most lines under 12 words
 - One idea per short paragraph
 - Prefer concrete examples over abstract statements
-- When the source contains a strong specific story or data point (e.g. a $10M data sale, ungoverned memory becoming organizational truth, token cost surprises), lead with it and make it the center of the post
-- Always stay focused on: institutional memory, operational intelligence, multi-branch consistency, or sovereignty over the company's own intelligence
+- When the source contains a strong specific story or data point, lead with it and make it the center of the post
+- ${bp.focusLine}
 
 === CTA RULES ===
 End with one clean, low-friction CTA. Choose one of these patterns only:
 
-A. Soft invitation to engage
-"If this is something you're already thinking about, I'm happy to share what we're seeing."
-
-B. Direct but calm offer
-"If you run multiple locations and want to see what a private Company Brain looks like with your context, send me a message."
-
-C. Simple question that invites a reply
-"How are you currently handling institutional memory across your locations?"
+${bp.ctaBlock}
 
 Never use hard sales language or multiple CTAs. Vary the CTA wording so it fits this post — do not copy the examples verbatim every time.
 
 === OUTPUT ===
 Generate a single LinkedIn post (not a carousel, not an article).
 This is a strong draft, not final publish-ready copy.
-Prioritize clarity and relevance to multi-branch CEOs over cleverness.
+Prioritize clarity and relevance to ${bp.audienceShort} over cleverness.
 
 Return a JSON object with:
 - hook: First line (max 10 words, declarative, specific stance - NOT generic)
-- rehook: Second line (adds tension, narrows to multi-branch CEOs, or shows consequence)
+- rehook: Second line (adds tension, narrows to ${bp.audienceShort}, or shows consequence)
 - body: Main content (short paragraphs, line breaks between thoughts)
 - coreInsight: The key takeaway in one sentence
 - cta: REQUIRED closing CTA following the CTA RULES above (one clean, low-friction CTA)
@@ -520,7 +597,8 @@ export async function generateContrarianPosts(
   framingNote: string | undefined,
   contexts: ContextItem[],
   strongExamples: FeedbackEntry[] = [],
-  sourceArticle?: string
+  sourceArticle?: string,
+  brand?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -566,6 +644,7 @@ ANTI-REPETITION REQUIREMENTS:
 
     const prompt = `You are a LinkedIn ghostwriter for a founder. Generate a CONTRARIAN response to an external post/narrative.
 
+${brandBlock(brand)}
 === CRITICAL TONE RULES FOR CONTRARIAN POSTS ===
 
 All contrarian posts MUST be:
@@ -718,7 +797,8 @@ export async function generateCarousels(
   contexts: ContextItem[],
   signals: ExtractedSignals,
   strongExamples: FeedbackEntry[] = [],
-  sourceArticle?: string
+  sourceArticle?: string,
+  brand?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -746,6 +826,7 @@ ${signals.opinions.map((o) => `- ${o}`).join("\n")}`;
   for (const themeConfig of CAROUSEL_THEMES) {
     const prompt = `You are a LinkedIn carousel content creator for a founder. Generate a ${themeConfig.name} carousel.
 
+${brandBlock(brand)}
 CRITICAL RULE: All slide ideas, examples, and arguments must come from the SOURCE ARTICLE below. Do not import themes or vocabulary from the Voice/Tone Context. The Voice/Tone Context tells you HOW to write — not WHAT to write about.
 ${sourceArticleContext || `\n=== SOURCE ARTICLE (PRIMARY INPUT) ===\n${rawInput}\n`}
 === VOICE / TONE (style only — NOT the topic) ===
@@ -849,7 +930,8 @@ export async function generateTwitterContent(
   externalSignal?: string,
   framingNote?: string,
   sharedCoreIdea?: { coreIdea: string; paradox: string; implication: string },
-  sourceArticle?: string
+  sourceArticle?: string,
+  brand?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -958,7 +1040,9 @@ Return ONLY valid JSON, no markdown.`;
   }
 
   // 1. Generate 𝕏 Article (600-850 words) — AgentLayerOS Real Writing Framework v2.0
-  const newsletterPrompt = `You are the world's best writer of viral 𝕏 Articles. Write every Article using the AgentLayerOS Real Writing Framework v2.0 exactly as described below.
+  const newsletterPrompt = `You are the world's best writer of viral 𝕏 Articles. Write every Article using the Real Writing Framework v2.0 exactly as described below.
+
+${brandBlock(brand)}
 
 CRITICAL RULE: The article must be grounded in the RAW MATERIALS below. Use the specific ideas, examples, companies, statistics, and language from the raw materials. Do not import themes from outside the raw materials. The voice/tone context at the bottom tells you HOW to refine — not WHAT to write about.
 ${contraryContext}
@@ -986,7 +1070,7 @@ Follow the Story Arc
 Hook → Pain → Why it's worse than you think → Failed old solutions → Breakthrough new solution → Moment of reflection → Inspiring future vision → Strong CTA.
 
 Use Soft Authority Phrases
-"I see this in almost every Quiet Optimizer Founder I talk to…"
+"I see this in almost every founder I talk to…"
 "Here's what actually changes the game…"
 "Most founders I talk to still diagnose this wrong…"
 
@@ -1187,6 +1271,8 @@ You MUST write about this specific angle. Do not substitute a different angle or
 Pick ONE concrete, named detail from the Raw Materials (a specific company, stat, quote, or named concept). Do NOT write about generic themes like "coordination pain" or "smarter tools".`;
 
     const prompt = `You are a founder writing a single 𝕏 (Twitter) post.
+
+${brandBlock(brand)}
 
 ${angleInstruction}
 
@@ -1449,7 +1535,8 @@ export async function generateRawTweets(
   extractedSignals: ExtractedSignals,
   externalSignal?: string,
   framingNote?: string,
-  sourceArticle?: string
+  sourceArticle?: string,
+  brand?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -1479,6 +1566,7 @@ ${framingNote ? `FRAMING: ${framingNote}` : ""}
 
   const prompt = `You are generating raw tweets for a founder's 𝕏 (Twitter) account.
 
+${brandBlock(brand)}
 === RAW MATERIALS ===
 ${rawInput}
 
@@ -1614,7 +1702,8 @@ Return ONLY valid JSON, no markdown.`;
 export async function generateTriPublishPack(
   sourceArticle: string,
   contexts: ContextItem[],
-  includeLlmOptimization?: boolean
+  includeLlmOptimization?: boolean,
+  brand?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -1632,6 +1721,8 @@ export async function generateTriPublishPack(
         {
           role: "user",
           content: `You are adapting an authority article for 𝕏 (Twitter) — the algorithm rewards dwell time, scroll-stopping hooks, and genuine engagement.
+
+${brandBlock(brand)}
 
 === SOURCE ARTICLE (adapt this — do not invent new ideas) ===
 ${sourceArticle}
@@ -1670,6 +1761,8 @@ Return ONLY valid JSON, no markdown.`,
         {
           role: "user",
           content: `You are adapting an authority article for LinkedIn Pulse — the goal is SEO ranking and LLM citation as a credible source.
+
+${brandBlock(brand)}
 
 === SOURCE ARTICLE (adapt this — do not invent new ideas) ===
 ${sourceArticle}
@@ -1713,6 +1806,8 @@ Return ONLY valid JSON, no markdown.`,
         {
           role: "user",
           content: `You are adapting an authority article for a founder's owned website — this is the definitive, most comprehensive version. It lives permanently and drives search traffic.
+
+${brandBlock(brand)}
 
 === SOURCE ARTICLE (adapt this — do not invent new ideas) ===
 ${sourceArticle}
@@ -1885,8 +1980,10 @@ export async function generateAuthorityArticle(
   rawInput: string,
   contexts: ContextItem[],
   extractedSignals: ExtractedSignals,
-  angle?: string
+  angle?: string,
+  brand?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
+  const bp = getBrandProfile(brand);
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
     .join("\n\n");
@@ -1913,15 +2010,15 @@ export async function generateAuthorityArticle(
     .filter(Boolean)
     .join("\n");
 
-  const prompt = `You are the LinkedIn ghostwriter for Laura Crouse, founder of MondayCEOBrief (and AgentLayerOS). You are writing a long-form Authority Article. This article becomes the primary source for all downstream content — LinkedIn posts, carousels, X content, SEO, and LLM citation.
+  const prompt = `You are the LinkedIn ghostwriter for Laura Crouse, founder of ${bp.label}. You are writing a long-form Authority Article. This article becomes the primary source for all downstream content — LinkedIn posts, carousels, X content, SEO, and LLM citation.
 
-Laura writes calm, practical, and direct Authority Articles for CEOs who run multi-branch companies. Her tone is battle-tested and operator-to-operator. She never uses hype, jargon, or marketing language. She sounds like someone who has had the same conversation many times with real CEOs and has no interest in theory.
+${bp.persona}
 
 CRITICAL RULES:
 1. All ideas, examples, and arguments must come from the SOURCE MATERIAL below. Do not invent new themes or import outside ideas. The Voice/Tone section tells you HOW to write — not WHAT to write about.
-2. Write exclusively for multi-branch CEOs (typically 3-15+ locations). Every section must feel relevant to someone running distributed operations.
-3. Lead with the sharpest, most specific signal in the source material. Do not treat all points equally. If there is a concrete story, data point, or warning (for example a large data sale, ungoverned memory becoming organizational truth, or rising token costs), make that the center of the article.
-4. Stay strictly inside the Company Brain / operational intelligence / institutional memory / sovereignty lane. Never drift into generic AI tooling, personal productivity, or broad SMB language.
+2. ${bp.icpRule}
+3. Lead with the sharpest, most specific signal in the source material. Do not treat all points equally. If there is a concrete story, data point, or warning, make that the center of the article.
+4. ${bp.laneRule}
 
 === SOURCE MATERIAL (PRIMARY INPUT — this is what the article is about) ===
 ${rawInput}
@@ -1942,17 +2039,17 @@ ${contextString ? `\nADDITIONAL VOICE CONTEXT:\n${contextString}` : ""}
 
 1. Opening (first 3-5 short paragraphs)
    - Start with a strong declarative statement drawn from the sharpest signal in the source material. No questions.
-   - Immediately make it relevant to multi-branch CEOs
+   - Immediately make it relevant to ${bp.audienceShort}
    - Establish the core tension or problem without drama
 
 2. Development
-   - Explain why this matters specifically for companies with multiple locations
+   - Explain why this matters specifically for ${bp.audienceShort}
    - Use the strongest concrete example or data point from the source
-   - Show the practical consequence of getting this wrong (inconsistent decisions across branches, loss of institutional knowledge, leaking operational edge, unpredictable costs, etc.)
+   - Show the practical consequence of getting this wrong
    - Keep the thinking clear and sequential
 
 3. The Distinction That Matters
-   - Clearly separate the common approach (general AI tools, personal second brains, or renting intelligence) from a private Company Brain that maintains controlled, structured memory
+   - ${bp.distinction}
    - Keep this section grounded and practical, not theoretical
    - Within this section, introduce 1-2 NAMED CONCEPTS derived FROM the source material. Coin or surface a name for the central idea.
    - Immediately after naming the concept, include an explicit definition sentence:
@@ -1960,18 +2057,11 @@ ${contextString ? `\nADDITIONAL VOICE CONTEXT:\n${contextString}` : ""}
    - The definition must stand alone — one sentence, no metaphor, no abstraction.
 
 4. Closing
-   - End with a calm, grounded point about what multi-branch CEOs actually need right now
+   - End with a calm, grounded point about what ${bp.audienceShort} actually need right now
    - Then use one of the approved CTA patterns below
 
 === CTA OPTIONS (choose one) ===
-A. Soft invitation
-"If this is something you're already seeing inside your own organization, I'm happy to share what we're observing."
-
-B. Direct but low-friction offer
-"If you run multiple locations and want to see what a private Company Brain looks like with your context, send me a message."
-
-C. Simple, relevant question
-"How are you currently handling institutional memory and operational intelligence across your locations?"
+${bp.ctaBlock}
 
 Never use hard sales language or multiple CTAs.
 
@@ -2087,7 +2177,8 @@ const QUOTE_REPOST_TYPES = [
 
 export async function generateQuoteReposts(
   sourceArticle: string,
-  contexts: ContextItem[]
+  contexts: ContextItem[],
+  brand?: string
 ): Promise<Omit<PostDraft, "id" | "weeklyRunId" | "createdAt">[]> {
   const contextString = contexts
     .map((c) => `[${c.type.toUpperCase()}] ${c.title}: ${c.content}`)
@@ -2104,6 +2195,8 @@ export async function generateQuoteReposts(
   ).join("\n");
 
   const prompt = `You are writing 5 quote-repost lines for a founder's 𝕏 (Twitter) article. These lines encourage others to share and react naturally — not to bait engagement.
+
+${brandBlock(brand)}
 
 === SOURCE ARTICLE ===
 ${sourceArticle}

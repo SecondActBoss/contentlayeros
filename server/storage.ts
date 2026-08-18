@@ -132,12 +132,13 @@ export class MemStorage implements IStorage {
 
   async createWeeklyRun(run: InsertWeeklyRun): Promise<WeeklyRun> {
     const id = randomUUID();
-    const weeklyRun: WeeklyRun = {
+    const weeklyRun = {
       ...run,
+      brand: run.brand || "mondayceobrief",
       id,
       extractedSignals: null,
       createdAt: new Date(),
-    };
+    } as WeeklyRun;
     this.weeklyRuns.set(id, weeklyRun);
     return weeklyRun;
   }

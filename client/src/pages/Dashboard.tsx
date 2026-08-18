@@ -87,6 +87,7 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [selectedContextIds, setSelectedContextIds] = useState<string[]>([]);
+  const [brand, setBrand] = useState<"mondayceobrief" | "agentlayeros">("mondayceobrief");
   const [generatedPosts, setGeneratedPosts] = useState<PostDraft[]>([]);
   const [extractedSignals, setExtractedSignals] = useState<ExtractedSignals | null>(null);
   const [distributionMode, setDistributionMode] = useState<DistributionMode>("linkedin");
@@ -163,6 +164,7 @@ export default function Dashboard() {
     mutationFn: async (data: { 
       rawInput: string; 
       selectedContextIds: string[];
+      brand?: "mondayceobrief" | "agentlayeros";
       distributionMode?: DistributionMode;
       isContrarianMode?: boolean;
       isRawTweetMode?: boolean;
@@ -255,6 +257,7 @@ export default function Dashboard() {
     generateMutation.mutate({ 
       rawInput, 
       selectedContextIds,
+      brand,
       distributionMode,
       isContrarianMode: distributionMode === "linkedin" ? isContrarianMode : false,
       isRawTweetMode: distributionMode === "twitter" ? isRawTweetMode : false,
@@ -1405,6 +1408,43 @@ Examples:
 
         {/* Context Selection */}
         <div className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Brand</CardTitle>
+              <CardDescription>
+                Which brand is this run for? Voice, ICP, and CTAs adapt accordingly.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={brand === "mondayceobrief" ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setBrand("mondayceobrief")}
+                  data-testid="button-brand-mondayceobrief"
+                >
+                  MondayCEOBrief
+                </Button>
+                <Button
+                  type="button"
+                  variant={brand === "agentlayeros" ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setBrand("agentlayeros")}
+                  data-testid="button-brand-agentlayeros"
+                >
+                  AgentLayerOS
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {brand === "mondayceobrief"
+                  ? "Multi-branch CEOs · Company Brain · sovereignty"
+                  : "SMB founders · AI agent operations · Autopilot AI"}
+              </p>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Context Selection</CardTitle>

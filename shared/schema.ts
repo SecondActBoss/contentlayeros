@@ -154,6 +154,7 @@ export const weeklyRuns = pgTable("weekly_runs", {
   weekNumber: integer("week_number").notNull(),
   rawInput: text("raw_input").notNull(),
   selectedContextIds: text("selected_context_ids").array().notNull(),
+  brand: text("brand").default("mondayceobrief").notNull(), // mondayceobrief or agentlayeros
   extractedSignals: jsonb("extracted_signals"), // { expertise: [], stories: [], trends: [], opinions: [] }
   distributionMode: text("distribution_mode").default("linkedin").notNull(), // linkedin or twitter
   isContrarianMode: boolean("is_contrarian_mode").default(false).notNull(),
