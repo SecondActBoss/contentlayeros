@@ -1913,57 +1913,81 @@ export async function generateAuthorityArticle(
     .filter(Boolean)
     .join("\n");
 
-  const prompt = `You are writing a long-form authority article for a founder. This article becomes the primary source for all downstream content — LinkedIn posts, carousels, X content, SEO, and LLM citation.
+  const prompt = `You are the LinkedIn ghostwriter for Laura Crouse, founder of MondayCEOBrief (and AgentLayerOS). You are writing a long-form Authority Article. This article becomes the primary source for all downstream content — LinkedIn posts, carousels, X content, SEO, and LLM citation.
 
-CRITICAL RULE: The article must be grounded in the RAW MATERIALS below. All ideas, named concepts, examples, and arguments must come FROM the raw materials. Do not import themes, frameworks, or vocabulary from outside the raw materials. The Voice/Tone section tells you HOW to write — not WHAT to write about.
+Laura writes calm, practical, and direct Authority Articles for CEOs who run multi-branch companies. Her tone is battle-tested and operator-to-operator. She never uses hype, jargon, or marketing language. She sounds like someone who has had the same conversation many times with real CEOs and has no interest in theory.
 
-=== RAW MATERIALS (PRIMARY SOURCE — this is what the article is about) ===
+CRITICAL RULES:
+1. All ideas, examples, and arguments must come from the SOURCE MATERIAL below. Do not invent new themes or import outside ideas. The Voice/Tone section tells you HOW to write — not WHAT to write about.
+2. Write exclusively for multi-branch CEOs (typically 3-15+ locations). Every section must feel relevant to someone running distributed operations.
+3. Lead with the sharpest, most specific signal in the source material. Do not treat all points equally. If there is a concrete story, data point, or warning (for example a large data sale, ungoverned memory becoming organizational truth, or rising token costs), make that the center of the article.
+4. Stay strictly inside the Company Brain / operational intelligence / institutional memory / sovereignty lane. Never drift into generic AI tooling, personal productivity, or broad SMB language.
+
+=== SOURCE MATERIAL (PRIMARY INPUT — this is what the article is about) ===
 ${rawInput}
 
 ${angle ? `=== ANGLE / FOCUS ===\n${angle}\n` : ""}
-=== VOICE / TONE (style only — NOT the topic) ===
-${contextString || "Operator-focused, calm, authoritative. Conversational but precise. No hype or corporate speak."}
+=== VOICE & TONE (style only — NOT the topic) ===
+- Calm, clear, and direct
+- Short paragraphs (usually 1-3 sentences)
+- Conversational but precise
+- No hype words ("game-changing," "revolutionary," "unlock," "the future of," etc.)
+- No emojis
+- No em-dashes
+- No rhetorical questions in the opening
+- Sounds like a seasoned operator speaking to other operators
+${contextString ? `\nADDITIONAL VOICE CONTEXT:\n${contextString}` : ""}
 
-=== ARTICLE STRUCTURE (MANDATORY — follow in order, grounded in the raw materials) ===
-1. Hook (contrarian, 1–2 sentences max)
-   - Strong opinion drawn from the raw materials. No questions. Should create tension.
+=== ARTICLE STRUCTURE (MANDATORY — follow in order, grounded in the source material) ===
 
-2. The Problem
-   - Grounded in what the raw materials identify as the core problem.
+1. Opening (first 3-5 short paragraphs)
+   - Start with a strong declarative statement drawn from the sharpest signal in the source material. No questions.
+   - Immediately make it relevant to multi-branch CEOs
+   - Establish the core tension or problem without drama
 
-3. What People Think Is Happening
-   - Present the common belief or narrative the raw materials push back against.
+2. Development
+   - Explain why this matters specifically for companies with multiple locations
+   - Use the strongest concrete example or data point from the source
+   - Show the practical consequence of getting this wrong (inconsistent decisions across branches, loss of institutional knowledge, leaking operational edge, unpredictable costs, etc.)
+   - Keep the thinking clear and sequential
 
-4. What's Actually Happening
-   - The reframe from the raw materials.
-
-5. Core Insight / Framework
-   - Introduce 1–2 NAMED CONCEPTS derived FROM the raw materials. Coin or surface a name for the central idea in the raw materials.
+3. The Distinction That Matters
+   - Clearly separate the common approach (general AI tools, personal second brains, or renting intelligence) from a private Company Brain that maintains controlled, structured memory
+   - Keep this section grounded and practical, not theoretical
+   - Within this section, introduce 1-2 NAMED CONCEPTS derived FROM the source material. Coin or surface a name for the central idea.
    - Immediately after naming the concept, include an explicit definition sentence:
      "[Named Concept] is when [clear, plain-English explanation]."
    - The definition must stand alone — one sentence, no metaphor, no abstraction.
 
-6. Real Example or Scenario
-   - Use concrete examples from the raw materials where available.
+4. Closing
+   - End with a calm, grounded point about what multi-branch CEOs actually need right now
+   - Then use one of the approved CTA patterns below
 
-7. Implication
-   - What the raw materials' argument means for the reader in practical terms.
+=== CTA OPTIONS (choose one) ===
+A. Soft invitation
+"If this is something you're already seeing inside your own organization, I'm happy to share what we're observing."
 
-8. Closing Shift
-   - Clear mental reframe. Calm, authoritative tone.
+B. Direct but low-friction offer
+"If you run multiple locations and want to see what a private Company Brain looks like with your context, send me a message."
+
+C. Simple, relevant question
+"How are you currently handling institutional memory and operational intelligence across your locations?"
+
+Never use hard sales language or multiple CTAs.
 
 === WRITING RULES (MANDATORY) ===
-- Conversational tone (5th–6th grade reading level)
 - Short sentences (under 20 words)
-- Use whitespace (1–2 sentence paragraphs only)
+- Short paragraphs throughout (1-3 sentences, use whitespace)
 - No emojis
 - No hype language ("game-changing", "revolutionary", "unlock")
 - No generic advice ("communicate better", "just focus")
 - No listicles or bullet points in the body
+- No sub-headers unless they add real clarity
 - No "tips" or "strategies"
-- Total length: 800–1500 words
+- Target 600-850 words
 - No slang or overly creative metaphors — prefer precise, professional language
 - Avoid vague abstractions: replace them with concrete, specific meaning
+- This should read as a thoughtful operator essay, not a blog post or sales letter
 
 === LLM CITATION OPTIMIZATION (MANDATORY) ===
 LLMs (ChatGPT, Perplexity, Google AI) cite articles that are clear, structured, and definitional. Follow these rules:
