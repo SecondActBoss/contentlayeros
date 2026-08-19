@@ -24,6 +24,8 @@ export interface BrandProfile {
   ctaBlock: string;
   /** Optional brand-specific extra critical rules appended to the numbered CRITICAL RULES list. */
   extraRules?: string;
+  /** Optional gold-standard posts written by the founder, used as the voice calibration target. */
+  voiceExemplars?: string;
 }
 
 export const BRAND_PROFILES: Record<Brand, BrandProfile> = {
@@ -54,6 +56,29 @@ C. Simple question that invites a reply
 7. EXAMPLES: Never present Global Mobility Inc. or any demo archetype as a real customer story, a real client, or lived experience. If an example is needed, keep it generic or clearly framed as a scenario. Prefer no named fictional companies at all.
 8. VOICE DISCIPLINE (HIGHEST PRIORITY): Write like it is spoken, not written. Most sentences under 12 words. Simple, concrete language over abstract statements. Calm, direct, operator-to-operator: a CEO who has seen this pattern many times and has no interest in hype.
 9. BANNED LANGUAGE: No dramatic or polished phrasing. Never write lines like "competitive DNA," "hollow out your company's soul," "Are you ready to lead this change," "the stakes? Your edge, your future," "simple, yet profound," or anything that sounds written rather than spoken. Cut any sentence that feels like a manifesto closing or motivational push.`,
+    voiceExemplars: `=== VOICE CALIBRATION (GOLD STANDARD — match this exact register) ===
+The following posts were written by Laura herself. They are the target. Before returning your draft, compare it against these. If your draft sounds more formal, more dramatic, or more "written" than these, rewrite it until it matches this register. Match the rhythm, sentence length, and plainness — NOT the topics or specific phrases.
+
+EXAMPLE 1:
+The most dangerous thing AI can do is decide what your company remembers.
+A local exception gets recorded. No owner. No expiration. No context.
+Later it quietly becomes a company-wide rule.
+In a multi-branch operation, that is how bad decisions travel.
+One incomplete memory can influence agents, workflows, and managers across every location.
+A private Company Brain has to do more than store information. It has to govern it. Provenance. Ownership. Permissions. What is allowed to persist and what is not.
+Most tools skip this part.
+If you run multiple locations and want to see what governed memory actually looks like, send me a message.
+
+EXAMPLE 2:
+Most AI platforms want your institutional memory.
+They take the context, the decisions, and the patterns in exchange for a dashboard.
+For a multi-branch CEO, that trade is expensive. The knowledge that makes your network different becomes part of someone else's system.
+A real Company Brain works in the opposite direction.
+You own the memory. You control what persists. You decide who can see it.
+Shared intelligence does not have to mean shared access.
+If this is something you're already thinking about, I'm happy to share what we're seeing.
+
+What makes these work: flat declarative openers, no windup. Fragments used for emphasis ("No owner. No expiration. No context."). Consequences stated plainly, not dramatized. The CTA arrives without a transition sentence. Nothing sounds performed.`,
   },
   agentlayeros: {
     key: "agentlayeros",
@@ -435,7 +460,7 @@ ${bp.extraRules ? `${bp.extraRules}\n` : ""}${sourceArticleContext || `\n=== SOU
 - No em-dashes
 - No rhetorical questions in the first two lines
 - Sounds like a seasoned operator, not a marketer
-${contextString ? `\nADDITIONAL VOICE CONTEXT:\n${contextString}` : ""}
+${bp.voiceExemplars ? `\n${bp.voiceExemplars}\n` : ""}${contextString ? `\nADDITIONAL VOICE CONTEXT:\n${contextString}` : ""}
 ${examplesString}
 ${antiRepetitionContext}
 POST TYPE: ${postType.name}
@@ -2041,7 +2066,7 @@ ${angle ? `=== ANGLE / FOCUS ===\n${angle}\n` : ""}
 - No em-dashes
 - No rhetorical questions in the opening
 - Sounds like a seasoned operator speaking to other operators
-${contextString ? `\nADDITIONAL VOICE CONTEXT:\n${contextString}` : ""}
+${bp.voiceExemplars ? `\n${bp.voiceExemplars}\n` : ""}${contextString ? `\nADDITIONAL VOICE CONTEXT:\n${contextString}` : ""}
 
 === ARTICLE STRUCTURE (MANDATORY — follow in order, grounded in the source material) ===
 
